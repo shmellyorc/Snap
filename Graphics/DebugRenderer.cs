@@ -76,21 +76,6 @@ public sealed class DebugRenderer
 		DrawLine(prev, start, color);
 	}
 
-	public void DrawGraph(Graph graph)
-	{
-		if (graph == null) return;
-		if (!EngineSettings.Instance.DebugDraw) return;
-
-		foreach (var node in graph.Nodes.Values)
-		{
-			foreach (var edge in node.Edges)
-			{
-				DrawLine(node.Position, graph.Nodes[edge.Key].Position, new(255, 0, 0));
-			}
-			DrawCircle(node.Position, 5, new Color(0, 255, 0), 16);
-		}
-	}
-
 	internal void Begin() => _vertexCount = 0;
 
 	internal void End()
