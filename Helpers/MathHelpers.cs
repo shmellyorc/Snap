@@ -26,6 +26,9 @@ public static class MathHelpers
 		return Lerp(a, b, u);
 	}
 
+	public static float LerpPercise(float a, float b, float t) =>
+		a + (b - a) * t;
+
 	/// <summary>
 	/// Clamps value to [0,1].
 	/// </summary>
@@ -41,7 +44,7 @@ public static class MathHelpers
 
 	public static Vect2 To2D(int index, int tilesize)
 		=> new(index % tilesize, index / tilesize);
-		
+
 	public static int To1D(Vect2 location, int tilesize)
 		=> (int)location.Y * tilesize + (int)location.X;
 }

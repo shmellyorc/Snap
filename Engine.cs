@@ -252,7 +252,7 @@ public class Engine : IDisposable
 			sb.Append($"Routines: {CoroutineManager.Instance.Count} | ");
 
 			// // Beacon (PubSub): <number>
-			sb.Append($"Beacon: {BeaconManager.Instance.Count}");
+			sb.Append($"Beacon: {BeaconManager.Instance.Count} | ");
 
 			// // Sounds:
 			sb.Append($"Sound: Playing: {_soundManager.PlayCount}, Banks: {_soundManager.Count}");

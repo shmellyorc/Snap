@@ -29,6 +29,16 @@ public sealed class EngineSettings
 		return this;
 	}
 
+
+	// Allow partial paths from pathfinding...
+	public bool AllowPartialPaths { get; private set; }
+	public EngineSettings WithAllowPartialPaths(bool value)
+	{
+		AllowPartialPaths = value;
+
+		return this;
+	}
+
 	public bool VSync { get; private set; }
 	public EngineSettings WithVSync(bool value)
 	{
@@ -234,7 +244,7 @@ public sealed class EngineSettings
 			AtlasPageSize = 512;
 		if (DrawCallCache == 0)
 			DrawCallCache = 512;
-		if(DeadZone <= 0)
+		if (DeadZone <= 0)
 			DeadZone = 0.2f;
 
 		Initialized = true;

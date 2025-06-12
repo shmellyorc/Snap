@@ -4,6 +4,7 @@ using Snap.Coroutines.Routines.Animations;
 using Snap.Coroutines.Routines.Conditionals;
 using Snap.Coroutines.Routines.Time;
 using Snap.Entities.Graphics;
+using Snap.Helpers;
 using Snap.Systems;
 
 namespace Snap.Screens.Helpers;
@@ -39,7 +40,7 @@ public class TransitionScreen : Screen
 	{
 		var toRemove = ScreenManager.Screens.Where(x => x != this).ToList();
 
-		yield return new Tween(0f, 1f, EaseInTime, EaseIn, (f) => _rect.Color = Color * f);
+		yield return new Tween<float>(0f, 1f, EaseInTime, EaseIn, MathHelpers.SmoothLerp, (f) => _rect.Color = Color * f);
 
 		foreach (var screen in toRemove)
 		{
@@ -62,7 +63,7 @@ public class TransitionScreen : Screen
 
 		yield return new WaitForNextFrame();
 
-		yield return new Tween(1f, 0f, EaseOutTime, EaseOut, (f) => _rect.Color = Color * f);
+		yield return new Tween<float>(1f, 0f, EaseOutTime, EaseOut, MathHelpers.SmoothLerp, (f) => _rect.Color = Color * f);
 
 		ExitScreen();
 	}

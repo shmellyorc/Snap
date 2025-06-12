@@ -321,13 +321,22 @@ public struct Vect2 : IEquatable<Vect2>
 
 
 	#region Lerp
+	public readonly Vect2 LerpPercise(in Vect2 other, float t) => LerpPercise(this, other, t);
+	public static Vect2 LerpPercise(Vect2 a, Vect2 b, float t)
+	{
+		return new Vect2(
+			MathHelpers.LerpPercise(a.X, b.X, t),
+			MathHelpers.LerpPercise(a.Y, b.Y, t)
+		);
+	}
+
 	public readonly Vect2 Lerp(in Vect2 other, float t) => Lerp(this, other, t);
-	public static Vect2 Lerp(in Vect2 a, in Vect2 b, float t)
+	public static Vect2 Lerp(Vect2 a, Vect2 b, float t)
 		=> new(a.X + (b.X - a.X) * t, a.Y + (b.Y - a.Y) * t);
 
 	public readonly Vect2 SmoothStep(in Vect2 target, float t)
 		=> SmoothStep(this, target, t);
-	public static Vect2 SmoothStep(in Vect2 a, in Vect2 b, float t)
+	public static Vect2 SmoothStep(Vect2 a, Vect2 b, float t)
 	{
 		// clamp t to [0,1]
 		t = Math.Clamp(t, 0f, 1f);

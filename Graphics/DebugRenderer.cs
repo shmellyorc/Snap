@@ -1,6 +1,9 @@
 using System.Runtime.CompilerServices;
 
+using Microsoft.VisualBasic;
+
 using Snap.Logs;
+using Snap.Paths;
 using Snap.Systems;
 
 namespace Snap.Graphics;
@@ -56,6 +59,7 @@ public sealed class DebugRenderer
 			center.X + MathF.Cos(0f) * radius,
 			center.Y + MathF.Sin(0f) * radius
 		);
+		Vect2 start = prev;
 
 		for (int i = 0; i < segmentCount; i++)
 		{
@@ -67,6 +71,23 @@ public sealed class DebugRenderer
 
 			DrawLine(prev, next, color);
 			prev = next;
+		}
+
+		DrawLine(prev, start, color);
+	}
+
+	public void DrawGraph(Graph graph)
+	{
+		if (graph == null) return;
+		if (!EngineSettings.Instance.DebugDraw) return;
+
+		foreach (var node in graph.Nodes.Values)
+		{
+			foreach (var edge in node.Edges)
+			{
+				DrawLine(node.Position, graph.Nodes[edge.Key].Position, new(255, 0, 0));
+			}
+			DrawCircle(node.Position, 5, new Color(0, 255, 0), 16);
 		}
 	}
 

@@ -88,7 +88,7 @@ public class Texture : IAsset
 	~Texture()
 	{
 		if (_state == TextureState.Create || _state == TextureState.RenderTexture)
-			Unload();
+			Dispose();
 	}
 
 	public ulong Load()
