@@ -1,6 +1,6 @@
 namespace Snap.Paths;
 
-public class GraphPriorityQueue<TItem, TPriority>
+public sealed class GraphPriorityQueue<TItem, TPriority>
 	where TItem : notnull
 	where TPriority : IComparable<TPriority>
 {
@@ -17,16 +17,17 @@ public class GraphPriorityQueue<TItem, TPriority>
 
 	private readonly List<Node> _heap = new();
 	private readonly Dictionary<TItem, int> _indices = new();
-
 	public int Count => _heap.Count;
 
 	public void Enqueue(TItem item, TPriority priority)
 	{
 		if (_indices.ContainsKey(item))
 			throw new InvalidOperationException("Item is already in the queue");
+
 		int i = _heap.Count;
 		_heap.Add(new Node(item, priority));
 		_indices[item] = i;
+
 		BubbleUp(i);
 	}
 
@@ -81,8 +82,10 @@ public class GraphPriorityQueue<TItem, TPriority>
 		while (i > 0)
 		{
 			int parent = (i - 1) / 2;
+
 			if (_heap[i].Priority.CompareTo(_heap[parent].Priority) >= 0)
 				break;
+
 			Swap(i, parent);
 			i = parent;
 		}
@@ -94,11 +97,15 @@ public class GraphPriorityQueue<TItem, TPriority>
 		while (true)
 		{
 			int left = 2 * i + 1, right = left + 1, smallest = i;
+
 			if (left < n && _heap[left].Priority.CompareTo(_heap[smallest].Priority) < 0)
 				smallest = left;
+
 			if (right < n && _heap[right].Priority.CompareTo(_heap[smallest].Priority) < 0)
 				smallest = right;
+
 			if (smallest == i) break;
+
 			Swap(i, smallest);
 			i = smallest;
 		}
