@@ -60,6 +60,8 @@ public class Engine : IDisposable
 		Settings = settings;
 
 		_log = new Logger();
+		_log.AddSink(new FileLogSink("Logs", 5_000_000, 5));
+
 		_log.Log(LogLevel.Info, "────────────────────────────────────────────────────────────");
 		_log.Log(LogLevel.Info, "           ███████╗ ███╗   ██╗  █████╗  ██████╗");
 		_log.Log(LogLevel.Info, "           ██╔════╝ ████╗  ██║ ██╔══██╗ ██╔══██╗");
@@ -103,14 +105,12 @@ public class Engine : IDisposable
 			}
 
 			_log.Log(LogLevel.Info, "SNAP Stopped\n");
-			_log.Stop();
 		};
 
 		// Only triggers if app doesnt crash:
 		AppDomain.CurrentDomain.ProcessExit += (object sender, EventArgs args) =>
 		{
 			_log.Log(LogLevel.Info, "SNAP Stopped\n");
-			_log.Stop();
 		};
 
 		_log.Log(LogLevel.Info, $"Vsync been set to: {settings.VSync}.");
