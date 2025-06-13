@@ -1,10 +1,12 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
 
 using Snap.Coroutines.Routines.Conditionals;
+using Snap.Coroutines.Routines.Time;
 using Snap.Entities.Graphics;
 using Snap.Screens;
 using Snap.Systems;
@@ -16,7 +18,7 @@ public class ListviewItem : Entity
 {
 	private ColorRect _bar;
 	private bool _selected;
-	private bool _isDirty;
+	// private bool _isDirty = true;
 
 
 	public bool Selected
@@ -28,7 +30,10 @@ public class ListviewItem : Entity
 				return;
 			_selected = value;
 
-			_isDirty = true;
+			if (_bar != null)
+				_bar.IsVisible = _selected;
+
+			// _isDirty = true;
 		}
 	}
 
@@ -40,28 +45,34 @@ public class ListviewItem : Entity
 			throw new Exception();
 
 		AddChild(
-			_bar = new ColorRect() { Size = Size, Color = Color, IsVisible = _selected }
+			_bar = new ColorRect()
+			{
+				Size = Size,
+				Color = Color,
+				IsVisible = _selected,
+				Layer = Layer,
+			}
 		);
 
 		base.OnEnter();
 	}
 
-	protected override void OnUpdate()
-	{
-		if (_bar == null)
-		{
-			base.OnUpdate();
-			return;
-		}
+	// protected override void OnUpdate()
+	// {
+	// 	if (_bar == null)
+	// 	{
+	// 		base.OnUpdate();
+	// 		return;
+	// 	}
 
-		if (_isDirty)
-		{
-			_bar.IsVisible = _selected;
-			_isDirty = false;
-		}
+	// 	if (_isDirty)
+	// 	{
+	// 		_bar.Color = _selected ? Color : new Color(255, 255, 255, 0);
+	// 		_isDirty = false;
+	// 	}
 
-		base.OnUpdate();
-	}
+	// 	base.OnUpdate();
+	// }
 }
 
 
@@ -133,6 +144,8 @@ public sealed class Listview : RenderTarget
 		var children = Children.OfType<ListviewItem>().ToList();
 		var index = 0;
 
+		Offset = new Vect2(0, _avgSize.Y * _scrollIndex);
+
 		foreach (var c in children)
 		{
 			if (!c.IsVisible)
@@ -149,14 +162,10 @@ public sealed class Listview : RenderTarget
 			offsetY += _avgSize.Y;
 		}
 
-		StartRoutine(
-			WaitForRenderer(() => Offset = new Vect2(0, _avgSize.Y * _scrollIndex))
-		);
+
 
 		base.OnDirty(state);
 	}
-
-
 
 	public void PreviousItem()
 	{

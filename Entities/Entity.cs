@@ -119,7 +119,7 @@ public class Entity
 
 			// if (_screen == null)
 			// {
-			// 	CoroutineManager.StartCoroutine(CoroutineHelpers.WaitWhileThan(() => _screen == null, () =>
+			// 	StartRoutine(CoroutineHelpers.WaitWhileThan(() => _screen == null, () =>
 			// 	{
 			// 		if (!_screen.Camera.CullBounds.Intersects(Bounds))
 			// 			_screen.UpdateDirtyState(DirtyState.Sort | DirtyState.Update);
@@ -453,3 +453,4 @@ public class Entity
 	// 	return entity != null;
 	// }
 }
+

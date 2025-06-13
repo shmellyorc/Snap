@@ -13,6 +13,8 @@ public class Sprite : Entity
 {
 	private Texture _texture;
 	private Rect2 _source;
+	private RenderTarget? _rt;
+	private bool _rtChecked;
 
 	public Color Color { get; set; } = Color.White;
 	public Vect2 Origin { get; set; }
@@ -32,10 +34,6 @@ public class Sprite : Entity
 
 	public Sprite(Texture texture, Spritesheet sheet, string sheetName)
 		: this(texture, sheet.GetBounds(sheetName)) { }
-
-
-	private RenderTarget? _rt;
-	private bool _rtChecked;
 
 	protected override void OnUpdate()
 	{

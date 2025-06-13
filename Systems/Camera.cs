@@ -1,4 +1,11 @@
+using System.Collections;
+
+using Coroutines;
+
+using Snap.Coroutines.Routines.Time;
+using Snap.Coroutines.Routines.Utilities;
 using Snap.Entities;
+using Snap.Helpers;
 using Snap.Screens;
 
 namespace Snap.Systems;
@@ -9,7 +16,7 @@ public class Camera
 	private Vect2 _viewCenter, _viewport;
 	private readonly SFView _view;
 	private readonly Screen _screen;
-	private Vect2 _position, _oldPosition;
+	private Vect2 _position, _lastDirtyPosition;
 
 	// Shake:
 	private float _shakeDuration;         // total seconds of shake
@@ -33,18 +40,10 @@ public class Camera
 		{
 			if (_position == value)
 				return;
-
 			_position = value;
+
 			CullBounds = Rect2.FromCenter(_position, _viewport);
-
 			_view.Center = _position;
-
-			// if (_position.Distance(_oldPosition) >= 4)
-			// {
-			// 	_screen.UpdateDirtyState(DirtyState.Update);
-			// 	_oldPosition = _position;
-			// }
-
 			_screen.UpdateDirtyState(DirtyState.Update);
 		}
 	}
@@ -70,6 +69,10 @@ public class Camera
 
 		Position = _viewport / 2f;     // e.g. (160, 90)
 									   // (Position setter will set CullBounds and _view.Center)
+
+		// Don't remove or change. This makes it so stacking
+		// LDTK tiles appear properly. Don't touch or mess with.
+		_lastDirtyPosition = Position;
 	}
 
 	public void StopFollow() => _followTarget = null;
@@ -106,9 +109,7 @@ public class Camera
 			Position = entity.Position;
 
 		_followTarget = entity;
-
-		// Read the entity’s current position once and delegate to the other overload:
-		// Follow(entity.Position, duration, ease);
+		_screen.UpdateDirtyState(DirtyState.Update);
 	}
 
 	public void StartShake(float duration, float magnitude)
@@ -171,6 +172,12 @@ public class Camera
 		}
 
 		Position = desired;
+
+		const float pixelThreshold = 1.0f;
+		if ((desired - _lastDirtyPosition).Length() >= pixelThreshold)
+		{
+			_screen.UpdateDirtyState(DirtyState.Update);
+		}
 	}
 
 	private void UpdateFly(float dt)

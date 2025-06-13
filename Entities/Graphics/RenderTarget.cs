@@ -1,5 +1,6 @@
 
 using System.Collections;
+using System.Linq.Expressions;
 using System.Runtime.InteropServices;
 
 using Microsoft.Win32;
@@ -7,6 +8,7 @@ using Microsoft.Win32;
 using Snap.Assets.Fonts;
 using Snap.Assets.Loaders;
 using Snap.Coroutines.Routines.Conditionals;
+using Snap.Coroutines.Routines.Time;
 using Snap.Entities.Panels;
 using Snap.Enums;
 using Snap.Graphics;
@@ -83,118 +85,41 @@ public class RenderTarget : Panel
 
 
 
-	// internal void RenderAll()
-	// {
-	// 	// 1) Flatten all DrawCommands into one list
-	// 	var all = new List<DrawCommand>();
-	// 	foreach (var bucket in _drawCommands.Values)
-	// 		all.AddRange(bucket);
-
-	// 	// 2) Global sort by depth
-	// 	all.Sort((a, b) => a.Depth.CompareTo(b.Depth));
-
-	// 	// 3) Batch‐and‐flush in one pass
-	// 	var verts = _vertexCache;
-	// 	int index = 0;
-	// 	SFTexture currTex = null;
-	// 	foreach (ref readonly var cmd in CollectionsMarshal.AsSpan(all))
-	// 	{
-	// 		// whenever we hit a new texture, flush the previous batch
-	// 		if (currTex != cmd.Texture && index > 0)
-	// 		{
-	// 			Flush(index, verts, currTex);
-	// 			index = 0;
-	// 		}
-
-	// 		currTex = cmd.Texture;
-
-	// 		// copy this sprite’s verts
-	// 		foreach (var v in cmd.Vertex)
-	// 		{
-	// 			if (index >= _vertexBufferSize)
-	// 			{
-	// 				EnsureVertexBufferCapacity(index + MaxVerticies);
-	// 				Flush(index, verts, currTex);
-	// 				index = 0;
-	// 			}
-	// 			verts[index++] = v;
-	// 		}
-	// 	}
-
-	// 	// final flush
-	// 	if (index > 0 && currTex != null)
-	// 		Flush(index, verts, currTex);
-
-	// 	// clear for next frame
-	// 	_drawCommands.Clear();
-	// 	_batches = 0;
-	// }
+	private readonly List<DrawCommand> _allCommands = new();
 
 
+	private void EnqueueCommand(
+		uint texHandle,
+		SFTexture tex,
+		SFVertex[] quad,
+		int depth
+	)
+	{
+		if (!_drawCommands.TryGetValue(texHandle, out var list))
+		{
+			list = new List<DrawCommand>();
+			_drawCommands[texHandle] = list;
+		}
+		var cmd = new DrawCommand(tex, quad, depth, _seqCounter++);
 
-
-	// internal void RenderAll()
-	// {
-	// 	var temp = _vertexCache;
-	// 	var index = 0;
-	// 	SFTexture currentTexture = null;
-
-	// 	// Iterate each texture‐bucket in your original order
-	// 	foreach (var kvp in _drawCommands)
-	// 	{
-	// 		var commands = kvp.Value;
-	// 		commands.Sort((a, b) => a.Depth.CompareTo(b.Depth));
-
-	// 		foreach (ref readonly var cmd in CollectionsMarshal.AsSpan(commands))
-	// 		{
-	// 			// If the texture changed, flush whatever we’ve collected so far
-	// 			if (currentTexture != null && currentTexture != cmd.Texture)
-	// 			{
-	// 				Flush(index, temp, currentTexture);
-	// 				index = 0;
-	// 			}
-
-	// 			// Copy this sprite’s verts into the cache
-	// 			for (int i = 0; i < cmd.Vertex.Length; i++)
-	// 			{
-	// 				if (index >= _vertexBufferSize)
-	// 				{
-	// 					EnsureVertexBufferCapacity(index + MaxVerticies);
-	// 					// flush the old batch before resizing
-	// 					Flush(index, temp, currentTexture);
-	// 					index = 0;
-	// 				}
-	// 				temp[index++] = cmd.Vertex[i];
-	// 			}
-
-	// 			// Now we’re “in” this texture
-	// 			currentTexture = cmd.Texture;
-	// 		}
-	// 	}
-
-	// 	// Flush any remaining verts for the last texture
-	// 	if (index > 0 && currentTexture != null)
-	// 	{
-	// 		Flush(index, temp, currentTexture);
-	// 	}
-
-	// 	// Clear for next frame
-	// 	_drawCommands.Clear();
-	// 	_batches = 0;
-	// }
+		list.Add(cmd);
+		// _allCommands.Add(cmd);
+	}
 
 
 	internal void RenderAll()
 	{
-		// 1) Flatten every command into one list
 		var all = new List<DrawCommand>(_drawCommands.Sum(kv => kv.Value.Count));
 		foreach (var bucket in _drawCommands.Values)
 			all.AddRange(bucket);
 
-		// 2) Sort globally by Depth
 		all.Sort((a, b) => a.Depth.CompareTo(b.Depth));
+		// _allCommands.Sort((a, b) =>
+		// {
+		// 	int d = a.Depth.CompareTo(b.Depth);
+		// 	return d != 0 ? d : a.Sequence.CompareTo(b.Sequence);
+		// });
 
-		// 3) Batch & flush in one pass
 		int index = 0;
 		SFTexture currentTexture = null;
 		foreach (var cmd in all)
@@ -202,14 +127,8 @@ public class RenderTarget : Panel
 			bool willOverflow = index + cmd.Vertex.Length > _vertexBufferSize;
 			bool textureChanged = currentTexture != null && currentTexture != cmd.Texture;
 
-			// if (currentTexture != cmd.Texture && index > 0)
-			// {
-			// 	Flush(index, _vertexCache, currentTexture);
-			// 	index = 0;
-			// }
 			if (willOverflow || textureChanged)
 			{
-				// Flush(index, temp, currentTexture);
 				if (index > 0 && currentTexture != null)
 					Flush(index, _vertexCache, currentTexture);
 				index = 0;
@@ -224,22 +143,14 @@ public class RenderTarget : Panel
 			index += src.Length;
 
 			currentTexture = cmd.Texture;
-
-			// foreach (var v in cmd.Vertex)
-			// {
-			// 	if (index >= _vertexBufferSize)
-			// 	{
-			// 		EnsureVertexBufferCapacity(index + MaxVerticies);
-			// 		Flush(index, _vertexCache, currentTexture);
-			// 		index = 0;
-			// 	}
-			// 	_vertexCache[index++] = v;
-			// }
 		}
+
 		if (index > 0 && currentTexture != null)
 			Flush(index, _vertexCache, currentTexture);
 
 		_drawCommands.Clear();
+		_allCommands.Clear();
+		_seqCounter = 0;
 		_batches = 0;
 	}
 
@@ -253,7 +164,7 @@ public class RenderTarget : Panel
 		while (newSize < neededSize)
 			newSize *= 2;
 
-		Logger.Instance.Log(LogLevel.Info, $"Resizing Texture Target Vertex buffer to {newSize}");
+		Logger.Instance.Log(LogLevel.Info, $"Resizing Render Target Vertex buffer to {newSize}");
 
 		_vertexBuffer.Dispose();
 		_vertexBuffer = new SFVertexBuffer((uint)newSize, SFPrimitiveType.Triangles, SFVertexBuffer.UsageSpecifier.Stream);
@@ -295,15 +206,24 @@ public class RenderTarget : Panel
 				return;
 			_offset = value;
 
-			IEnumerator WaitForView()
-			{
-				while (_view == null || _view.IsInvalid)
-					yield return null;
-				_view.Center = new SFVectF(
-					Size.X / 2 + _offset.X, Size.Y / 2 + _offset.Y);
-			}
+			if (_view == null || _view.IsInvalid)
+				throw new Exception();
 
-			StartRoutine(WaitForView());
+			// IEnumerator WaitForView()
+			// {
+			// 	if (_view == null || _view.IsInvalid)
+			// 	{
+			// 		while (_view == null || _view.IsInvalid)
+			// 			yield return null;
+			// 	}
+			// 	_view.Center = new SFVectF(
+			// 		Size.X / 2 + _offset.X, Size.Y / 2 + _offset.Y);
+			// }
+
+			// StartRoutine(WaitForView());
+
+			_view.Center = new SFVectF(
+				Size.X / 2 + _offset.X, Size.Y / 2 + _offset.Y);
 		}
 	}
 
@@ -407,20 +327,9 @@ public class RenderTarget : Panel
 		EnqueueCommand(texture.NativeHandle, texture, directQuad, depth);
 	}
 
-	private void EnqueueCommand(
-		uint texHandle,
-		SFTexture tex,
-		SFVertex[] quad,
-		int depth
-	)
-	{
-		if (!_drawCommands.TryGetValue(texHandle, out var list))
-		{
-			list = new List<DrawCommand>();
-			_drawCommands[texHandle] = list;
-		}
-		list.Add(new DrawCommand(tex, quad, depth));
-	}
+	private long _seqCounter;
+
+
 
 
 
@@ -497,7 +406,7 @@ public class RenderTarget : Panel
 			list = new List<DrawCommand>();
 			_drawCommands[textureId] = list;
 		}
-		list.Add(new DrawCommand(texture, quad, depth));
+		list.Add(new DrawCommand(texture, quad, depth, _seqCounter++));
 	}
 
 	private void EngineDraw(
@@ -513,6 +422,7 @@ public class RenderTarget : Panel
 	{
 		// if (!_camera.CullBounds.Intersects(dstRect))
 		// 	return;
+
 		if (!texture.IsValid)
 			texture.Load();
 
@@ -527,275 +437,9 @@ public class RenderTarget : Panel
 		EnqueueDraw(texture, srcInt, dstRect, color, origin, scale, rotation, effects, depth);
 	}
 
-
-	// private void EngineDrawBypassAtlas(
-	// Texture texture,
-	// Rect2 dstRect,
-	// Rect2 srcRect,
-	// Color color,
-	// Vect2? origin = null,
-	// Vect2? scale = null,
-	// float rotation = 0f,
-	// TextureEffects effects = TextureEffects.None,
-	// int depth = 0)
-	// {
-	// 	// if(!texture.IsValid)
-	// 	// 	texture.Load();
-
-	// 	var quad = Renderer.DrawQuad(
-	// 			dstRect,
-	// 			srcRect,
-	// 			color,
-	// 			origin ?? Vect2.Zero,
-	// 			scale ?? Vect2.One,
-	// 			rotation,
-	// 			effects);
-
-	// 	uint textureId = texture.Handle;
-	// 	if (!_drawCommands.TryGetValue(textureId, out var list))
-	// 	{
-	// 		list = new List<DrawCommand>();
-	// 		_drawCommands[textureId] = list;
-	// 	}
-	// 	list.Add(new DrawCommand(texture, quad, depth));
-	// }
-
-	// private unsafe void EngineDrawText(Font font, string text, Vect2 position, Color color, int depth)
-	// {
-	// 	// 1) Grab the font's SFML texture once
-	// 	var fontTexture = font.GetTexture();
-	// 	if (fontTexture == null || fontTexture.IsValid)
-	// 		return;
-
-	// 	Vect2 offset = Vect2.Zero;
-
-	// 	// 3) Iterate over each character
-	// 	fixed (char* ptr = text)
-	// 	{
-	// 		for (int i = 0, n = text.Length; i < n; i++)
-	// 		{
-	// 			char c = ptr[i];
-
-	// 			// Support Windows (\r\n) or Linux (\n) line breaks
-	// 			if (c == '\r')
-	// 				continue;
-	// 			if (c == '\n')
-	// 			{
-	// 				offset.X = 0f;
-	// 				offset.Y += font.LineSpacing;
-	// 				continue;
-	// 			}
-
-	// 			// 4) Lookup the Glyph for this character
-	// 			if (!font.Glyphs.TryGetValue(c, out var glyph))
-	// 				continue;
-
-	// 			// 5) Compute the glyph's on-screen top-left
-	// 			float drawX = (position.X + offset.X) + glyph.XOffset;
-	// 			float drawY = (position.Y + offset.Y) + glyph.YOffset;
-
-	// 			// 6) Build the destination rectangle at the glyph's native size
-	// 			var dstRect = new Rect2(
-	// 				new Vect2(drawX, drawY),
-	// 				new Vect2(glyph.Cell.Width, glyph.Cell.Height)
-	// 			);
-
-	// 			// 7) Determine atlas vs. direct: only skip atlas if strictly larger than PageSize
-	// 			if (glyph.Cell.Width > Renderer.AtlasManager.Size.X || glyph.Cell.Height > Renderer.AtlasManager.Size.Y)
-	// 			{
-	// 				// Direct‐draw path: build a quad using fontTexture + glyph.Cell
-	// 				var quad = Renderer.DrawQuad(
-	// 					dstRect,
-	// 					new Rect2(glyph.Cell.Left, glyph.Cell.Top, glyph.Cell.Width, glyph.Cell.Height),
-	// 					color,
-	// 					Vect2.Zero,
-	// 					Vect2.One,
-	// 					0f,
-	// 					TextureEffects.None
-	// 				);
-
-	// 				uint texId = fontTexture.NativeHandle;
-	// 				if (!_drawCommands.TryGetValue(texId, out var list))
-	// 				{
-	// 					list = new List<DrawCommand>();
-	// 					_drawCommands[texId] = list;
-	// 				}
-	// 				list.Add(new DrawCommand(fontTexture, quad, depth));
-	// 			}
-	// 			else
-	// 			{
-	// 				// Atlas path: pack (or retrieve) this glyph’s cell into the atlas
-	// 				var srcIntRect = new SFRectI(
-	// 					(int)glyph.Cell.Left,
-	// 					(int)glyph.Cell.Top,
-	// 					(int)glyph.Cell.Width,
-	// 					(int)glyph.Cell.Height
-	// 				);
-
-	// 				AtlasHandle? maybeHandle = Renderer.AtlasManager.GetOrCreateSlice(fontTexture, srcIntRect);
-	// 				if (maybeHandle.HasValue)
-	// 				{
-	// 					var handle = maybeHandle.Value;
-	// 					var pageTex = Renderer.AtlasManager.GetPageTexture(handle.PageId);
-
-	// 					// Build the Rect2 for the atlas sub-rect
-	// 					var atlasSrc = new Rect2(
-	// 						handle.SourceRect.Left,
-	// 						handle.SourceRect.Top,
-	// 						handle.SourceRect.Width,
-	// 						handle.SourceRect.Height
-	// 					);
-
-	// 					var quad = Renderer.DrawQuad(
-	// 						dstRect,
-	// 						atlasSrc,
-	// 						color,
-	// 						Vect2.Zero,
-	// 						Vect2.One,
-	// 						0f,
-	// 						TextureEffects.None
-	// 					);
-
-	// 					uint texId = pageTex.NativeHandle;
-	// 					if (!_drawCommands.TryGetValue(texId, out var list))
-	// 					{
-	// 						list = new List<DrawCommand>();
-	// 						_drawCommands[texId] = list;
-	// 					}
-	// 					list.Add(new DrawCommand(pageTex, quad, depth));
-	// 				}
-	// 				else
-	// 				{
-	// 					// Atlas is full (or insertion failed) → fallback to direct‐draw
-	// 					var quad = Renderer.DrawQuad(
-	// 						dstRect,
-	// 						new Rect2(glyph.Cell.Left, glyph.Cell.Top, glyph.Cell.Width, glyph.Cell.Height),
-	// 						color,
-	// 						Vect2.Zero,
-	// 						Vect2.One,
-	// 						0f,
-	// 						TextureEffects.None
-	// 					);
-
-	// 					uint texId = fontTexture.NativeHandle;
-	// 					if (!_drawCommands.TryGetValue(texId, out var list))
-	// 					{
-	// 						list = new List<DrawCommand>();
-	// 						_drawCommands[texId] = list;
-	// 					}
-	// 					list.Add(new DrawCommand(fontTexture, quad, depth));
-	// 				}
-	// 			}
-
-	// 			// 8) Advance cursor X by glyph.Advance
-	// 			offset.X += glyph.Advance;
-	// 		}
-	// 	}
-	// }
-
-
-
-
-
-	// private void EngineDraw(
-	// 	Texture texture,
-	// 	Rect2 dstRect,
-	// 	Rect2 srcRect,
-	// 	Color color,
-	// 	Vect2? origin = null,
-	// 	Vect2? scale = null,
-	// 	float rotation = 0f,
-	// 	TextureEffects effects = TextureEffects.None,
-	// 	int depth = 0
-	// )
-	// {
-	// 	// if (!Camera.CullBounds.Intersects(dstRect))
-	// 	// 	return;
-	// 	// if(!texture.IsValid)
-	// 	// 	texture.Load();
-
-	// 	// If the source‐rect is bigger than our atlas pages, draw directly:
-	// 	if (srcRect.Size.X > Renderer.AtlasManager.PageSize || srcRect.Size.Y > Renderer.AtlasManager.PageSize)
-	// 	{
-	// 		var quad = Renderer.DrawQuad(
-	// 			dstRect,
-	// 			srcRect,
-	// 			color,
-	// 			origin ?? Vect2.Zero,
-	// 			scale ?? Vect2.One,
-	// 			rotation,
-	// 			effects);
-
-	// 		uint textureId = texture.Handle;
-	// 		if (!_drawCommands.TryGetValue(textureId, out var list))
-	// 		{
-	// 			list = new List<DrawCommand>();
-	// 			_drawCommands[textureId] = list;
-	// 		}
-	// 		list.Add(new DrawCommand(texture, quad, depth));
-	// 	}
-	// 	else
-	// 	{
-	// 		// Try to pack (or retrieve) this sub‐rect into our atlas:
-	// 		AtlasHandle? maybeHandle = Renderer.AtlasManager.GetOrCreateSlice(texture, srcRect);
-
-	// 		if (!maybeHandle.HasValue)
-	// 		{
-	// 			// If atlas is full or failed, fall back to drawing directly:
-	// 			var quad = Renderer.DrawQuad(
-	// 				dstRect,
-	// 				srcRect,
-	// 				color,
-	// 				origin ?? Vect2.Zero,
-	// 				scale ?? Vect2.One,
-	// 				rotation,
-	// 				effects);
-
-	// 			uint textureId = texture.Handle;
-	// 			if (!_drawCommands.TryGetValue(textureId, out var list))
-	// 			{
-	// 				list = new List<DrawCommand>();
-	// 				_drawCommands[textureId] = list;
-	// 			}
-	// 			list.Add(new DrawCommand(texture, quad, depth));
-	// 		}
-	// 		else
-	// 		{
-	// 			// We successfully got an atlas handle:
-	// 			var handle = maybeHandle.Value;
-	// 			SFTexture pageTexture = Renderer.AtlasManager.GetPageTexture(handle.PageId);
-
-	// 			// Build the Rect2 for the atlas sub‐rect:
-	// 			var atlasSrc = new Rect2(
-	// 				handle.SourceRect.Left,
-	// 				handle.SourceRect.Top,
-	// 				handle.SourceRect.Width,
-	// 				handle.SourceRect.Height);
-
-	// 			var quad = Renderer.DrawQuad(
-	// 				dstRect,
-	// 				atlasSrc,
-	// 				color,
-	// 				origin ?? Vect2.Zero,
-	// 				scale ?? Vect2.One,
-	// 				rotation,
-	// 				effects);
-
-	// 			uint textureId = pageTexture.NativeHandle;
-	// 			if (!_drawCommands.TryGetValue(textureId, out var list))
-	// 			{
-	// 				list = new List<DrawCommand>();
-	// 				_drawCommands[textureId] = list;
-	// 			}
-	// 			list.Add(new DrawCommand(pageTexture, quad, depth));
-	// 		}
-	// 	}
-	// }
-
 	protected IEnumerator WaitForRenderer(Action onReady)
 	{
-		if (IsRendering)
-			yield return new WaitWhile(() => IsRendering);
+		yield return new WaitWhile(() => IsRendering);
 
 		onReady?.Invoke();
 	}

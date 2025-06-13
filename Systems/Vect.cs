@@ -120,7 +120,8 @@ public struct Vect2 : IEquatable<Vect2>
 
 	#region IEquatable
 	public readonly bool Equals(Vect2 other) =>
-		MathF.Abs(X - other.X) < Epsilon && MathF.Abs(Y - other.Y) < Epsilon;
+		(X, Y) == (other.X, other.Y);
+	// MathF.Abs(X - other.X) < Epsilon && MathF.Abs(Y - other.Y) < Epsilon;
 
 	public readonly override bool Equals([NotNullWhen(true)] object obj) =>
 		obj is Vect2 value && Equals(value);

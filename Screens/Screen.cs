@@ -15,6 +15,7 @@ using Snap.Coroutines;
 using Snap.Entities;
 using Snap.Entities.Graphics;
 using Snap.Graphics;
+using Snap.Helpers;
 using Snap.Inputs;
 using Snap.Logs;
 using Snap.Sounds;
@@ -27,7 +28,7 @@ public class Screen
 {
 	private int _layer;
 	private bool _visible = true;
-	private DirtyState _dirtyState;
+	private DirtyState _dirtyState = DirtyState.Sort | DirtyState.Update;
 	private readonly List<Entity> _entities = new();
 	private readonly List<Entity> _updateEntities = new();
 
@@ -179,6 +180,7 @@ public class Screen
 	internal void EngineOnEnter()
 	{
 		Camera = new Camera(this);
+		Camera.Update(Clock.DeltaTime);
 
 		OnEnter();
 	}
@@ -297,6 +299,5 @@ public class Screen
 	public void ClearRoutines() => CoroutineManager.StopAll(this);
 	#endregion
 
-
-	internal void UpdateDirtyState(DirtyState state) => _dirtyState = state;
+	internal void UpdateDirtyState(DirtyState state) => _dirtyState |= state;
 }

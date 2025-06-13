@@ -17,6 +17,15 @@ using Snap.Systems;
 
 namespace Snap;
 
+public class WindowCreationException : Exception
+{
+	public WindowCreationException(string message)
+		: base(message) { }
+
+	public WindowCreationException(string message, Exception inner)
+		: base(message, inner) { }
+}
+
 public class Engine : IDisposable
 {
 	private const int TotalFpsQueueSamples = 32;
@@ -53,8 +62,13 @@ public class Engine : IDisposable
 
 	public Engine(EngineSettings settings)
 	{
+		if (settings is null)
+			throw new ArgumentNullException(nameof(settings));
 		if (!settings.Initialized)
-			throw new ArgumentException(nameof(settings));
+			throw new InvalidOperationException(
+				"Cannot create Engine: EngineSettings must be initialized. " +
+				"Make sure you call EngineSettingsBuilder.Build() before passing it in."
+			);
 
 		Instance ??= this;
 		Settings = settings;
@@ -63,29 +77,50 @@ public class Engine : IDisposable
 		_log.AddSink(new FileLogSink("Logs", 5_000_000, 5));
 
 		_log.Log(LogLevel.Info, "────────────────────────────────────────────────────────────");
-		_log.Log(LogLevel.Info, "           ███████╗ ███╗   ██╗  █████╗  ██████╗");
-		_log.Log(LogLevel.Info, "           ██╔════╝ ████╗  ██║ ██╔══██╗ ██╔══██╗");
-		_log.Log(LogLevel.Info, "           ███████╗ ██╔██╗ ██║ ███████║ ██████╔╝");
-		_log.Log(LogLevel.Info, "           ╚════██║ ██║╚██╗██║ ██╔══██║ ██╔═══╝");
-		_log.Log(LogLevel.Info, "           ███████║ ██║ ╚████║ ██║  ██║ ██║");
-		_log.Log(LogLevel.Info, "           ╚══════╝ ╚═╝  ╚═══╝ ╚═╝  ╚═╝ ╚═╝");
+		_log.Log(LogLevel.Info, "           ███████═╗ ███══╗ ██═╗  █████══╗ ██████══╗");
+		_log.Log(LogLevel.Info, "           ██ ╔════╝ ████ ╚╗██ ║ ██ ╔═██ ║ ██ ╔═██ ║");
+		_log.Log(LogLevel.Info, "           ███████═╗ ██ ██ ╚██ ║ ███████ ║ ██████ ╔╝");
+		_log.Log(LogLevel.Info, "            ╚═══██ ║ ██ ║██ ██ ║ ██ ╔═██ ║ ██ ╔═══╝");
+		_log.Log(LogLevel.Info, "           ███████ ║ ██ ║ ████ ║ ██ ║ ██ ║ ██ ║");
+		_log.Log(LogLevel.Info, "            ╚══════╝ ╚══╝  ╚═══╝ ╚══╝ ╚══╝ ╚══╝");
 		_log.Log(LogLevel.Info, "────────────────────────────────────────────────────────────");
 		_log.Log(LogLevel.Info, $"         Version: {Version}, Hash: {VersionHash}");
 		_log.Log(LogLevel.Info, "────────────────────────────────────────────────────────────");
 
 		_styles = SFStyles.Titlebar | SFStyles.Close;
-		_videoMode = new SFVideoMode((uint)Settings.Window.X, (uint)Settings.Window.Y);
-		_log.Log(LogLevel.Info, $"Initializing video mode: {Settings.Window.X}x{Settings.Window.Y}");
-		_context = new SFContext { MinorVersion = 3, MajorVersion = 3, AntialiasingLevel = 0 };
-		_log.Log(LogLevel.Info, $"Creating OpenGL context: Version {_context.MajorVersion}.{_context.MinorVersion}, Antialiasing: {_context.AntialiasingLevel}");
-		_window = new SFRenderWindow(_videoMode, "Game", _styles, _context);
 
-		if (!_window.IsInvalid)
-			_log.Log(LogLevel.Info, "Window seccessfully created.");
-		else
+		_log.Log(LogLevel.Info, $"Initializing video mode: {Settings.Window.X}x{Settings.Window.Y}");
+		_videoMode = new SFVideoMode((uint)Settings.Window.X, (uint)Settings.Window.Y);
+
+		_log.Log(LogLevel.Info, $"Creating OpenGL context: Version {_context.MajorVersion}.{_context.MinorVersion}, Antialiasing: {_context.AntialiasingLevel}");
+		_context = new SFContext { MinorVersion = 3, MajorVersion = 3, AntialiasingLevel = 0 };
+
+		try
 		{
-			_log.Log(LogLevel.Error, "Window creation failed! Check settings or intialization parameters.");
-			return;
+			_window = new SFRenderWindow(_videoMode, Settings.AppTitle, _styles, _context);
+
+			if (_window.IsInvalid || !_window.IsOpen)
+			{
+				throw new WindowCreationException(
+					"Failed to create SNAP window. Make sure your GPU supports OpenGl 3.3 or greater."
+				);
+			}
+
+			_log.Log(LogLevel.Info, "Window successfully created.");
+		}
+		catch (WindowCreationException wex)
+		{
+			_log.Log(LogLevel.Error, wex.Message);
+			_log.LogException(wex);
+			throw; // re-throw so upstream knows we’re fatally broken
+		}
+		catch (Exception ex)
+		{
+			// any other unexpected issue
+			_log.Log(LogLevel.Error, "Unexpected error during window creation.");
+			_log.LogException(ex);
+
+			throw new WindowCreationException("Unexpected error while creating SNAP window.", ex);
 		}
 
 		_window.Closed += (_, _) => _window.Close();
@@ -97,14 +132,14 @@ public class Engine : IDisposable
 		{
 			if (args.ExceptionObject is Exception ex)
 			{
-				var msg = new StringBuilder();
-				msg.AppendLine($"Crash detected: {ex.Message}");
-				msg.AppendLine($"Stack Trace:\n{ex.StackTrace}");
+				// var msg = new StringBuilder();
+				// msg.AppendLine($"Crash detected: {ex.Message}");
+				// msg.AppendLine($"Stack Trace:\n{ex.StackTrace}");
 
-				_log.Log(LogLevel.Error, msg.ToString().Trim());
+				_log.LogException(ex);
 			}
 
-			_log.Log(LogLevel.Info, "SNAP Stopped\n");
+			_log.Log(LogLevel.Warning, "SNAP force Stopped\n");
 		};
 
 		// Only triggers if app doesnt crash:
@@ -164,6 +199,7 @@ public class Engine : IDisposable
 		if (_window.IsInvalid)
 			return;
 
+		_log.Log(LogLevel.Info, "Loading InputMap...");
 		Input.Load();
 
 		// init
@@ -171,12 +207,16 @@ public class Engine : IDisposable
 		{
 			if (Settings.Services != null && Settings.Services.Length > 0)
 			{
+				_log.Log(LogLevel.Info, $"Adding {Settings.Services.Length} service{(Settings.Services.Length > 1 ? "s" : string.Empty)}.");
 				for (int i = 0; i < Settings.Services.Length; i++)
 					_serviceManager.RegisterService(Settings.Services[i]);
 			}
 
 			if (Settings.Screens != null && Settings.Screens.Length > 0)
+			{
+				_log.Log(LogLevel.Info, $"Adding {Settings.Services.Length} screen{(Settings.Screens.Length > 1 ? "s" : string.Empty)}.");
 				_screenManager.Add(Settings.Screens);
+			}
 
 			_initialized = true;
 		}
@@ -221,11 +261,11 @@ public class Engine : IDisposable
 
 		_fpsQueue.Enqueue(1f / _clock.DeltaTime);
 
-		if (_titleTimeout >= 0)
+		if (_titleTimeout >= 0.000001f)
 			_titleTimeout -= _clock.DeltaTime;
 		else
 		{
-			var sb = new StringBuilder();
+			var sb = new StringBuilder(1024);
 			var tEntity = _screenManager.Screens.Sum(x => x.Entities.Count);
 			var aEntity = _screenManager.Screens.Sum(x => x.ActiveEntities.Count);
 

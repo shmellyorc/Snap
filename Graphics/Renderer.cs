@@ -13,12 +13,14 @@ public struct DrawCommand
 	public SFTexture Texture { get; }
 	public SFVertex[] Vertex { get; }
 	public int Depth { get; }
+	public long Sequence { get; }
 
-	public DrawCommand(SFTexture texture, SFVertex[] vertex, int depth)
+	public DrawCommand(SFTexture texture, SFVertex[] vertex, int depth, long seq)
 	{
 		Texture = texture;
 		Vertex = vertex;
 		Depth = depth;
+		Sequence = seq;
 	}
 }
 
@@ -29,9 +31,7 @@ public sealed class Renderer
 	private SFVertexBuffer _vertexBuffer;
 	private SFVertex[] _vertexCache;
 	private readonly Dictionary<uint, List<DrawCommand>> _drawCommands = new(16);
-	// private DateTime _nextEvictionTime = DateTime.UtcNow.AddMinutes(0.5);
-	// private readonly TimeSpan _evictionInterval = TimeSpan.FromMinutes(0.5);
-	// private readonly TimeSpan _maxIdle = TimeSpan.FromMinutes(0.5);
+	private long _seqCounter = 0;
 	private int _vertexBufferSize, _batches;
 	private Camera _camera;
 
@@ -55,15 +55,10 @@ public sealed class Renderer
 	{
 		Instance ??= this;
 
-		_vertexBufferSize = maxDrawCalls;// * MaxVerticies;
+		_vertexBufferSize = maxDrawCalls;
 		_vertexBuffer = new((uint)_vertexBufferSize, SFPrimitiveType.Triangles, SFVertexBuffer.UsageSpecifier.Stream);
-		// AtlasManager = new TextureAtlasManager(pageSize: 2048, maxPages: 8);
 		_vertexCache = new SFVertex[_vertexBufferSize];
 	}
-
-
-
-
 
 	// 1) A single helper that handles both atlas‐draw and direct‐draw,
 	//    and calls TouchSlice **only** when we actually hit the atlas.
@@ -128,7 +123,7 @@ public sealed class Renderer
 			list = new List<DrawCommand>();
 			_drawCommands[texHandle] = list;
 		}
-		list.Add(new DrawCommand(tex, quad, depth));
+		list.Add(new DrawCommand(tex, quad, depth, _seqCounter++));
 	}
 
 
@@ -158,142 +153,6 @@ public sealed class Renderer
 	public void DrawBypassAtlas(Texture texture, Rect2 dst, Rect2 src, Color color, int depth = 0) =>
 		EngineDrawBypassAtlas(texture, dst, src, color, depth: depth);
 
-	// private unsafe void EngineDrawText(Font font, string text, Vect2 position, Color color, int depth)
-	// {
-	// 	// 1) Grab the font's SFML texture once
-	// 	var fontTexture = font.GetTexture();
-	// 	if (!fontTexture.IsValid)
-	// 		return;
-
-	// 	// 2) Track an (x,y) offset from 'position'
-	// 	Vect2 offset = Vect2.Zero;
-
-	// 	// 3) Iterate over each character
-	// 	fixed (char* ptr = text)
-	// 	{
-	// 		for (int i = 0, n = text.Length; i < n; i++)
-	// 		{
-	// 			char c = ptr[i];
-
-	// 			// Support Windows (\r\n) or Linux (\n) line breaks
-	// 			if (c == '\r')
-	// 				continue;
-	// 			if (c == '\n')
-	// 			{
-	// 				offset.X = 0f;
-	// 				offset.Y += font.LineSpacing;
-	// 				continue;
-	// 			}
-
-	// 			// 4) Lookup the Glyph for this character
-	// 			if (!font.Glyphs.TryGetValue(c, out var glyph))
-	// 				continue;
-
-	// 			// 5) Compute the glyph's on-screen top-left
-	// 			float drawX = (position.X + offset.X) + glyph.XOffset;
-	// 			float drawY = (position.Y + offset.Y) + glyph.YOffset;
-
-	// 			// 6) Build the destination rectangle at the glyph's native size
-	// 			var dstRect = new Rect2(
-	// 				new Vect2(drawX, drawY),
-	// 				new Vect2(glyph.Cell.Width, glyph.Cell.Height)
-	// 			);
-
-	// 			// 7) Determine atlas vs. direct: only skip atlas if strictly larger than PageSize
-	// 			if (glyph.Cell.Width > AtlasManager.Size.X || glyph.Cell.Height > AtlasManager.Size.Y)
-	// 			{
-	// 				// Direct‐draw path: build a quad using fontTexture + glyph.Cell
-	// 				var quad = DrawQuad(
-	// 					dstRect,
-	// 					new Rect2(glyph.Cell.Left, glyph.Cell.Top, glyph.Cell.Width, glyph.Cell.Height),
-	// 					color,
-	// 					Vect2.Zero,
-	// 					Vect2.One,
-	// 					0f,
-	// 					TextureEffects.None
-	// 				);
-
-	// 				uint texId = fontTexture.Handle;
-	// 				if (!_drawCommands.TryGetValue(texId, out var list))
-	// 				{
-	// 					list = new List<DrawCommand>();
-	// 					_drawCommands[texId] = list;
-	// 				}
-	// 				list.Add(new DrawCommand(fontTexture, quad, depth));
-	// 			}
-	// 			else
-	// 			{
-	// 				// Atlas path: pack (or retrieve) this glyph’s cell into the atlas
-	// 				var srcIntRect = new SFRectI(
-	// 					(int)glyph.Cell.Left,
-	// 					(int)glyph.Cell.Top,
-	// 					(int)glyph.Cell.Width,
-	// 					(int)glyph.Cell.Height
-	// 				);
-
-	// 				AtlasHandle? maybeHandle = AtlasManager.GetOrCreateSlice(fontTexture, srcIntRect);
-	// 				if (maybeHandle.HasValue)
-	// 				{
-	// 					var handle = maybeHandle.Value;
-	// 					var pageTex = AtlasManager.GetPageTexture(handle.PageId);
-
-	// 					// Build the Rect2 for the atlas sub-rect
-	// 					var atlasSrc = new Rect2(
-	// 						handle.SourceRect.Left,
-	// 						handle.SourceRect.Top,
-	// 						handle.SourceRect.Width,
-	// 						handle.SourceRect.Height
-	// 					);
-
-	// 					var quad = DrawQuad(
-	// 						dstRect,
-	// 						atlasSrc,
-	// 						color,
-	// 						Vect2.Zero,
-	// 						Vect2.One,
-	// 						0f,
-	// 						TextureEffects.None
-	// 					);
-
-	// 					uint texId = pageTex.NativeHandle;
-	// 					if (!_drawCommands.TryGetValue(texId, out var list))
-	// 					{
-	// 						list = new List<DrawCommand>();
-	// 						_drawCommands[texId] = list;
-	// 					}
-	// 					list.Add(new DrawCommand(pageTex, quad, depth));
-	// 					AtlasManager.TouchSlice(fontTexture, atlasSrc);
-	// 				}
-	// 				else
-	// 				{
-	// 					var rect = new Rect2(glyph.Cell.Left, glyph.Cell.Top, glyph.Cell.Width, glyph.Cell.Height);
-	// 					// Atlas is full (or insertion failed) → fallback to direct‐draw
-	// 					var quad = DrawQuad(
-	// 						dstRect,
-	// 						rect,
-	// 						color,
-	// 						Vect2.Zero,
-	// 						Vect2.One,
-	// 						0f,
-	// 						TextureEffects.None
-	// 					);
-
-	// 					uint texId = fontTexture.Handle;
-	// 					if (!_drawCommands.TryGetValue(texId, out var list))
-	// 					{
-	// 						list = new List<DrawCommand>();
-	// 						_drawCommands[texId] = list;
-	// 					}
-	// 					list.Add(new DrawCommand(fontTexture, quad, depth));
-	// 					AtlasManager.TouchSlice(fontTexture, rect);
-	// 				}
-	// 			}
-
-	// 			// 8) Advance cursor X by glyph.Advance
-	// 			offset.X += glyph.Advance;
-	// 		}
-	// 	}
-	// }
 	private unsafe void EngineDrawText(Font font, string text, Vect2 position, Color color, int depth)
 	{
 		var fontTex = font.GetTexture();
@@ -366,7 +225,7 @@ public sealed class Renderer
 			list = new List<DrawCommand>();
 			_drawCommands[textureId] = list;
 		}
-		list.Add(new DrawCommand(texture, quad, depth));
+		list.Add(new DrawCommand(texture, quad, depth, _seqCounter++));
 	}
 
 	private void EngineDraw(
@@ -395,103 +254,6 @@ public sealed class Renderer
 
 		EnqueueDraw(texture, srcInt, dstRect, color, origin, scale, rotation, effects, depth);
 	}
-
-
-	// private void EngineDraw(
-	// Texture texture,
-	// Rect2 dstRect,
-	// Rect2 srcRect,
-	// Color color,
-	// Vect2? origin = null,
-	// Vect2? scale = null,
-	// float rotation = 0f,
-	// TextureEffects effects = TextureEffects.None,
-	// int depth = 0)
-	// {
-	// 	if (!_camera.CullBounds.Intersects(dstRect))
-	// 		return;
-	// 	// if (!texture.IsValid)
-	// 	// 	texture.Load();
-
-	// 	// If the source‐rect is bigger than our atlas pages, draw directly:
-	// 	if (srcRect.Size.X > AtlasManager.PageSize || srcRect.Size.Y > AtlasManager.PageSize)
-	// 	{
-	// 		var quad = DrawQuad(
-	// 			dstRect,
-	// 			srcRect,
-	// 			color,
-	// 			origin ?? Vect2.Zero,
-	// 			scale ?? Vect2.One,
-	// 			rotation,
-	// 			effects);
-
-	// 		uint textureId = texture.Handle;
-	// 		if (!_drawCommands.TryGetValue(textureId, out var list))
-	// 		{
-	// 			list = new List<DrawCommand>();
-	// 			_drawCommands[textureId] = list;
-	// 		}
-	// 		list.Add(new DrawCommand(texture, quad, depth));
-	// 	}
-	// 	else
-	// 	{
-	// 		// Try to pack (or retrieve) this sub‐rect into our atlas:
-	// 		AtlasHandle? maybeHandle = AtlasManager.GetOrCreateSlice(texture, srcRect);
-
-	// 		if (!maybeHandle.HasValue)
-	// 		{
-	// 			// If atlas is full or failed, fall back to drawing directly:
-	// 			var quad = DrawQuad(
-	// 				dstRect,
-	// 				srcRect,
-	// 				color,
-	// 				origin ?? Vect2.Zero,
-	// 				scale ?? Vect2.One,
-	// 				rotation,
-	// 				effects);
-
-	// 			uint textureId = texture.Handle;
-	// 			if (!_drawCommands.TryGetValue(textureId, out var list))
-	// 			{
-	// 				list = new List<DrawCommand>();
-	// 				_drawCommands[textureId] = list;
-	// 			}
-	// 			list.Add(new DrawCommand(texture, quad, depth));
-	// 		}
-	// 		else
-	// 		{
-	// 			// We successfully got an atlas handle:
-	// 			var handle = maybeHandle.Value;
-	// 			SFTexture pageTexture = AtlasManager.GetPageTexture(handle.PageId);
-
-	// 			// Build the Rect2 for the atlas sub‐rect:
-	// 			var atlasSrc = new Rect2(
-	// 				handle.SourceRect.Left,
-	// 				handle.SourceRect.Top,
-	// 				handle.SourceRect.Width,
-	// 				handle.SourceRect.Height);
-
-	// 			var quad = DrawQuad(
-	// 				dstRect,
-	// 				atlasSrc,
-	// 				color,
-	// 				origin ?? Vect2.Zero,
-	// 				scale ?? Vect2.One,
-	// 				rotation,
-	// 				effects);
-
-	// 			uint textureId = pageTexture.NativeHandle;
-	// 			if (!_drawCommands.TryGetValue(textureId, out var list))
-	// 			{
-	// 				list = new List<DrawCommand>();
-	// 				_drawCommands[textureId] = list;
-	// 			}
-	// 			list.Add(new DrawCommand(pageTexture, quad, depth));
-
-	// 			AtlasManager.TouchSlice(texture, srcRect);
-	// 		}
-	// 	}
-	// }
 
 	internal SFVertex[] DrawQuad(
 		Rect2 dstRect,
@@ -572,71 +334,106 @@ public sealed class Renderer
 
 
 
+
+
 	internal void End()
 	{
-		// var temp = _vertexCache;
 		var index = 0;
 		SFTexture currentTexture = null;
 
-		// Iterate each texture‐bucket in your original order
-		foreach (var kvp in _drawCommands)
-		{
-			var commands = kvp.Value;
-			commands.Sort((a, b) => a.Depth.CompareTo(b.Depth));
+		// 1) Flatten all buckets into one list
+		var allCommands = _drawCommands.Values
+			.SelectMany(list => list)
+			.OrderBy(cmd => cmd.Depth)
+			.ThenBy(cmd => cmd.Sequence);
 
-			foreach (ref readonly var cmd in CollectionsMarshal.AsSpan(commands))
+		// 2) Iterate in perfect depth/sequence order,
+		//    but still batch whenever the texture doesn't change
+		foreach (ref readonly var cmd in CollectionsMarshal.AsSpan(allCommands.ToList()))
+		{
+			bool willOverflow = index + cmd.Vertex.Length > _vertexBufferSize;
+			bool textureChanged = currentTexture != null && currentTexture != cmd.Texture;
+
+			if (willOverflow || textureChanged)
 			{
-				bool willOverflow = index + cmd.Vertex.Length > _vertexBufferSize;
-				bool textureChanged = currentTexture != null && currentTexture != cmd.Texture;
+				if (index > 0 && currentTexture != null)
+					Flush(index, _vertexCache, currentTexture);
+				index = 0;
 
-				// If the texture changed, flush whatever we’ve collected so far
-				// if (currentTexture != null && currentTexture != cmd.Texture)
-				if(willOverflow || textureChanged)
-				{
-					// Flush(index, temp, currentTexture);
-					if(index > 0 && currentTexture != null)
-						Flush(index, _vertexCache, currentTexture);
-					index = 0;
-
-					if(willOverflow)
-						EnsureVertexBufferCapacity(Math.Max(_vertexBufferSize * 2, cmd.Vertex.Length));
-				}
-
-				// Copy this sprite’s verts into the cache
-				// for (int i = 0; i < cmd.Vertex.Length; i++)
-				// {
-				// 	_vertexCache[index++] = cmd.Vertex[i];
-
-				// 	// if (index >= _vertexBufferSize)
-				// 	// {
-				// 	// 	EnsureVertexBufferCapacity(index + MaxVerticies);
-				// 	// 	// flush the old batch before resizing
-				// 	// 	Flush(index, temp, currentTexture);
-				// 	// 	index = 0;
-				// 	// 	temp = _vertexCache;
-				// 	// }
-				// 	// temp[index++] = cmd.Vertex[i];
-				// }
-				var src = cmd.Vertex.AsSpan();
-				var dst = _vertexCache.AsSpan(index, src.Length);
-				src.CopyTo(dst);
-				index += src.Length;
-
-				// Now we’re “in” this texture
-				currentTexture = cmd.Texture;
+				if (willOverflow)
+					EnsureVertexBufferCapacity(Math.Max(_vertexBufferSize * 2, cmd.Vertex.Length));
 			}
+
+			// copy verts into the cache
+			var src = cmd.Vertex.AsSpan();
+			var dst = _vertexCache.AsSpan(index, src.Length);
+			src.CopyTo(dst);
+			index += src.Length;
+
+			currentTexture = cmd.Texture;
 		}
 
-		// Flush any remaining verts for the last texture
+		// 3) Final flush
 		if (index > 0 && currentTexture != null)
-		{
-			// Flush(index, temp, currentTexture);
 			Flush(index, _vertexCache, currentTexture);
-		}
 
-		// Clear for next frame
+		// 4) reset for next frame
 		_drawCommands.Clear();
+		_seqCounter = 0;
 	}
+
+
+	// internal void End()
+	// {
+	// 	var index = 0;
+	// 	SFTexture currentTexture = null;
+
+	// 	// Iterate each texture‐bucket in your original order
+	// 	foreach (var kvp in _drawCommands)
+	// 	{
+	// 		var commands = kvp.Value;
+	// 		commands.Sort((a, b) =>
+	// 		{
+	// 			int c = a.Depth.CompareTo(b.Depth);
+	// 			return c != 0 ? c : a.Sequence.CompareTo(b.Sequence);
+	// 		});
+
+	// 		foreach (ref readonly var cmd in CollectionsMarshal.AsSpan(commands))
+	// 		{
+	// 			bool willOverflow = index + cmd.Vertex.Length > _vertexBufferSize;
+	// 			bool textureChanged = currentTexture != null && currentTexture != cmd.Texture;
+
+	// 			if (willOverflow || textureChanged)
+	// 			{
+	// 				if (index > 0 && currentTexture != null)
+	// 					Flush(index, _vertexCache, currentTexture);
+	// 				index = 0;
+
+	// 				if (willOverflow)
+	// 					EnsureVertexBufferCapacity(Math.Max(_vertexBufferSize * 2, cmd.Vertex.Length));
+	// 			}
+
+	// 			var src = cmd.Vertex.AsSpan();
+	// 			var dst = _vertexCache.AsSpan(index, src.Length);
+	// 			src.CopyTo(dst);
+	// 			index += src.Length;
+
+	// 			// Now we’re “in” this texture
+	// 			currentTexture = cmd.Texture;
+	// 		}
+	// 	}
+
+	// 	// Flush any remaining verts for the last texture
+	// 	if (index > 0 && currentTexture != null)
+	// 	{
+	// 		// Flush(index, temp, currentTexture);
+	// 		Flush(index, _vertexCache, currentTexture);
+	// 	}
+
+	// 	// Clear for next frame
+	// 	_drawCommands.Clear();
+	// 	_seqCounter = 0;
+	// }
 
 	private void EnsureVertexBufferCapacity(int neededSize)
 	{

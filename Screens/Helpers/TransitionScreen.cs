@@ -29,7 +29,10 @@ public class TransitionScreen : Screen
 
 	protected override void OnEnter()
 	{
-		AddEntity(_rect = new ColorRect() { Color = Color * 0f });
+		AddEntity(_rect = new ColorRect()
+		{
+			Color = Color * 0f,
+		});
 
 		StartRoutine(Transition());
 
