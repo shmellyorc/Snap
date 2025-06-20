@@ -56,13 +56,50 @@ public static class EntityExtentions
 			action(descendant);
 	}
 
+	public static IEnumerable<T> GetDescendantsOfType<T>(this Entity e) where T: Entity
+	{
+		foreach (var a in GetDescendants(e))
+		{
+			if (a is T)
+				yield return (T)a;
+		}
+	}
+
 	/// <summary>Returns the world‐space position by summing parent positions.</summary>
 	public static Vect2 GetGlobalPosition(this Entity e)
 	{
-		if (e.IsChild)
-			return e.Parent?.Position + e._position ?? e._position;
-		else
-			return e._position;
+		if (e == null || e.IsExiting)
+			return Vect2.Zero;
+
+		var pos = e._position;
+
+		if (e.IsChild && e.Parent != null)
+			pos += e.Parent.GetGlobalPosition();
+
+		// if (e.IsChild)
+		// 	return e.Parent?.Position + e._position ?? e._position;
+		// else
+		// 	return e._position;
+
+		return pos;
+	}
+
+	public static Vect2 GetLocalPosition(this Entity e) => e._position;
+
+	public static Vect2 GetLocalPosition(this Entity e, Vect2 position)
+	{
+		if (e == null || e.IsExiting)
+			return Vect2.Zero;
+
+		return position - e.GetGlobalPosition();
+	}
+
+	public static Vect2 GetworldPosition(this Entity e, Vect2 position)
+	{
+		if (e == null || e.IsExiting)
+			return Vect2.Zero;
+
+		return position + e.GetGlobalPosition();
 	}
 
 	/// <summary>Yields all ancestors, from immediate parent up to root.</summary>
@@ -74,6 +111,15 @@ public static class EntityExtentions
 		{
 			yield return current;
 			current = current.Parent;
+		}
+	}
+
+	public static IEnumerable<T> GetAncestorsOfType<T>(this Entity e) where T: Entity
+	{
+		foreach (var a in GetAncestors(e))
+		{
+			if (a is T)
+				yield return (T)a;
 		}
 	}
 

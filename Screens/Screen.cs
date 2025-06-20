@@ -1,10 +1,4 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-using Coroutines;
 
 using Snap.Assets.Fonts;
 using Snap.Assets.LDTKImporter;
@@ -30,7 +24,7 @@ public class Screen
 	private bool _visible = true;
 	private DirtyState _dirtyState = DirtyState.Sort | DirtyState.Update;
 	private readonly List<Entity> _entities = new();
-	private readonly List<Entity> _updateEntities = new();
+	private List<Entity> _updateEntities = new();
 
 	public uint Id { get; internal set; }
 	public IReadOnlyList<Entity> Entities => _entities;
@@ -103,8 +97,10 @@ public class Screen
 	public LDTKProject GetMap(Enum name) => AssetManager.GetMap(name);
 	public Spritesheet GetSheet(string name) => AssetManager.GetSheet(name);
 	public Spritesheet GetSheet(Enum name) => AssetManager.GetSheet(name);
-	public BitmapFont GetFont(string name) => AssetManager.GetFont(name);
-	public BitmapFont GetFont(Enum name) => AssetManager.GetFont(name);
+	public Font GetFont(string name) => AssetManager.GetFont(name);
+	public Font GetFont(Enum name) => AssetManager.GetFont(name);
+	public BitmapFont GetBitmapFont(string name) => AssetManager.GetBitmapFont(name);
+	public BitmapFont GetBitmapFont(Enum name) => AssetManager.GetBitmapFont(name);
 	public SpriteFont GetSpriteFont(string name) => AssetManager.GetSpriteFont(name);
 	public SpriteFont GetSpriteFont(Enum name) => AssetManager.GetSpriteFont(name);
 	public Sound GetSound(string name) => AssetManager.GetSound(name);
@@ -136,27 +132,20 @@ public class Screen
 
 		if (_dirtyState != DirtyState.None)
 		{
+			IEnumerable<Entity> pipeline = _entities;
+
 			if (_dirtyState.HasFlag(DirtyState.Update))
 			{
-				_updateEntities.Clear();
-
-				for (int i = 0; i < _entities.Count; i++)
-				{
-					var e = _entities[i];
-					if (e.IsExiting)
-						continue;
-					if (!e.Bounds.Intersects(Camera.CullBounds))
-					{
-						if (!e.HasAncestorOfType<RenderTarget>())
-							continue;
-					}
-
-					_updateEntities.Add(e);
-				}
+				pipeline = pipeline
+					.Where(x => x is not null && !x.IsExiting && (x.HasAncestorOfType<RenderTarget>()
+						|| x.Bounds.Intersects(Camera.CullBounds)
+						|| x.KeepAlive));
 			}
 
 			if (_dirtyState.HasFlag(DirtyState.Sort))
-				_updateEntities.Sort((a, b) => a.Layer.CompareTo(b.Layer));
+				pipeline = pipeline.OrderBy(x => x.Layer);
+
+			_updateEntities = pipeline.ToList();
 
 			_dirtyState = DirtyState.None;
 		}
@@ -220,18 +209,21 @@ public class Screen
 	#region Entity
 	public void AddEntity(params Entity[] entities)
 	{
-		if (entities.IsEmpty())
+		if (entities == null || entities.Length == 0)
 			return;
 
 		for (int i = 0; i < entities.Length; i++)
 		{
-			if (entities[i] == null || entities[i].IsExiting)
+			var e = entities[i];
+			if (e == null || e.IsExiting)
 				continue;
 
-			entities[i]._screen = this;
-			entities[i].EngineOnEnter();
+			e._screen = this;
+			BeaconManager.Initialize(e);
+			
+			e.EngineOnEnter();
 
-			_entities.Add(entities[i]);
+			_entities.Add(e);
 		}
 
 		UpdateDirtyState(DirtyState.Sort | DirtyState.Update);
@@ -239,19 +231,21 @@ public class Screen
 
 	public void RemoveEntity(params Entity[] entities)
 	{
-		if (entities.IsEmpty())
+		if (entities == null || entities.Length == 0)
 			return;
 
 		bool anyRemoved = false;
 
 		for (int i = 0; i < entities.Length; i++)
 		{
-			if (entities[i] == null || entities[i].IsExiting)
+			var e = entities[i];
+
+			if (e == null || e.IsExiting)
 				continue;
-			if (!_entities.Remove(entities[i]))
+			if (!_entities.Remove(e))
 				continue;
 
-			entities[i].EngineOnExit();
+			e.EngineOnExit();
 			anyRemoved = true;
 		}
 
@@ -284,8 +278,8 @@ public class Screen
 	public void ConnectBeacon(Enum topic, Action<BeaconHandle> handler) => Beacon.Connect(topic.ToEnumString(), this, handler);
 	public void DisconnectBeacon(string topic, Action<BeaconHandle> handler) => Beacon.Disconnect(topic, this, handler);
 	public void DisconnectBeacon(Enum topic, Action<BeaconHandle> handler) => Beacon.Disconnect(topic.ToEnumString(), this, handler);
-	public void EmitBeacon(string topic, Action<BeaconHandle> handler) => Beacon.Emit(topic, handler);
-	public void EmitBeacon(Enum topic, Action<BeaconHandle> handler) => Beacon.Emit(topic, handler);
+	public void EmitBeacon(string topic, params object[] args) => Beacon.Emit(topic, args);
+	public void EmitBeacon(Enum topic, params object[] args) => Beacon.Emit(topic, args);
 	public void EmitBeaconDelayed(string topic, float seconds, params object[] args) => Beacon.EmitDelayed(this, topic, seconds, args);
 	public void EmitBeaconDelayed(Enum topic, float seconds, params object[] args) => Beacon.EmitDelayed(this, topic.ToEnumString(), seconds, args);
 	public void ClearBeacons() => Beacon.ClearOwner(this);
@@ -294,6 +288,7 @@ public class Screen
 
 	#region Coroutines
 	public CoroutineHandle StartRoutine(IEnumerator routine) => CoroutineManager.Start(routine, this);
+	public CoroutineHandle StartRoutineDelayed(IEnumerator routine, float delay) => CoroutineManager.StartDelayed(delay, this, routine);
 	public bool StopRoutine(CoroutineHandle handle) => CoroutineManager.Stop(handle);
 	public bool HasRoutine(CoroutineHandle handle) => CoroutineManager.IsRunning(handle);
 	public void ClearRoutines() => CoroutineManager.StopAll(this);

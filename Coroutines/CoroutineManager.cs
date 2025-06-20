@@ -25,11 +25,10 @@ SOFTWARE.
 */
 
 using System.Collections;
-using System.Collections.Generic;
 
 using Snap.Systems;
 
-namespace Coroutines
+namespace Snap.Coroutines
 {
 	/// <summary>
 	/// A container for running multiple routines in parallel. Coroutines can be nested.
@@ -174,6 +173,16 @@ namespace Coroutines
 			}
 
 			bool result = routine.MoveNext();
+			// if (!result)
+			// 	return false;
+
+			// if (routine.Current is IEnumerator nested)
+			// {
+			// 	if (MoveNext(nested, index))
+			// 		return true;
+			// 	_delays[index] = 0;
+			// 	return true;
+			// }
 
 			if (routine.Current is float fValue)
 				_delays[index] = fValue;

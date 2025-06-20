@@ -55,6 +55,6 @@ public static class AlignHelpers
 		child.Position = new Vect2(x, y);
 	}
 
-	public static float GetRemaining(float containerSize, float elementSize, float spacing) =>
+	public static float Remaining(float containerSize, float elementSize, float spacing) =>
 		MathF.Max(0, containerSize - elementSize - spacing);
 }

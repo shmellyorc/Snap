@@ -159,8 +159,11 @@ public sealed class AssetManager
 	public static Spritesheet GetSheet(string name) => Instance.Get<Spritesheet>(name);
 	public static Spritesheet GetSheet(Enum name) => Instance.Get<Spritesheet>(name);
 
-	public static BitmapFont GetFont(string name) => Instance.Get<BitmapFont>(name);
-	public static BitmapFont GetFont(Enum name) => Instance.Get<BitmapFont>(name);
+	public static Font GetFont(string name) => Instance.Get<Font>(name);
+	public static Font GetFont(Enum name) => Instance.Get<Font>(name);
+
+	public static BitmapFont GetBitmapFont(string name) => Instance.Get<BitmapFont>(name);
+	public static BitmapFont GetBitmapFont(Enum name) => Instance.Get<BitmapFont>(name);
 
 	public static SpriteFont GetSpriteFont(string name) => Instance.Get<SpriteFont>(name);
 	public static SpriteFont GetSpriteFont(Enum name) => Instance.Get<SpriteFont>(name);

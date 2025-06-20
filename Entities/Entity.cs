@@ -1,8 +1,6 @@
 using System.Collections;
 using System.Net.Sockets;
 
-using Coroutines;
-
 using Snap.Assets.Fonts;
 using Snap.Assets.LDTKImporter;
 using Snap.Assets.Loaders;
@@ -11,6 +9,7 @@ using Snap.Beacons;
 using Snap.Coroutines;
 using Snap.Coroutines.Routines.Conditionals;
 using Snap.Entities.Graphics;
+using Snap.Entities.Panels;
 using Snap.Graphics;
 using Snap.Helpers;
 using Snap.Inputs;
@@ -36,6 +35,7 @@ public class Entity
 	public IReadOnlyList<Entity> Children => _children;
 	public int ChildCount => Children.Count;
 	public bool IsParent => _parent == null;
+	public bool IsReady { get; private set; }
 	public bool IsChild => _parent != null;
 	public bool IsExiting { get; private set; }
 	public Camera Camera => _screen.Camera;
@@ -58,7 +58,14 @@ public class Entity
 
 			_keepAlive = value;
 
-			_screen.UpdateDirtyState(DirtyState.Update);
+			// _screen.UpdateDirtyState(DirtyState.Update);
+			if (_screen == null)
+			{
+				CoroutineManager.Start(CoroutineHelpers.WaitWhileThan(() => _screen == null,
+					() => _screen.UpdateDirtyState(DirtyState.Update)));
+			}
+			else
+				_screen.UpdateDirtyState(DirtyState.Update);
 		}
 	}
 
@@ -139,8 +146,22 @@ public class Entity
 		set => _position = value;
 	}
 
+	private Vect2 _size = Vect2.Zero;
 
-	public Vect2 Size { get; set; } = Vect2.Zero;
+	// public Vect2 Size { get; set; } = Vect2.Zero;
+	public Vect2 Size
+	{
+		get => _size;
+		set
+		{
+			if (_size == value)
+				return;
+			_size = value;
+
+			foreach (var e in this.GetAncestorsOfType<Panel>())
+				e.SetDirtyState(DirtyState.Update | DirtyState.Sort);
+		}
+	}
 
 	public Rect2 Bounds
 	// => IsChild
@@ -164,7 +185,7 @@ public class Entity
 
 	#region Helpers
 	public float SafeRegion => EngineSettings.Instance.SafeRegion;
-	
+
 	public Logger Log => Logger.Instance;
 	public Clock Clock => Clock.Instance;
 	public Engine Engine => Engine.Instance;
@@ -183,8 +204,10 @@ public class Entity
 	public LDTKProject GetMap(Enum name) => AssetManager.GetMap(name);
 	public Spritesheet GetSheet(string name) => AssetManager.GetSheet(name);
 	public Spritesheet GetSheet(Enum name) => AssetManager.GetSheet(name);
-	public BitmapFont GetFont(string name) => AssetManager.GetFont(name);
-	public BitmapFont GetFont(Enum name) => AssetManager.GetFont(name);
+	public Font GetFont(string name) => AssetManager.GetFont(name);
+	public Font GetFont(Enum name) => AssetManager.GetFont(name);
+	public BitmapFont GetBitmapFont(string name) => AssetManager.GetBitmapFont(name);
+	public BitmapFont GetBitmapFont(Enum name) => AssetManager.GetBitmapFont(name);
 	public SpriteFont GetSpriteFont(string name) => AssetManager.GetSpriteFont(name);
 	public SpriteFont GetSpriteFont(Enum name) => AssetManager.GetSpriteFont(name);
 	public Sound GetSound(string name) => AssetManager.GetSound(name);
@@ -222,6 +245,9 @@ public class Entity
 
 		IsExiting = true;
 
+		foreach (var p in this.GetAncestorsOfType<Panel>())
+			p.SetDirtyState(DirtyState.Sort | DirtyState.Update);
+
 		OnExit();
 	}
 	protected virtual void OnExit() { }
@@ -243,9 +269,8 @@ public class Entity
 
 		OnUpdate();
 	}
+
 	protected virtual void OnUpdate() { }
-
-
 
 
 
@@ -320,15 +345,21 @@ public class Entity
 			var c = children[i];
 			if (c == null || c.IsExiting)
 				continue;
-			if (!_children.Remove(c))
-				continue;
 
-			list.Add(c);
+			if (_children.Remove(c))
+			{
+				c._parent = null;
+				list.Add(c);
+			}
 		}
 
-		_screen.AddEntity(list.ToArray());
+		if (list.Count > 0)
+		{
+			_screen.RemoveEntity(list.ToArray());
+			return true;
+		}
 
-		return list.Count > 0;
+		return false;
 	}
 
 	public TEntity GetChild<TEntity>(int index) where TEntity : Entity
@@ -366,10 +397,10 @@ public class Entity
 		var toRemove = _children.ToArray();
 		_children.Clear();
 
-		RemoveChild(toRemove);
-
 		for (int i = toRemove.Length - 1; i >= 0; i--)
 			toRemove[i]._parent = null;
+
+		_screen.RemoveEntity(toRemove);
 	}
 	#endregion
 
@@ -395,6 +426,7 @@ public class Entity
 
 	#region Coroutines
 	public CoroutineHandle StartRoutine(IEnumerator routine) => CoroutineManager.Start(routine, this);
+	public CoroutineHandle StartRoutineDelayed(IEnumerator routine, float delay) => CoroutineManager.StartDelayed(delay, this, routine);
 	public bool StopRoutine(CoroutineHandle handle) => CoroutineManager.Stop(handle);
 	public bool HasRoutine(CoroutineHandle handle) => CoroutineManager.IsRunning(handle);
 	public void ClearRoutines() => CoroutineManager.StopAll(this);

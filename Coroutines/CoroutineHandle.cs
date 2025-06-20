@@ -26,7 +26,7 @@ SOFTWARE.
 
 using System.Collections;
 
-namespace Coroutines;
+namespace Snap.Coroutines;
 
 /// <summary>
 /// A handle to a (potentially running) coroutine.
@@ -43,7 +43,7 @@ public readonly struct CoroutineHandle
 	/// </summary>
 	public IEnumerator Enumerator { get; }
 
-    /// <summary>
+	/// <summary>
 	/// True if the enumerator is currently running.
 	/// </summary>
 	public bool IsRunning => Enumerator != null && Manager.IsRunning(Enumerator);

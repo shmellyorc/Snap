@@ -1,6 +1,8 @@
 using System.Dynamic;
 using System.Security.Cryptography.X509Certificates;
 
+using Microsoft.VisualBasic;
+
 using Snap.Assets.Loaders;
 using Snap.Assets.Spritesheets;
 using Snap.Entities.Panels;
@@ -72,12 +74,30 @@ public sealed class Ninepatch : Entity
 	private RenderTarget? _rt;
 	private bool _rtChecked;
 
+	Rect2 _oldBounds;
+
+	protected override void OnEnter()
+	{
+		_oldBounds = Bounds;
+
+		CreatePatches(_source, _src);
+		CreatePatches(Bounds, _dst);
+
+		base.OnEnter();
+	}
+
 	protected override void OnUpdate()
 	{
 		if (!_rtChecked)
 		{
 			this.TryGetAncestorOfType(out _rt);
 			_rtChecked = true;
+		}
+
+		if (_oldBounds != Bounds)
+		{
+			_dirtyFlags |= NinePatchDirtyFlags.Dest;
+			_oldBounds = Bounds;
 		}
 
 		if (_dirtyFlags != NinePatchDirtyFlags.None)

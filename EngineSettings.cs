@@ -1,4 +1,5 @@
 using Snap.Inputs;
+using Snap.Logs;
 using Snap.Screens;
 using Snap.Services;
 using Snap.Systems;
@@ -10,8 +11,46 @@ public sealed class EngineSettings
 	public static EngineSettings Instance { get; private set; }
 	public bool Initialized { get; private set; }
 
-
 	public EngineSettings() => Instance ??= this;
+
+
+
+	public LogLevel LogLevel { get; private set; }
+	public EngineSettings WithLogLevel(LogLevel value)
+	{
+		LogLevel = value;
+
+		return this;
+	}
+
+
+	public string SaveDirectory { get; private set; }
+	public EngineSettings WithSaveDirectory(string value)
+	{
+		if (value.IsEmpty())
+			throw new Exception();
+		if (value.Contains(Path.PathSeparator))
+			throw new Exception();
+
+		SaveDirectory = value;
+
+		return this;
+	}
+
+
+	public string LogDirectory { get; private set; }
+	public EngineSettings WithLogDirectory(string value)
+	{
+		if (value.IsEmpty())
+			throw new Exception();
+		if (value.Contains(Path.PathSeparator))
+			throw new Exception();
+
+		LogDirectory = value;
+
+		return this;
+	}
+
 
 	public bool Mouse { get; private set; }
 	public EngineSettings WithMouse(bool value)
@@ -25,6 +64,15 @@ public sealed class EngineSettings
 	public EngineSettings WithDebugDraw(bool value)
 	{
 		DebugDraw = value;
+
+		return this;
+	}
+
+
+	public string AppCompany { get; private set; }
+	public EngineSettings WithAppCompany(string value)
+	{
+		AppCompany = value;
 
 		return this;
 	}
@@ -209,46 +257,93 @@ public sealed class EngineSettings
 	}
 
 
+	public int LogFileSizeCap { get; private set; }
+	public EngineSettings WithLogFileCap(uint value)
+	{
+		if (value == 0 || value >= 50_000_000)
+			throw new Exception();
+
+		LogFileSizeCap = (int)value;
+
+		return this;
+	}
+
+
+	public int LogMaxRecentEntries { get; private set; }
+	public EngineSettings WithLogMaxRecentEntries(uint value)
+	{
+		if (value == 0 || value >= 100)
+			throw new Exception();
+
+		LogMaxRecentEntries = (int)value;
+
+		return this;
+	}
+
+
 	public EngineSettings Build()
 	{
 		if (Initialized)
 			return this;
 
-		if (Screens == null || Screens.Length == 0)
-			throw new Exception();// Engine requires at least one screen
+		// Screens
+		if (Screens is null || Screens.Length == 0)
+			throw new InvalidOperationException("At least one screen must be configured.");
 
-		if (AppTitle.IsEmpty())
-			AppTitle = "Game";
+		// Company & AppName
+		if (string.IsNullOrWhiteSpace(AppCompany))
+			throw new ArgumentException(
+				"Company must be provided and cannot be empty or whitespace.", nameof(AppCompany));
+		if (string.IsNullOrWhiteSpace(AppName))
+			throw new ArgumentException(
+				"AppName must be provided and cannot be empty or whitespace.", nameof(AppName));
 
-		if (AppContentRoot.IsEmpty())
+		// AppTitle
+		AppTitle = string.IsNullOrWhiteSpace(AppTitle)
+			? "Game" : AppTitle.Trim();
+		LogDirectory = string.IsNullOrWhiteSpace(LogDirectory)
+			? "Logs" : LogDirectory.Trim();
+		SaveDirectory = string.IsNullOrWhiteSpace(SaveDirectory)
+			? "Saves" : SaveDirectory.Trim();
+
+		// Content root
+		if (string.IsNullOrWhiteSpace(AppContentRoot))
 		{
 			if (Directory.Exists("Content"))
 				AppContentRoot = "Content";
 			else if (Directory.Exists("Assets"))
 				AppContentRoot = "Assets";
 			else
-				throw new Exception();
+				throw new DirectoryNotFoundException(
+					"No content directory found. Expected to find either a 'Content' or 'Assets' folder.");
 		}
 
+		// Window & Viewport defaults
 		if (Window.X <= 0 || Window.Y <= 0)
 			Window = new Vect2(1280, 720);
 		if (Viewport.X <= 0 || Viewport.Y <= 0)
 			Viewport = new Vect2(320, 180);
-		if (ClearColor.R == 0 && ClearColor.G == 0 && ClearColor.B == 0)
+
+		// ClearColor default
+		if (ClearColor == Color.Transparent)
 			ClearColor = Color.CornFlowerBlue;
-		if (InputMap == null)
-			InputMap = new DefaultInputMap();
-		if (MaxAtlasPages == 0)
-			MaxAtlasPages = 6;
-		if (AtlasPageSize == 0)
-			AtlasPageSize = 512;
-		if (DrawCallCache == 0)
-			DrawCallCache = 512;
-		if (DeadZone <= 0)
-			DeadZone = 0.2f;
+
+		// InputMap
+		InputMap ??= new DefaultInputMap();
+
+		// Atlas & cache defaults
+		MaxAtlasPages = MaxAtlasPages > 0 ? MaxAtlasPages : 6;
+		AtlasPageSize = AtlasPageSize > 0 ? AtlasPageSize : 512;
+		DrawCallCache = DrawCallCache > 0 ? DrawCallCache : 512;
+		DeadZone = DeadZone > 0 ? DeadZone : 0.2f;
+
+		// Logfiles:
+		LogFileSizeCap = LogFileSizeCap > 0 ? LogFileSizeCap : 1_000_000;
+		LogMaxRecentEntries = LogMaxRecentEntries > 0 ? LogMaxRecentEntries : 100;
+
+		SafeRegion = SafeRegion > 0 ? SafeRegion : 8;
 
 		Initialized = true;
-
 		return this;
 	}
 }

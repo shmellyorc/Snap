@@ -8,22 +8,32 @@ public class Panel : Entity
 	private readonly List<Entity> _entityAdd;
 	private DirtyState _state;
 
-	protected void SetDirtyState(DirtyState state) => _state = state;
+	public void SetDirtyState(DirtyState state) => _state |= state;
 
-	public Panel(params Entity[] entities) =>
+	public Panel(params Entity[] entities)
+	{
+		if (entities == null || entities.Length == 0)
+			return;
+
 		_entityAdd = new List<Entity>(entities);
+	}
 
 	public Panel() : this(Array.Empty<Entity>()) { }
 
 	protected override void OnEnter()
 	{
-		AddChild(_entityAdd.ToArray());
-		_entityAdd.Clear();
+		if (_entityAdd != null)
+		{
+			AddChild(_entityAdd.ToArray());
+			_entityAdd.Clear();
+		}
 
 		base.OnEnter();
 	}
 
-	protected override void OnUpdate()
+	protected override void OnUpdate() => Update();
+
+	private void Update()
 	{
 		if (_state != DirtyState.None)
 		{
@@ -31,27 +41,23 @@ public class Panel : Entity
 
 			_state = DirtyState.None;
 		}
-
-		base.OnUpdate();
 	}
 
 	protected virtual void OnDirty(DirtyState state) { }
 
 	public new void AddChild(params Entity[] children)
 	{
+		if (children == null || children.Length == 0) return;
+
 		base.AddChild(children);
 
-		// Make sure all children have the screen before updating:
-		CoroutineManager.Start(
-			CoroutineHelpers.WaitWhileThan(
-				() => children.Any(x => x._screen == null),
-				() => SetDirtyState(DirtyState.Update)
-			)
-		);
+		SetDirtyState(DirtyState.Update | DirtyState.Sort);
 	}
 
 	public new bool RemoveChild(params Entity[] children)
 	{
+		if (children == null || children.Length == 0) return false;
+
 		if (base.RemoveChild(children))
 		{
 			SetDirtyState(DirtyState.Update);

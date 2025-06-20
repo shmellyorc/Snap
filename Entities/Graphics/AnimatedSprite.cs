@@ -179,7 +179,7 @@ public sealed class AnimatedSprite : Entity
 
 	protected override void OnUpdate()
 	{
-		if (IsPlaying && !Current.IsEmpty)
+		if (IsPlaying && Current != null)
 		{
 			var FrameDuration = _currentDuration;
 			var delta = Clock.DeltaTime * SpeedScale;
@@ -204,7 +204,7 @@ public sealed class AnimatedSprite : Entity
 			}
 		}
 
-		if (!Current.IsEmpty)
+		if (Current != null)
 			UpdateDraw();
 
 		base.OnUpdate();

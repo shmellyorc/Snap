@@ -77,12 +77,43 @@ public abstract class ContentTypeWriterReader<T>
 		headerWriter.Write(metadata.Version);
 		headerWriter.Write(finalData);
 
-		File.WriteAllBytes(filename, headerStream.ToArray());
+		File.WriteAllBytes(CreateFinalPath(filename), headerStream.ToArray());
+	}
+
+	private string CreateFinalPath(string filename)
+	{
+		if(Path.IsPathRooted(filename))
+			throw new UnauthorizedAccessException("Save filename must be relative.");
+
+		var safeName = filename
+			.Replace("../", "")
+			.Replace("..\\", "");
+		
+		var invalid = Path.GetInvalidPathChars().Concat(Path.GetInvalidFileNameChars()).ToArray();
+		safeName = new string(safeName.Where(c => !invalid.Contains(c)).ToArray());
+
+		var baseDir = Engine.Instance.ApplicationSaveFolder;
+		var combined = Path.Combine(baseDir, safeName);
+		var fullPath = Path.GetFullPath(combined);
+		var normalizedBase = Path.GetFullPath(baseDir)
+								 .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+								 + Path.DirectorySeparatorChar;
+
+		if (!fullPath.StartsWith(normalizedBase, StringComparison.OrdinalIgnoreCase))
+		{
+			throw new UnauthorizedAccessException(
+				$"Invalid save path: '{filename}'. Cannot escape save directory.");
+		}
+
+		// Make 100% sure the save folder exists.
+		Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+
+		return fullPath;
 	}
 
 	public T Load(string filename)
 	{
-		byte[] fileData = File.ReadAllBytes(filename);
+		byte[] fileData = File.ReadAllBytes(CreateFinalPath(filename));
 
 		using var memoryStream = new MemoryStream(fileData);
 		using var reader = new BinaryReader(memoryStream);

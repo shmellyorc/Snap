@@ -30,7 +30,7 @@ public static class TextHelpers
 				string testLine = current.Length > 0 ? $"{current} {word}" : word;
 
 				// Check if adding the word exceeds width
-				if (font.Measure(testLine).X >= width)
+				if (font.Measure(testLine).X > width)
 				{
 					sb.AppendLine(current.ToString().Trim());
 					current.Clear();

@@ -83,11 +83,6 @@ public class RenderTarget : Panel
 		base.OnEnter();
 	}
 
-
-
-	private readonly List<DrawCommand> _allCommands = new();
-
-
 	private void EnqueueCommand(
 		uint texHandle,
 		SFTexture tex,
@@ -100,29 +95,33 @@ public class RenderTarget : Panel
 			list = new List<DrawCommand>();
 			_drawCommands[texHandle] = list;
 		}
-		var cmd = new DrawCommand(tex, quad, depth, _seqCounter++);
-
-		list.Add(cmd);
+		list.Add(new DrawCommand(tex, quad, depth, _seqCounter++));
 		// _allCommands.Add(cmd);
 	}
 
 
 	internal void RenderAll()
 	{
-		var all = new List<DrawCommand>(_drawCommands.Sum(kv => kv.Value.Count));
-		foreach (var bucket in _drawCommands.Values)
-			all.AddRange(bucket);
+		var index = 0;
+		SFTexture currentTexture = null;
+		// var all = new List<DrawCommand>(_drawCommands.Sum(kv => kv.Value.Count));
+		// foreach (var bucket in _drawCommands.Values)
+		// 	all.AddRange(bucket);
+		var allCommands = _drawCommands.Values
+			.SelectMany(list => list)
+			.OrderBy(cmd => cmd.Depth)
+			.ThenBy(cmd => cmd.Sequence);
 
-		all.Sort((a, b) => a.Depth.CompareTo(b.Depth));
-		// _allCommands.Sort((a, b) =>
+		// all.Sort((a, b) => a.Depth.CompareTo(b.Depth));
+		// allCommands.Sort((a, b) =>
 		// {
 		// 	int d = a.Depth.CompareTo(b.Depth);
 		// 	return d != 0 ? d : a.Sequence.CompareTo(b.Sequence);
 		// });
 
-		int index = 0;
-		SFTexture currentTexture = null;
-		foreach (var cmd in all)
+		// 2) Iterate in perfect depth/sequence order,
+		//    but still batch whenever the texture doesn't change
+		foreach (ref readonly var cmd in CollectionsMarshal.AsSpan(allCommands.ToList()))
 		{
 			bool willOverflow = index + cmd.Vertex.Length > _vertexBufferSize;
 			bool textureChanged = currentTexture != null && currentTexture != cmd.Texture;
@@ -137,6 +136,7 @@ public class RenderTarget : Panel
 					EnsureVertexBufferCapacity(Math.Max(_vertexBufferSize * 2, cmd.Vertex.Length));
 			}
 
+			// copy verts into the cache
 			var src = cmd.Vertex.AsSpan();
 			var dst = _vertexCache.AsSpan(index, src.Length);
 			src.CopyTo(dst);
@@ -145,13 +145,41 @@ public class RenderTarget : Panel
 			currentTexture = cmd.Texture;
 		}
 
+		// 3) Final flush
 		if (index > 0 && currentTexture != null)
 			Flush(index, _vertexCache, currentTexture);
 
+		// int index = 0;
+		// SFTexture currentTexture = null;
+		// foreach (var cmd in allCommands)
+		// {
+		// 	bool willOverflow = index + cmd.Vertex.Length > _vertexBufferSize;
+		// 	bool textureChanged = currentTexture != null && currentTexture != cmd.Texture;
+
+		// 	if (willOverflow || textureChanged)
+		// 	{
+		// 		if (index > 0 && currentTexture != null)
+		// 			Flush(index, _vertexCache, currentTexture);
+		// 		index = 0;
+
+		// 		if (willOverflow)
+		// 			EnsureVertexBufferCapacity(Math.Max(_vertexBufferSize * 2, cmd.Vertex.Length));
+		// 	}
+
+		// 	var src = cmd.Vertex.AsSpan();
+		// 	var dst = _vertexCache.AsSpan(index, src.Length);
+		// 	src.CopyTo(dst);
+		// 	index += src.Length;
+
+		// 	currentTexture = cmd.Texture;
+		// }
+
+		// if (index > 0 && currentTexture != null)
+		// 	Flush(index, _vertexCache, currentTexture);
+
 		_drawCommands.Clear();
-		_allCommands.Clear();
 		_seqCounter = 0;
-		_batches = 0;
+		// _batches = 0;
 	}
 
 	private void EnsureVertexBufferCapacity(int neededSize)

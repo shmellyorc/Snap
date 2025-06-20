@@ -1,3 +1,4 @@
+using Snap.Beacons;
 using Snap.Graphics;
 
 namespace Snap.Screens;
@@ -35,6 +36,7 @@ public sealed class ScreenManager
 			if (_dirtyState.HasFlag(DirtyState.Update))
 			{
 				_updateScreens.Clear();
+				_updateScreens.EnsureCapacity(_screens.Count);
 
 				for (int i = 0; i < _screens.Count; i++)
 				{
@@ -88,6 +90,8 @@ public sealed class ScreenManager
 			var screen = screens[i];
 
 			screen.Id = _id++;
+			BeaconManager.Initialize(screen);
+
 			screen.EngineOnEnter();
 
 			_screens.Add(screen);

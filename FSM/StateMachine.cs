@@ -4,6 +4,7 @@ public sealed class StateMachine<T>
 {
 	public T Owner { get; }
 	public IState<T> Current { get; private set; }
+	public object Metadata { get; set; }
 
 	public StateMachine(T owner) => Owner = owner;
 

@@ -1,8 +1,6 @@
 ﻿using System.Reflection;
 using System.Text;
 
-using Coroutines;
-
 using Snap.Assets.Loaders;
 using Snap.Beacons;
 using Snap.Coroutines;
@@ -43,8 +41,10 @@ public class Engine : IDisposable
 	public bool IsActive { get; private set; } = true;
 	public string Version => Assembly.GetExecutingAssembly().GetName().Version.ToString();
 	public string VersionHash => $"{HashHelpers.Hash64(Version):X8}";
-
 	public InputMap Input { get; private set; }
+	public string ApplicationFolder => FileHelpers.GetApplicationData(Settings.AppCompany, Settings.AppName);
+	public string ApplicationLogFolder => Path.Combine(ApplicationFolder, Settings.LogDirectory);
+	public string ApplicationSaveFolder => Path.Combine(ApplicationFolder, Settings.SaveDirectory);
 
 	// Systems:
 	private readonly Logger _log;
@@ -65,16 +65,23 @@ public class Engine : IDisposable
 		if (settings is null)
 			throw new ArgumentNullException(nameof(settings));
 		if (!settings.Initialized)
+		{
 			throw new InvalidOperationException(
 				"Cannot create Engine: EngineSettings must be initialized. " +
 				"Make sure you call EngineSettingsBuilder.Build() before passing it in."
 			);
+		}
 
 		Instance ??= this;
 		Settings = settings;
 
-		_log = new Logger();
-		_log.AddSink(new FileLogSink("Logs", 5_000_000, 5));
+		// Before setting any folders for log, etc. Make suer they exist:
+		CreateFolder(ApplicationFolder, "Application data root");
+		CreateFolder(ApplicationLogFolder, "Application log folder");
+		CreateFolder(ApplicationSaveFolder, "Application save folder");
+
+		_log = new Logger(Settings.LogLevel, Settings.LogMaxRecentEntries);
+		_log.AddSink(new FileLogSink(ApplicationLogFolder, Settings.LogFileSizeCap, Settings.LogMaxRecentEntries));
 
 		_log.Log(LogLevel.Info, "────────────────────────────────────────────────────────────");
 		_log.Log(LogLevel.Info, "           ███████═╗ ███══╗ ██═╗  █████══╗ ██████══╗");
@@ -194,10 +201,27 @@ public class Engine : IDisposable
 	}
 	~Engine() => Dispose(disposing: false);
 
+
+
+
+
+	private void CreateFolder(string path, string description)
+	{
+		try
+		{
+			Directory.CreateDirectory(path);
+		}
+		catch (Exception ex)
+		{
+			_log.LogException(ex);
+			throw new IOException($"Unable to create {description} at '{path}'", ex);
+		}
+	}
+
 	public void Run()
 	{
 		if (_window.IsInvalid)
-			return;
+			throw new InvalidOperationException("Window is invalid. Cannot start engine.");
 
 		_log.Log(LogLevel.Info, "Loading InputMap...");
 		Input.Load();
@@ -205,6 +229,8 @@ public class Engine : IDisposable
 		// init
 		if (!_initialized)
 		{
+
+
 			if (Settings.Services != null && Settings.Services.Length > 0)
 			{
 				_log.Log(LogLevel.Info, $"Adding {Settings.Services.Length} service{(Settings.Services.Length > 1 ? "s" : string.Empty)}.");
@@ -214,7 +240,7 @@ public class Engine : IDisposable
 
 			if (Settings.Screens != null && Settings.Screens.Length > 0)
 			{
-				_log.Log(LogLevel.Info, $"Adding {Settings.Services.Length} screen{(Settings.Screens.Length > 1 ? "s" : string.Empty)}.");
+				_log.Log(LogLevel.Info, $"Adding {Settings.Screens.Length} screen{(Settings.Screens.Length > 1 ? "s" : string.Empty)}.");
 				_screenManager.Add(Settings.Screens);
 			}
 

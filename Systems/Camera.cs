@@ -1,11 +1,4 @@
-using System.Collections;
-
-using Coroutines;
-
-using Snap.Coroutines.Routines.Time;
-using Snap.Coroutines.Routines.Utilities;
 using Snap.Entities;
-using Snap.Helpers;
 using Snap.Screens;
 
 namespace Snap.Systems;

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 using Snap.Systems;
 
 namespace Snap.Paths
@@ -60,7 +57,8 @@ namespace Snap.Paths
 		public void AddNode(int id, Vect2 position)
 		{
 			if (_idToIndex.ContainsKey(id))
-				throw new InvalidOperationException($"Node {id} already exists.");
+				return;
+			// throw new InvalidOperationException($"Node {id} already exists.");
 
 			int idx = _indexToId.Count;
 			_idToIndex[id] = idx;
@@ -120,7 +118,8 @@ namespace Snap.Paths
 		public void ComputeFlowField(int goalId)
 		{
 			if (!_idToIndex.TryGetValue(goalId, out var goalIdx))
-				throw new InvalidOperationException("Goal must exist.");
+				return;
+			// throw new InvalidOperationException("Goal must exist.");
 
 			int n = _indexToId.Count;
 
@@ -219,17 +218,32 @@ namespace Snap.Paths
 		/// </summary>
 		public List<Vect2> FindPathPositions(int startId, int goalId)
 		{
+			if (!_idToIndex.TryGetValue(startId, out _) ||
+				!_idToIndex.TryGetValue(goalId, out _))
+			{
+				return new List<Vect2>();
+			}
+
 			ComputeFlowField(goalId);
+
 			_posBuffer.Clear();
 			int current = startId;
 			int goalIdx = _idToIndex[goalId];
+
 			while (true)
 			{
 				_posBuffer.Add(_positions[_idToIndex[current]]);
-				if (_idToIndex[current] == goalIdx) break;
+
+				if (_idToIndex[current] == goalIdx)
+					break;
+
 				int next = GetNextNode(current);
+				if (next == current)
+					break; // no further process possible
+
 				current = next;
 			}
+
 			return _posBuffer;
 		}
 

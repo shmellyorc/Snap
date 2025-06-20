@@ -11,7 +11,7 @@ public class Sequence : IEnumerator
 	private readonly IEnumerator[] _routines;
 	private int _index;
 
-	public object Current => _routines[_index]?.Current;
+	public object Current => _routines[Math.Clamp(_index, 0, _routines.Length - 1)]?.Current;
 
 	public Sequence(params IEnumerator[] routines)
 	{
@@ -33,5 +33,5 @@ public class Sequence : IEnumerator
 		return false;
 	}
 
-	public void Reset() { }
+	public void Reset() => throw new NotSupportedException();
 }

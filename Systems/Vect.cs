@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 using Snap.Helpers;
 
 namespace Snap.Systems;
@@ -120,8 +122,7 @@ public struct Vect2 : IEquatable<Vect2>
 
 	#region IEquatable
 	public readonly bool Equals(Vect2 other) =>
-		(X, Y) == (other.X, other.Y);
-	// MathF.Abs(X - other.X) < Epsilon && MathF.Abs(Y - other.Y) < Epsilon;
+		MathF.Abs(X - other.X) < Epsilon && MathF.Abs(Y - other.Y) < Epsilon;
 
 	public readonly override bool Equals([NotNullWhen(true)] object obj) =>
 		obj is Vect2 value && Equals(value);
@@ -240,6 +241,15 @@ public struct Vect2 : IEquatable<Vect2>
 	#endregion
 
 
+	#region Direction
+	public readonly Vect2 Direction(in Vect2 other) => Direction(this, other);
+	public static Vect2 Direction(in Vect2 a, in Vect2 b)
+	{
+		return (b - a).Normalize();
+	}
+	#endregion
+
+
 	#region Distance
 	public readonly float DistanceSquared(in Vect2 other) => DistanceSquared(this, other);
 	public static float DistanceSquared(in Vect2 a, in Vect2 b)
@@ -331,7 +341,7 @@ public struct Vect2 : IEquatable<Vect2>
 		);
 	}
 
-	public readonly Vect2 Lerp(in Vect2 other, float t) => Lerp(this, other, t);
+	public readonly Vect2 Lerp(Vect2 other, float t) => Lerp(this, other, t);
 	public static Vect2 Lerp(Vect2 a, Vect2 b, float t)
 		=> new(a.X + (b.X - a.X) * t, a.Y + (b.Y - a.Y) * t);
 

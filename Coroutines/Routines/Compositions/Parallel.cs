@@ -1,18 +1,14 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Snap.Coroutines.Routines.Compositions;
 
-public class Parallel : IEnumerator
+public class WhenAll : IEnumerator
 {
 	private readonly List<IEnumerator> _active;
 
 	public object Current => null;
 
-	public Parallel(params IEnumerator[] routines)
+	public WhenAll(params IEnumerator[] routines)
 		=> _active = new List<IEnumerator>(routines);
 
 	public bool MoveNext()
@@ -23,7 +19,7 @@ public class Parallel : IEnumerator
 			if (r == null || !r.MoveNext())
 				_active.RemoveAt(i);
 		}
-        
+
 		return _active.Count > 0;
 	}
 

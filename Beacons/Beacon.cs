@@ -1,8 +1,7 @@
 using System.Collections;
-using System.ComponentModel;
+using System.Reflection;
 
-using Coroutines;
-
+using Snap.Coroutines;
 using Snap.Coroutines.Routines.Time;
 using Snap.Helpers;
 using Snap.Logs;
@@ -55,7 +54,7 @@ public sealed class BeaconManager
 	{
 		if (string.IsNullOrEmpty(topic))
 			throw new ArgumentException("Topic must be a non-empty string", nameof(topic));
-		if (handler == null) 
+		if (handler == null)
 			throw new ArgumentNullException(nameof(handler));
 
 		uint hash = HashHelpers.Hash32(topic);
@@ -159,7 +158,7 @@ public sealed class BeaconManager
 
 			// try
 			// {
-				
+
 			// }
 			// catch (Exception ex)
 			// {
@@ -188,4 +187,97 @@ public sealed class BeaconManager
 	}
 
 	internal void ClearPublicSubscriptions() => ClearOwner(_publicOwner);
+
+
+
+
+
+
+
+
+
+
+	//Attr:
+
+	internal static void Initialize(object owner)
+	{
+		if (owner == null)
+			throw new ArgumentNullException(nameof(owner));
+
+		var ownerType = owner.GetType();
+		var flags = BindingFlags.Public
+				| BindingFlags.NonPublic
+				| BindingFlags.Instance
+				| BindingFlags.Static
+				| BindingFlags.DeclaredOnly;
+		var beaconMethods = new List<MethodInfo>();
+
+		for (Type t = ownerType; t != null; t = t.BaseType)
+		{
+			beaconMethods.AddRange(
+				t.GetMethods(flags).Where(m => m.GetCustomAttribute<BeaconAttribute>() != null)
+			);
+		}
+
+		foreach (var method in beaconMethods)
+		{
+			var attr = method.GetCustomAttribute<BeaconAttribute>();
+			var topic = attr.Topic;
+			var strict = attr.Strict;
+
+			var pars = method.GetParameters();
+			Action<BeaconHandle> handler = h =>
+			{
+				if (strict && h.Args.Length != pars.Length)
+				{
+					Logger.Instance.Log(LogLevel.Warning, $"[Beacon: {topic}] Handler {method.Name} excepts {pars.Length} args but got {h.Args.Length}. Skipping.");
+					return;
+				}
+
+				if (strict)
+				{
+					for (int i = 0; i < pars.Length; i++)
+					{
+						var expected = pars[i].ParameterType;
+						var actual = i < h.Args.Length ? h.Args[i].GetType() : null;
+
+						if (actual == null || !expected.IsAssignableFrom(actual))
+						{
+							Logger.Instance.Log(LogLevel.Warning, $"[Beacon: {topic}] Param#{i} mismatch for '{method.Name}' expects {expected.Name}, got {(actual?.Name ?? "null")}. Skipping.");
+							return;
+						}
+					}
+				}
+
+				var callArgs = new object?[pars.Length];
+				for (int i = 0; i < pars.Length; i++)
+				{
+					if (i < h.Args.Length && pars[i].ParameterType.IsInstanceOfType(h.Args[i]!))
+						callArgs[i] = h.Args[i];
+					else
+						callArgs[i] = GetDefault(pars[i].ParameterType);
+				}
+
+				method.Invoke(method.IsStatic ? null : owner, callArgs);
+			};
+
+			Instance.Connect(topic, owner, handler);
+		}
+	}
+
+	private static object? GetDefault(Type t) =>
+		t.IsValueType ? Activator.CreateInstance(t) : null;
+}
+
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+public sealed class BeaconAttribute : Attribute
+{
+	public object Name { get; set; }
+	public bool Strict { get; set; }
+
+	internal string Topic => Name is Enum e
+		? $"{e.GetType().FullName}.{e}"
+		: Name?.ToString() ?? throw new InvalidOperationException("Beacon.Name was null");
+
+	public BeaconAttribute() { }
 }

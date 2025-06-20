@@ -1,4 +1,7 @@
+using System.Runtime.CompilerServices;
+
 using Snap.Assets.Fonts;
+using Snap.Entities.Panels;
 using Snap.Enums;
 using Snap.Helpers;
 using Snap.Systems;
@@ -30,7 +33,6 @@ public sealed class Label : Entity
 			if (_text == value)
 				return;
 			_text = value;
-
 			_isDirty = true;
 		}
 	}
@@ -42,9 +44,7 @@ public sealed class Label : Entity
 		{
 			if (base.Size == value)
 				return;
-
 			base.Size = value;
-
 			_isDirty = true;
 		}
 	}

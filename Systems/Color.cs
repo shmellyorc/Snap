@@ -13,6 +13,7 @@ public struct Color : IEquatable<Color>
 	public static Color Yellow => new(255, 255, 0);
 	public static Color Cyan => new(0, 255, 255);
 	public static Color Magenta => new(255, 0, 255);
+	public static Color Transparent => new(0, 0, 0, 0);
 
 	public byte R, G, B, A;
 
@@ -106,7 +107,7 @@ public struct Color : IEquatable<Color>
 			(byte)Math.Clamp(a.B + b.B, 0, 255),
 			(byte)Math.Clamp(a.A + b.A, 0, 255)
 		);
-	public static Color operator *(in Color a, float b) => new(
+	public static Color operator *(Color a, float b) => new(
 		(byte)Math.Clamp(a.R * b, 0f, 255f),
 		(byte)Math.Clamp(a.G * b, 0f, 255f),
 		(byte)Math.Clamp(a.B * b, 0f, 255f),
