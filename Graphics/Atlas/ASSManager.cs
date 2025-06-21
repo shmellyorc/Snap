@@ -14,23 +14,32 @@ public struct AtlasHandle
 
 public sealed class TextureAtlasManager
 {
-	private readonly int _pageSize;
-	private readonly int _maxPages;
 	private readonly Dictionary<int, AtlasPage> _pagesById = new();
 	private readonly Dictionary<(uint texHandle, SFRectI rect), SliceInfo> _registered = new();
 	public TimeSpan MaxIdle { get; set; }
 
 	public static TextureAtlasManager Instance { get; private set; }
-	public int PageSize => _pageSize;
-	public int MaxPages => _maxPages;
+	public int PageSize { get; }
+	public int MaxPages { get; }
 	public int Pages => _pagesById.Count;
+
+	public double TotalFillRatio
+		=> TotalCapacityPixels == 0
+		   ? 0
+		   : (double)TotalUsedPixels / TotalCapacityPixels;
+
+	private long TotalCapacityPixels
+		=> (long)PageSize * PageSize * _pagesById.Count;
+
+	private long TotalUsedPixels
+		=> _pagesById.Values.Sum(p => p.UsedPixels);
 
 	internal TextureAtlasManager(int pageSize, int maxPages)
 	{
 		Instance ??= this;
 
-		_pageSize = pageSize;
-		_maxPages = maxPages;
+		PageSize = pageSize;
+		MaxPages = maxPages;
 		MaxIdle = TimeSpan.FromMinutes(30);
 
 		// start with one page (id = 0)
@@ -121,10 +130,10 @@ public sealed class TextureAtlasManager
 		}
 
 		// 2) New page
-		if (_pagesById.Count < _maxPages)
+		if (_pagesById.Count < MaxPages)
 		{
 			int newId = _pagesById.Count;
-			var page = new AtlasPage(_pageSize, newId);
+			var page = new AtlasPage(PageSize, newId);
 			_pagesById[newId] = page;
 
 			if (page.TryPack(srcTexture, srcRect, out handle))
@@ -211,12 +220,14 @@ public sealed class TextureAtlasManager
 		public int PageIndex { get; }
 		public SkylinePacker Packer { get; }
 		public SFTexture Texture { get; }
+		public long UsedPixels { get; private set; }
 
 		public AtlasPage(int pageSize, int pageIndex)
 		{
 			PageIndex = pageIndex;
 			Packer = new SkylinePacker(pageSize, pageSize);
 			Texture = new SFTexture((uint)pageSize, (uint)pageSize);
+			UsedPixels = 0;
 		}
 
 		/// <summary>
@@ -247,6 +258,8 @@ public sealed class TextureAtlasManager
 			);
 			Texture.Update(region, (uint)dst.Left, (uint)dst.Top);
 
+			UsedPixels += (long)srcRect.Width * srcRect.Height;
+
 			handle = new AtlasHandle(PageIndex, dst);
 			return true;
 		}
@@ -261,8 +274,9 @@ public sealed class TextureAtlasManager
 		public void RemoveLazy(SFRectI rect)
 		{
 			// no-op under SkylinePacker
+
+			var area = (long)rect.Width * rect.Height;
+			UsedPixels = Math.Max(0, UsedPixels - area);  // avoid going negative
 		}
-
-
 	}
 }

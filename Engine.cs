@@ -312,7 +312,7 @@ public class Engine : IDisposable
 			sb.Append($"Batch: Draws: {_renderer.DrawCalls}, Batches: {_renderer.Batches} | ");
 
 			// Atlas Manager: 1/8, <percent of ratio used>
-			sb.Append($"Atlas: {TextureAtlasManager.Instance.Pages}/{TextureAtlasManager.Instance.MaxPages} Pages, {(0.0D * 100D):0.00}% Filled | ");
+			sb.Append($"Atlas: {TextureAtlasManager.Instance.Pages}/{TextureAtlasManager.Instance.MaxPages} Pages, {(TextureAtlasManager.Instance.TotalFillRatio * 100f):0}% Filled | ");
 
 			// // Coroutines: <number>
 			sb.Append($"Routines: {CoroutineManager.Instance.Count} | ");

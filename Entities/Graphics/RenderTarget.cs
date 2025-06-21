@@ -75,7 +75,7 @@ public class RenderTarget : Panel
 		}
 
 		_vertexBufferSize = MaxDrawCalls;
-		_vertexBuffer = new((uint)_vertexBufferSize, SFPrimitiveType.Triangles, SFVertexBuffer.UsageSpecifier.Stream);
+		_vertexBuffer = new((uint)_vertexBufferSize, SFPrimitiveType.Triangles, SFVertexBuffer.UsageSpecifier.Dynamic);
 		_vertexCache = new SFVertex[_vertexBufferSize];
 		_view = new SFView(new SFRectF(0, 0, Size.X, Size.Y));
 		_rendTexture.SetView(_view);
@@ -195,7 +195,7 @@ public class RenderTarget : Panel
 		Logger.Instance.Log(LogLevel.Info, $"Resizing Render Target Vertex buffer to {newSize}");
 
 		_vertexBuffer.Dispose();
-		_vertexBuffer = new SFVertexBuffer((uint)newSize, SFPrimitiveType.Triangles, SFVertexBuffer.UsageSpecifier.Stream);
+		_vertexBuffer = new SFVertexBuffer((uint)newSize, SFPrimitiveType.Triangles, SFVertexBuffer.UsageSpecifier.Dynamic);
 
 		Array.Resize(ref _vertexCache, newSize);
 

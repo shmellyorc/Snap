@@ -38,30 +38,16 @@ public sealed class Renderer
 	public int DrawCalls { get; private set; }
 	public int Batches { get; private set; }
 	public static Renderer Instance { get; private set; }
-	// public int AtlasPageUsed => AtlasManager.PagesUsed;
-	// public int AtlasTotalPages => AtlasManager.MaxPages;
-	// public long AtlasTotalUsedPixels => AtlasManager.TotalUsedPixels;
-	// public long AtlasTotalCapacityPixels => AtlasManager.TotalCapacityPixels;
-	// public double AtlasTotalFillRatio => AtlasManager.TotalFillRatio;
-	// public TextureAtlasManager AtlasManager { get; }
-
-	// public void PrintMetrics()
-	// {
-	// 	Console.WriteLine($"Pixels Used: {AtlasManager.TotalUsedPixels}/{AtlasManager.TotalCapacityPixels}");
-	// 	Console.WriteLine($"Pages: {AtlasManager.PagesUsed}/{AtlasManager.MaxPages}");
-	// }
 
 	internal Renderer(int maxDrawCalls = 512)
 	{
 		Instance ??= this;
 
 		_vertexBufferSize = maxDrawCalls;
-		_vertexBuffer = new((uint)_vertexBufferSize, SFPrimitiveType.Triangles, SFVertexBuffer.UsageSpecifier.Stream);
+		_vertexBuffer = new((uint)_vertexBufferSize, SFPrimitiveType.Triangles, SFVertexBuffer.UsageSpecifier.Dynamic);
 		_vertexCache = new SFVertex[_vertexBufferSize];
 	}
 
-	// 1) A single helper that handles both atlas‐draw and direct‐draw,
-	//    and calls TouchSlice **only** when we actually hit the atlas.
 	private void EnqueueDraw(
 		SFTexture texture,
 		SFRectI srcIntRect,
@@ -341,14 +327,11 @@ public sealed class Renderer
 		var index = 0;
 		SFTexture currentTexture = null;
 
-		// 1) Flatten all buckets into one list
 		var allCommands = _drawCommands.Values
 			.SelectMany(list => list)
 			.OrderBy(cmd => cmd.Depth)
 			.ThenBy(cmd => cmd.Sequence);
 
-		// 2) Iterate in perfect depth/sequence order,
-		//    but still batch whenever the texture doesn't change
 		foreach (ref readonly var cmd in CollectionsMarshal.AsSpan(allCommands.ToList()))
 		{
 			bool willOverflow = index + cmd.Vertex.Length > _vertexBufferSize;
@@ -382,59 +365,6 @@ public sealed class Renderer
 		_seqCounter = 0;
 	}
 
-
-	// internal void End()
-	// {
-	// 	var index = 0;
-	// 	SFTexture currentTexture = null;
-
-	// 	// Iterate each texture‐bucket in your original order
-	// 	foreach (var kvp in _drawCommands)
-	// 	{
-	// 		var commands = kvp.Value;
-	// 		commands.Sort((a, b) =>
-	// 		{
-	// 			int c = a.Depth.CompareTo(b.Depth);
-	// 			return c != 0 ? c : a.Sequence.CompareTo(b.Sequence);
-	// 		});
-
-	// 		foreach (ref readonly var cmd in CollectionsMarshal.AsSpan(commands))
-	// 		{
-	// 			bool willOverflow = index + cmd.Vertex.Length > _vertexBufferSize;
-	// 			bool textureChanged = currentTexture != null && currentTexture != cmd.Texture;
-
-	// 			if (willOverflow || textureChanged)
-	// 			{
-	// 				if (index > 0 && currentTexture != null)
-	// 					Flush(index, _vertexCache, currentTexture);
-	// 				index = 0;
-
-	// 				if (willOverflow)
-	// 					EnsureVertexBufferCapacity(Math.Max(_vertexBufferSize * 2, cmd.Vertex.Length));
-	// 			}
-
-	// 			var src = cmd.Vertex.AsSpan();
-	// 			var dst = _vertexCache.AsSpan(index, src.Length);
-	// 			src.CopyTo(dst);
-	// 			index += src.Length;
-
-	// 			// Now we’re “in” this texture
-	// 			currentTexture = cmd.Texture;
-	// 		}
-	// 	}
-
-	// 	// Flush any remaining verts for the last texture
-	// 	if (index > 0 && currentTexture != null)
-	// 	{
-	// 		// Flush(index, temp, currentTexture);
-	// 		Flush(index, _vertexCache, currentTexture);
-	// 	}
-
-	// 	// Clear for next frame
-	// 	_drawCommands.Clear();
-	// 	_seqCounter = 0;
-	// }
-
 	private void EnsureVertexBufferCapacity(int neededSize)
 	{
 		if (neededSize <= _vertexBufferSize)
@@ -448,7 +378,7 @@ public sealed class Renderer
 		Logger.Instance.Log(LogLevel.Info, $"[Renderer]: Resizing vertex buffer array to {newSize}");
 
 		_vertexBuffer.Dispose();
-		_vertexBuffer = new SFVertexBuffer((uint)newSize, SFPrimitiveType.Triangles, SFVertexBuffer.UsageSpecifier.Stream);
+		_vertexBuffer = new SFVertexBuffer((uint)newSize, SFPrimitiveType.Triangles, SFVertexBuffer.UsageSpecifier.Dynamic);
 
 		Array.Resize(ref _vertexCache, newSize);
 
