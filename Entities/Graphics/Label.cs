@@ -19,12 +19,15 @@ public sealed class Label : Entity
 	private float _cachedMaxHeight = 0f;
 
 	public Vect2 ShadowOffset { get; set; } = Vect2.One;
+	public Vect2 Offset { get; set; } = Vect2.Zero;
 	public Color Color { get; set; } = Color.White;
 	public Color ShadowColor { get; set; } = Color.Black * 0.2f;
 	public bool Shadow { get; set; }
 	public HAlign HAlign { get; set; }
 	public VAlign VAlign { get; set; }
 	public int Length => _text.Length;
+
+
 	public string Text
 	{
 		get => _text;
@@ -135,18 +138,18 @@ public sealed class Label : Entity
 				var final = new Vect2(local.X + offsetX, local.Y + offsetY + offset);
 
 				if (Shadow)
-					rt.DrawText(_font, txt, final + ShadowOffset, ShadowColor, Layer);
+					rt.DrawText(_font, txt, final + ShadowOffset + Offset, ShadowColor, Layer);
 
-				rt.DrawText(_font, txt, final, Color, Layer + 1);
+				rt.DrawText(_font, txt, final + Offset, Color, Layer + 1);
 			}
 			else
 			{
 				var final = new Vect2(Position.X + offsetX, Position.Y + offsetY + offset);
 
 				if (Shadow)
-					Renderer.DrawText(_font, txt, final + ShadowOffset, ShadowColor, Layer);
+					Renderer.DrawText(_font, txt, final + ShadowOffset + Offset, ShadowColor, Layer);
 
-				Renderer.DrawText(_font, txt, final, Color, Layer + 1);
+				Renderer.DrawText(_font, txt, final + Offset, Color, Layer + 1);
 			}
 
 			offset += measure.Y;

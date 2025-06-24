@@ -107,12 +107,12 @@ public sealed class AssetManager
 	}
 
 	#region Loaders
-	public static Texture LoadTexture(string filename)
+	public static Texture LoadTexture(string filename, bool repeat = false, bool smooth = false)
 	{
 		if (!TryFindFullPath(filename, TextureExtentions, out var fullPath))
 			throw new FileNotFoundException($"Texture file '{filename}' could not be found.");
 
-		return new Texture(Id++, fullPath);
+		return new Texture(Id++, fullPath, repeat, smooth);
 	}
 
 	public static SpriteFont LoadSpriteFont(string filename, float spacing = 0f, float lineSpacing = 0f)

@@ -198,39 +198,53 @@ public sealed class BeaconManager
 
 
 	//Attr:
+	private static readonly HashSet<object> _initializeOwners = new();
 
 	internal static void Initialize(object owner)
 	{
 		if (owner == null)
 			throw new ArgumentNullException(nameof(owner));
 
+		if (_initializeOwners.Contains(owner))
+			return;
+		_initializeOwners.Add(owner);
+
 		var ownerType = owner.GetType();
 		var flags = BindingFlags.Public
 				| BindingFlags.NonPublic
 				| BindingFlags.Instance
 				| BindingFlags.Static
-				| BindingFlags.DeclaredOnly;
+				| BindingFlags.DeclaredOnly
+				;
 		var beaconMethods = new List<MethodInfo>();
 
 		for (Type t = ownerType; t != null; t = t.BaseType)
 		{
 			beaconMethods.AddRange(
-				t.GetMethods(flags).Where(m => m.GetCustomAttribute<BeaconAttribute>() != null)
+				t.GetMethods(flags)
+				 .Where(m => m.GetCustomAttribute<BeaconAttribute>() != null)
 			);
 		}
 
-		foreach (var method in beaconMethods)
+		var byTopic = beaconMethods
+			.GroupBy(m => m.GetCustomAttribute<BeaconAttribute>().Topic);
+
+		foreach (var method in byTopic)
 		{
-			var attr = method.GetCustomAttribute<BeaconAttribute>();
+			var best = method
+				.OrderBy(m => InherinaceDistance(ownerType, m.DeclaringType))
+				.First();
+
+			var attr = best.GetCustomAttribute<BeaconAttribute>();
 			var topic = attr.Topic;
 			var strict = attr.Strict;
+			var pars = best.GetParameters();
 
-			var pars = method.GetParameters();
 			Action<BeaconHandle> handler = h =>
 			{
 				if (strict && h.Args.Length != pars.Length)
 				{
-					Logger.Instance.Log(LogLevel.Warning, $"[Beacon: {topic}] Handler {method.Name} excepts {pars.Length} args but got {h.Args.Length}. Skipping.");
+					Logger.Instance.Log(LogLevel.Warning, $"[Beacon: {topic}] Handler {best.Name} excepts {pars.Length} args but got {h.Args.Length}. Skipping.");
 					return;
 				}
 
@@ -243,7 +257,7 @@ public sealed class BeaconManager
 
 						if (actual == null || !expected.IsAssignableFrom(actual))
 						{
-							Logger.Instance.Log(LogLevel.Warning, $"[Beacon: {topic}] Param#{i} mismatch for '{method.Name}' expects {expected.Name}, got {(actual?.Name ?? "null")}. Skipping.");
+							Logger.Instance.Log(LogLevel.Warning, $"[Beacon: {topic}] Param#{i} mismatch for '{best.Name}' expects {expected.Name}, got {(actual?.Name ?? "null")}. Skipping.");
 							return;
 						}
 					}
@@ -258,11 +272,22 @@ public sealed class BeaconManager
 						callArgs[i] = GetDefault(pars[i].ParameterType);
 				}
 
-				method.Invoke(method.IsStatic ? null : owner, callArgs);
+				best.Invoke(best.IsStatic ? null : owner, callArgs);
 			};
 
 			Instance.Connect(topic, owner, handler);
 		}
+	}
+	private static int InherinaceDistance(Type owner, Type declType)
+	{
+		int dist = 0;
+		for (var t = owner; t != null; t = t.BaseType, dist++)
+		{
+			if (t == declType)
+				return dist;
+		}
+
+		return int.MaxValue;
 	}
 
 	private static object? GetDefault(Type t) =>

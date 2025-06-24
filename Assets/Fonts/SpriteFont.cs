@@ -74,8 +74,8 @@ public sealed class SpriteFont : Font
 
 	public override SFTexture GetTexture()
 	{
-		if (Texture == null || Texture.IsInvalid)
-			throw new Exception();
+		if (!IsValid || Texture == null || Texture.IsInvalid)
+			Load();
 
 		// if (Texture == null || Texture.IsInvalid)
 		// {

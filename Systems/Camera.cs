@@ -105,6 +105,8 @@ public class Camera
 		_screen.UpdateDirtyState(DirtyState.Update);
 	}
 
+	private Vect2 _orginalOffset;
+
 	public void StartShake(float duration, float magnitude)
 	{
 		if (duration <= 0f || magnitude <= 0f)
@@ -117,6 +119,7 @@ public class Camera
 		_shakeDuration = duration;
 		_shakeTimeRemaining = duration;
 		_shakeMagnitude = magnitude;
+		_orginalOffset = Position;
 	}
 
 	internal void Update(float dt)
@@ -162,6 +165,9 @@ public class Camera
 			float offsetX = (FastRandom.Instance.NextFloat() * 2f - 1f) * currentMag;
 			float offsetY = (FastRandom.Instance.NextFloat() * 2f - 1f) * currentMag;
 			desired += new Vect2(offsetX, offsetY);
+
+			if(_shakeTimeRemaining == 0)
+				desired = _orginalOffset;
 		}
 
 		Position = desired;

@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 using Snap.Entities.Graphics;
 using Snap.Screens;
 using Snap.Systems;
@@ -52,7 +54,7 @@ public sealed class Listview : RenderTarget
 	private int _scrollIndex, _selectedIndex;
 	private float _itemTimeout;
 	private int MaxScroll => Math.Max(Children.Count - (int)_maxItems, 0);
-	private int MaxSelectedIndex => Children.Count <= _maxItems ? Children.Count - 1 : (int)_maxItems - 1;
+	private int MaxSelectedIndex => Children.Count <= _maxItems ? Math.Max(Children.Count - 1, 0) : (int)_maxItems - 1;
 
 	public float PerItemTimeout { get; set; } = 0.255f;
 	public ListviewItem SelectedItem => ChildCount > 0 ? (ListviewItem)Children[SelectedIndex] : null;
@@ -63,20 +65,96 @@ public sealed class Listview : RenderTarget
 
 	public Action<Listview> OnItemSelected;
 
+	// public Listview(uint maxItems, params ListviewItem[] items) : base(items)
+	// {
+	// 	if (maxItems == 0)
+	// 		throw new ArgumentOutOfRangeException(nameof(maxItems), "maxItems must be greater than zero.");
+	// 	if (items == null || items.Length == 0)
+	// 		throw new ArgumentOutOfRangeException(nameof(items), "items cannot be null or empty.");
+
+	// 	_maxItems = maxItems;
+	// 	_avgSize = ComputeAverageSize(items);
+
+	// 	if (_avgSize.X <= 0 || _avgSize.Y <= 0)
+	// 		throw new InvalidOperationException("Item size has never been set or item size is zero.");
+
+	// 	Size = new Vect2(_avgSize.X, _avgSize.Y * maxItems);
+	// }
+
 	public Listview(uint maxItems, params ListviewItem[] items) : base(items)
 	{
 		if (maxItems == 0)
 			throw new ArgumentOutOfRangeException(nameof(maxItems), "maxItems must be greater than zero.");
-		if (items == null || items.Length == 0)
-			throw new ArgumentOutOfRangeException(nameof(items), "items cannot be null or empty.");
+		// if (items == null || items.Length == 0)
+		// 	throw new ArgumentOutOfRangeException(nameof(items), "items cannot be null or empty.");
 
 		_maxItems = maxItems;
 		_avgSize = ComputeAverageSize(items);
 
 		if (_avgSize.X <= 0 || _avgSize.Y <= 0)
-			throw new InvalidOperationException("Item size has never been set or item size is zero.");
+		{
+			if (items.Length > 0)
+				throw new InvalidOperationException("Item size has never been set or item size is zero.");
+			else
+				_avgSize = Vect2.One;
+		}
+
 
 		Size = new Vect2(_avgSize.X, _avgSize.Y * maxItems);
+	}
+
+	public new void AddChild(params Entity[] children)
+	{
+		if (children == null || children.Length == 0)
+			return;
+
+		var c = children.OfType<ListviewItem>().ToArray();
+		if (c.Length == 0)
+			return;
+
+		base.AddChild(children);
+
+		var avgSize = ComputeAverageSize(c);
+		if (avgSize != _avgSize)
+		{
+			Size = new Vect2(avgSize.X, avgSize.Y * _maxItems);
+			_avgSize = avgSize;
+		}
+
+		_scrollIndex = Math.Clamp(_scrollIndex, 0, MaxScroll);
+		_selectedIndex = Math.Clamp(_selectedIndex, 0, MaxSelectedIndex);
+
+		foreach (var p in this.GetAncestorsOfType<Panel>())
+			p.SetDirtyState(DirtyState.Sort | DirtyState.Update);
+
+		SetDirtyState(DirtyState.Sort | DirtyState.Update);
+	}
+
+	public new void ClearChildren()
+	{
+		base.ClearChildren();
+
+		_selectedIndex = 0;
+		_scrollIndex = 0;
+
+		SetDirtyState(DirtyState.Sort | DirtyState.Update);
+	}
+
+	public new bool RemoveChild(params Entity[] children)
+	{
+		var result = base.RemoveChild(children);
+		if (!result)
+			return false;
+
+		_scrollIndex = Math.Min(_scrollIndex, MaxScroll);
+		_scrollIndex = Math.Max(_scrollIndex, 0);
+
+		_selectedIndex = Math.Min(_selectedIndex, MaxSelectedIndex);
+		_selectedIndex = Math.Max(_scrollIndex, 0);
+
+		SetDirtyState(DirtyState.Sort | DirtyState.Update);
+
+		return result;
 	}
 
 	protected override void OnUpdate()

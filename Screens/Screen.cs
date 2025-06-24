@@ -8,6 +8,7 @@ using Snap.Beacons;
 using Snap.Coroutines;
 using Snap.Entities;
 using Snap.Entities.Graphics;
+using Snap.Entities.Panels;
 using Snap.Graphics;
 using Snap.Helpers;
 using Snap.Inputs;
@@ -72,7 +73,7 @@ public class Screen
 	#region Helpers
 	public float SafeRegion => EngineSettings.Instance.SafeRegion;
 
-	public Logger Log => Logger.Instance;
+	public Logger Logger => Logger.Instance;
 	public Clock Clock => Clock.Instance;
 	public Engine Engine => Engine.Instance;
 	public FastRandom Rand => FastRandom.Instance;
@@ -84,7 +85,7 @@ public class Screen
 	public ScreenManager ScreenManager => ScreenManager.Instance;
 	public CoroutineManager CoroutineManager => CoroutineManager.Instance;
 
-	public Texture LoadTexture(string filename) => AssetManager.LoadTexture(filename);
+	public Texture LoadTexture(string filename, bool repeat = false, bool smooth = false) => AssetManager.LoadTexture(filename, repeat, smooth);
 	public SpriteFont LoadSpriteFont(string filename, float spacing = 0f, float lineSpacing = 0f) =>
 		AssetManager.LoadSpriteFont(filename, spacing, lineSpacing);
 	public LDTKProject LoadMap(string filename) => AssetManager.LoadMap(filename);
@@ -220,9 +221,8 @@ public class Screen
 
 			e._screen = this;
 			BeaconManager.Initialize(e);
-			
-			e.EngineOnEnter();
 
+			e.EngineOnEnter();
 			_entities.Add(e);
 		}
 
@@ -247,6 +247,14 @@ public class Screen
 
 			e.EngineOnExit();
 			anyRemoved = true;
+		}
+
+		for (int i = 0; i < entities.Length; i++)
+		{
+			var e = entities[i];
+
+			foreach (var p in e.GetAncestorsOfType<Panel>())
+				p.SetDirtyState(DirtyState.Sort | DirtyState.Update);
 		}
 
 		if (anyRemoved)

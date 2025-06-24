@@ -12,10 +12,10 @@ namespace Snap.Entities.Graphics;
 public class Sprite : Entity
 {
 	private Texture _texture;
-	private Rect2 _source;
 	private RenderTarget? _rt;
 	private bool _rtChecked;
 
+	public Rect2 Source { get; set; }
 	public Color Color { get; set; } = Color.White;
 	public Vect2 Origin { get; set; }
 	public TextureEffects Effects { get; set; }
@@ -27,13 +27,15 @@ public class Sprite : Entity
 	public Sprite(Texture texture, Rect2 source)
 	{
 		_texture = texture;
-		_source = source;
+		Source = source;
 
 		Size = source.Size;
 	}
 
 	public Sprite(Texture texture, Spritesheet sheet, string sheetName)
 		: this(texture, sheet.GetBounds(sheetName)) { }
+
+	public Sprite(Texture texture) : this(texture, texture.Bounds) { }
 
 	protected override void OnUpdate()
 	{
@@ -43,11 +45,11 @@ public class Sprite : Entity
 			_rtChecked = true;
 		}
 
-		if (Color.A == 0 || !IsVisible)
-			return;
+		// if (Color.A == 0 || !IsVisible)
+		// 	return;
 
-		var offsetX = AlignHelpers.AlignWidth(Size.X, _source.Size.X, HAlign);
-		var offsetY = AlignHelpers.AlignHeight(Size.Y, _source.Size.Y, VAlign);
+		var offsetX = AlignHelpers.AlignWidth(Size.X, Source.Size.X, HAlign);
+		var offsetY = AlignHelpers.AlignHeight(Size.Y, Source.Size.Y, VAlign);
 
 		if (_rt != null)
 		{
@@ -57,13 +59,19 @@ public class Sprite : Entity
 			var local = world - rtWorld;
 			var final = new Vect2(local.X + offsetX, local.Y + offsetY);
 
-			_rt.Draw(_texture, final, _source, Color, Origin, Scale, Rotation, Effects, Layer);
+			if (_texture.RepeatedTexture) // don't add repeated textures into the atlas... creates massive amount of source rects
+				_rt.DrawBypassAtlas(_texture, final, Source, Color, Origin, Scale, Rotation, Effects, Layer);
+			else
+				_rt.Draw(_texture, final, Source, Color, Origin, Scale, Rotation, Effects, Layer);
 		}
 		else
 		{
 			var final = new Vect2(Position.X + offsetX, Position.Y + offsetY);
 
-			Renderer.Draw(_texture, final, _source, Color, Origin, Scale, Rotation, Effects, Layer);
+			if (_texture.RepeatedTexture)
+				Renderer.DrawBypassAtlas(_texture, final, Source, Color, Origin, Scale, Rotation, Effects, Layer);
+			else
+				Renderer.Draw(_texture, final, Source, Color, Origin, Scale, Rotation, Effects, Layer);
 		}
 
 		base.OnUpdate();

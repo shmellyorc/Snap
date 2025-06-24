@@ -1,3 +1,5 @@
+using Snap.Enums;
+using Snap.Helpers;
 using Snap.Screens;
 using Snap.Systems;
 
@@ -6,6 +8,47 @@ namespace Snap.Entities.Panels;
 public class VPanel : Panel
 {
 	private readonly int _spacing;
+	private bool _isAutoSize = true;
+	private HAlign _hAlign = HAlign.Left;
+	private VAlign _vAlign = VAlign.Top;
+	private bool _isDirty = true;
+
+	public new Vect2 Size
+	{
+		get => base.Size;
+		set
+		{
+			if (base.Size == value)
+				return;
+			base.Size = value;
+			_isAutoSize = false;
+			_isDirty = true;
+		}
+	}
+
+	public HAlign HAlign
+	{
+		get => _hAlign;
+		set
+		{
+			if (_hAlign == value)
+				return;
+			_hAlign = value;
+			_isDirty = true;
+		}
+	}
+
+	public VAlign VAlign
+	{
+		get => _vAlign;
+		set
+		{
+			if (_vAlign == value)
+				return;
+			_vAlign = value;
+			_isDirty = true;
+		}
+	}
 
 	public VPanel(int spacing, params Entity[] entities) : base(entities)
 	{
@@ -29,11 +72,17 @@ public class VPanel : Panel
 			return;
 		}
 
+		var width = allKids.Max(x => x.Size.X);
+		var height = allKids.Sum(x => x.Size.Y + _spacing) - _spacing;
 		var offset = 0f;
+
 		for (int i = 0; i < allKids.Count; i++)
 		{
 			var child = allKids[i];
-			child.Position = new Vect2(0, offset);
+			var eWidth = AlignHelpers.AlignWidth(Size.X, width, HAlign);
+			var eHeight = AlignHelpers.AlignHeight(Size.Y, height, VAlign);
+
+			child.Position = new Vect2(eWidth, offset + eHeight);
 
 			offset += child.Size.Y;
 			if (i < allKids.Count - 1)
@@ -45,8 +94,25 @@ public class VPanel : Panel
 		base.OnDirty(state);
 	}
 
+	protected override void OnUpdate()
+	{
+		if (_isDirty)
+		{
+			foreach (var e in this.GetAncestorsOfType<Panel>())
+				e.SetDirtyState(DirtyState.Update | DirtyState.Sort);
+			// SetDirtyState(DirtyState.Update | DirtyState.Sort); //<-- Dont add
+
+			_isDirty = false;
+		}
+
+		base.OnUpdate();
+	}
+
 	private void UpdateSize(IEnumerable<Entity> children)
 	{
+		if (!_isAutoSize)
+			return;
+
 		if (!children.Any())
 		{
 			Size = Vect2.Zero;

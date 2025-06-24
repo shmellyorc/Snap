@@ -237,19 +237,6 @@ public class RenderTarget : Panel
 			if (_view == null || _view.IsInvalid)
 				throw new Exception();
 
-			// IEnumerator WaitForView()
-			// {
-			// 	if (_view == null || _view.IsInvalid)
-			// 	{
-			// 		while (_view == null || _view.IsInvalid)
-			// 			yield return null;
-			// 	}
-			// 	_view.Center = new SFVectF(
-			// 		Size.X / 2 + _offset.X, Size.Y / 2 + _offset.Y);
-			// }
-
-			// StartRoutine(WaitForView());
-
 			_view.Center = new SFVectF(
 				Size.X / 2 + _offset.X, Size.Y / 2 + _offset.Y);
 		}
@@ -294,6 +281,12 @@ public class RenderTarget : Panel
 	public void DrawText(Font font, string text, Vect2 position, Color color, int depth = 0)
 		=> EngineDrawText(font, text, position, color, depth);
 
+	public void DrawBypassAtlas(Texture texture, Rect2 dstRect, Rect2 srcRect, Color color, Vect2? origin = null,
+		Vect2? scale = null, float rotation = 0f, TextureEffects effects = TextureEffects.None, int depth = 0) =>
+		EngineDrawBypassAtlas(texture, dstRect, srcRect, color, origin, scale, rotation, effects, depth);
+	public void DrawBypassAtlas(Texture texture, Vect2 position, Rect2 srcRect, Color color, Vect2? origin = null,
+		Vect2? scale = null, float rotation = 0f, TextureEffects effects = TextureEffects.None, int depth = 0) =>
+		EngineDrawBypassAtlas(texture, new Rect2(position, texture.Size), srcRect, color, origin, scale, rotation, effects, depth);
 	public void DrawBypassAtlas(Texture texture, Rect2 rect, Color color, int depth = 0) =>
 		EngineDrawBypassAtlas(texture, rect, texture.Bounds, color, depth: depth);
 	public void DrawBypassAtlas(Texture texture, Vect2 position, Color color, int depth = 0) =>

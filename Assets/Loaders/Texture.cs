@@ -18,17 +18,34 @@ public class Texture : IAsset
 	private Vect2 _texSize;
 	private Color _texColor;
 	private TextureState _state;
+	private bool _repeat, _smooth;
 
 	public bool RepeatedTexture
 	{
-		get => _texture.Repeated;
-		set => _texture.Repeated = value;
+		get => _repeat;
+		set
+		{
+			if (_repeat == value)
+				return;
+			_repeat = value;
+
+			if (_texture != null && !_texture.IsInvalid)
+				_texture.Repeated = _repeat;
+		}
 	}
 
 	public bool SmoothTexture
 	{
-		get => _texture.Smooth;
-		set => _texture.Smooth = value;
+		get => _smooth;
+		set
+		{
+			if (_smooth == value)
+				return;
+			_smooth = value;
+
+			if (_texture != null && !_texture.IsInvalid)
+				_texture.Smooth = _smooth;
+		}
 	}
 
 	public uint Id { get; }
@@ -37,14 +54,16 @@ public class Texture : IAsset
 	public uint Handle => IsValid ? _texture.NativeHandle : 0;
 	public int Width => IsValid ? (int)_texture.Size.X : 0;
 	public int Height => IsValid ? (int)_texture.Size.Y : 0;
-	public Vect2 Size => new Vect2(Width, Height);
-	public Rect2 Bounds => new Rect2(Vect2.Zero, Size);
+	public Vect2 Size => new(Width, Height);
+	public Rect2 Bounds => new(Vect2.Zero, Size);
 
-	internal Texture(uint id, string filename)
+	internal Texture(uint id, string filename, bool repeat, bool smooth)
 	{
 		Id = id;
 		Tag = filename;
 		_state = TextureState.Load;
+		_smooth = smooth;
+		_repeat = repeat;
 	}
 
 	internal Texture(uint id, byte[] bytes)
@@ -148,7 +167,11 @@ public class Texture : IAsset
 
 		var bytes = File.ReadAllBytes(Tag);
 
-		_texture = new SFTexture(bytes);
+		_texture = new SFTexture(bytes)
+		{
+			Smooth = _smooth,
+			Repeated = _repeat
+		};
 
 		return _texture.Size.X * _texture.Size.Y * 4;
 	}

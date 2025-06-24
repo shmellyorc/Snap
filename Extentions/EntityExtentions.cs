@@ -56,7 +56,7 @@ public static class EntityExtentions
 			action(descendant);
 	}
 
-	public static IEnumerable<T> GetDescendantsOfType<T>(this Entity e) where T: Entity
+	public static IEnumerable<T> GetDescendantsOfType<T>(this Entity e) where T : Entity
 	{
 		foreach (var a in GetDescendants(e))
 		{
@@ -114,7 +114,7 @@ public static class EntityExtentions
 		}
 	}
 
-	public static IEnumerable<T> GetAncestorsOfType<T>(this Entity e) where T: Entity
+	public static IEnumerable<T> GetAncestorsOfType<T>(this Entity e) where T : Entity
 	{
 		foreach (var a in GetAncestors(e))
 		{
@@ -164,12 +164,12 @@ public static class EntityExtentions
 
 
 
-	public static void AlignToRenderer(this Entity e, HAlign hAlign, VAlign vAlign) =>
-		AlignHelpers.AlignToRenderer(e, hAlign, vAlign);
-	public static void AlignToRenderer(this Entity e, HAlign hAlign, VAlign vAlign, Vect2 offset) =>
-		AlignHelpers.AlignToRenderer(e, hAlign, vAlign, offset);
-	public static void AlignToEntity(this Entity e, Entity child, HAlign hAlign, VAlign vAlign) =>
-		AlignHelpers.AlignToEntity(e, child, hAlign, vAlign);
-	public static void AlignToEntity(this Entity e, Entity child, HAlign hAlign, VAlign vAlign, Vect2 offset) =>
-		AlignHelpers.AlignToEntity(e, child, hAlign, vAlign, offset);
+	public static void AlignToRenderer(this Entity entity, HAlign hAlign, VAlign vAlign) =>
+		AlignHelpers.AlignToRenderer(entity, hAlign, vAlign);
+	public static void AlignToRenderer(this Entity entity, HAlign hAlign, VAlign vAlign, Vect2 offset) =>
+		AlignHelpers.AlignToRenderer(entity, hAlign, vAlign, offset);
+	public static void AlignToEntity(this Entity child, Entity parent, HAlign hAlign, VAlign vAlign) =>
+		AlignHelpers.AlignToEntity(parent, child, hAlign, vAlign);
+	public static void AlignToEntity(this Entity child, Entity parent, HAlign hAlign, VAlign vAlign, Vect2 offset) =>
+		AlignHelpers.AlignToEntity(parent, child, hAlign, vAlign, offset);
 }

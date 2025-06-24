@@ -186,7 +186,7 @@ public class Entity
 	#region Helpers
 	public float SafeRegion => EngineSettings.Instance.SafeRegion;
 
-	public Logger Log => Logger.Instance;
+	public Logger Logger => Logger.Instance;
 	public Clock Clock => Clock.Instance;
 	public Engine Engine => Engine.Instance;
 	public FastRandom Rand => FastRandom.Instance;
@@ -218,13 +218,25 @@ public class Entity
 		if (IsExiting)
 			return;
 
-		Screen.RemoveEntity(this);
+		// Screen.RemoveEntity(this);
+		// RemoveChild(this);
+
+		if (_parent != null)
+		{
+			_parent.ForceRemoveChild(this);
+			_parent = null;
+		}
+		Screen.RemoveEntity(this);  // this fires EngineOnExit internally
 	}
 
 	#endregion
 
 
-
+	private void ForceRemoveChild(Entity child)
+	{
+		if (_children.Remove(child))
+			child._parent = null;
+	}
 
 
 
@@ -308,7 +320,7 @@ public class Entity
 			}
 
 			if (list.Count > 0)
-				_screen.AddEntity(list.ToArray());
+				_screen.AddEntity([.. list]);
 		}
 
 		CoroutineManager.Start(WaitRoutine());
@@ -343,6 +355,7 @@ public class Entity
 		for (int i = 0; i < children.Length; i++)
 		{
 			var c = children[i];
+
 			if (c == null || c.IsExiting)
 				continue;
 
@@ -355,7 +368,7 @@ public class Entity
 
 		if (list.Count > 0)
 		{
-			_screen.RemoveEntity(list.ToArray());
+			_screen.RemoveEntity([.. list]);
 			return true;
 		}
 

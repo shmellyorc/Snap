@@ -18,22 +18,22 @@ public class Panel : Entity
 		_entityAdd = new List<Entity>(entities);
 	}
 
-	public Panel() : this(Array.Empty<Entity>()) { }
+	public Panel() : this([]) { }
 
 	protected override void OnEnter()
 	{
 		if (_entityAdd != null)
 		{
-			AddChild(_entityAdd.ToArray());
+			base.AddChild([.. _entityAdd]);
 			_entityAdd.Clear();
+
+			SetDirtyState(DirtyState.Update | DirtyState.Sort);
 		}
 
 		base.OnEnter();
 	}
 
-	protected override void OnUpdate() => Update();
-
-	private void Update()
+	protected override void OnUpdate()
 	{
 		if (_state != DirtyState.None)
 		{
@@ -47,7 +47,8 @@ public class Panel : Entity
 
 	public new void AddChild(params Entity[] children)
 	{
-		if (children == null || children.Length == 0) return;
+		if (children == null || children.Length == 0)
+			return;
 
 		base.AddChild(children);
 
@@ -73,7 +74,7 @@ public class Panel : Entity
 		if (Children.Count == 0)
 			return;
 
-		if (base.RemoveChild(Children.ToArray()))
+		if (base.RemoveChild([.. Children]))
 			SetDirtyState(DirtyState.Update);
 	}
 }

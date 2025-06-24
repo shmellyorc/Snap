@@ -202,7 +202,13 @@ public class Engine : IDisposable
 	~Engine() => Dispose(disposing: false);
 
 
+	public void Quit()
+	{
+		if(_window == null || !_window.IsOpen)
+			return;
 
+		_window.Close();
+	}
 
 
 	private void CreateFolder(string path, string description)
