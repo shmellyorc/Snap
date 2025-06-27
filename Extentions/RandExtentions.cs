@@ -81,7 +81,7 @@ public static class RandExtentions
 	{
 		for (int i = list.Count - 1; i >= 0; i--)
 		{
-			int j = rng.IntRange(0, i);
+			int j = rng.RangeInt(0, i);
 			(list[i], list[j]) = (list[j], list[i]);
 		}
 	}
@@ -90,7 +90,7 @@ public static class RandExtentions
 	{
 		int sum = 0;
 		for (int i = diceCount - 1; i >= 0; i--)
-			sum += rng.IntRange(1, sides);
+			sum += rng.RangeInt(1, sides);
 		return sum;
 	}
 
@@ -104,9 +104,9 @@ public static class RandExtentions
 	public static Color RandomPastelColor(this FastRandom rng)
 	{
 		// bais twoards lighter values:
-		byte r = (byte)rng.IntRange(128, 255);
-		byte g = (byte)rng.IntRange(128, 255);
-		byte b = (byte)rng.IntRange(128, 255);
+		byte r = (byte)rng.RangeInt(128, 255);
+		byte g = (byte)rng.RangeInt(128, 255);
+		byte b = (byte)rng.RangeInt(128, 255);
 		return new Color(r, g, b);
 	}
 }

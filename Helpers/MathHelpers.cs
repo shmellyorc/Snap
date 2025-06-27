@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -47,4 +48,25 @@ public static class MathHelpers
 
 	public static int To1D(Vect2 location, int tilesize)
 		=> (int)location.Y * tilesize + (int)location.X;
+
+	public static int Wrap(int value, int min, int max)
+	{
+		int range = max - min;
+		if (range <= 0)
+			throw new ArgumentException("max must be greater than min");
+		int mod = (value - min) % range;
+		if (min < 0)
+			mod += range;
+		return mod + min;
+	}
+
+	public static float Wrap(float value, float min, float max)
+	{
+		float range = max - min;
+		if (range <= 0f)
+			throw new ArgumentException("max must be greater than min");
+		float mod = (value - min) % range;
+		if (mod < 0f) mod += range;
+		return mod + min;
+	}
 }

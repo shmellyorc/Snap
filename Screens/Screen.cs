@@ -219,11 +219,11 @@ public class Screen
 			if (e == null || e.IsExiting)
 				continue;
 
+			_entities.Add(e);
+
 			e._screen = this;
 			BeaconManager.Initialize(e);
-
 			e.EngineOnEnter();
-			_entities.Add(e);
 		}
 
 		UpdateDirtyState(DirtyState.Sort | DirtyState.Update);

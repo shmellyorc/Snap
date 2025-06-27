@@ -323,6 +323,7 @@ public class RenderTarget : Panel
 				var atlasSrc = new Rect2(sr.Left, sr.Top, sr.Width, sr.Height);
 
 				var quad = Renderer.DrawQuad(
+					texture,
 					dstRect, atlasSrc, color,
 					origin ?? Vect2.Zero, scale ?? Vect2.One,
 					rotation, effects
@@ -340,6 +341,7 @@ public class RenderTarget : Panel
 		);
 
 		var directQuad = Renderer.DrawQuad(
+			texture,
 			dstRect, directSrc, color,
 			origin ?? Vect2.Zero, scale ?? Vect2.One,
 			rotation, effects
@@ -413,13 +415,14 @@ public class RenderTarget : Panel
 		// 	texture.Load();
 
 		var quad = Renderer.DrawQuad(
-				dstRect,
-				srcRect,
-				color,
-				origin ?? Vect2.Zero,
-				scale ?? Vect2.One,
-				rotation,
-				effects);
+			texture,
+			dstRect,
+			srcRect,
+			color,
+			origin ?? Vect2.Zero,
+			scale ?? Vect2.One,
+			rotation,
+			effects);
 
 		uint textureId = texture.Handle;
 		if (!_drawCommands.TryGetValue(textureId, out var list))

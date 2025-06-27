@@ -198,16 +198,15 @@ public sealed class BeaconManager
 
 
 	//Attr:
-	private static readonly HashSet<object> _initializeOwners = new();
+	private static readonly HashSet<object> InitializeOwners = new();
 
 	internal static void Initialize(object owner)
 	{
-		if (owner == null)
-			throw new ArgumentNullException(nameof(owner));
+		ArgumentNullException.ThrowIfNull(owner);
 
-		if (_initializeOwners.Contains(owner))
+		if (InitializeOwners.Contains(owner))
 			return;
-		_initializeOwners.Add(owner);
+		InitializeOwners.Add(owner);
 
 		var ownerType = owner.GetType();
 		var flags = BindingFlags.Public

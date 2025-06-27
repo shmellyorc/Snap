@@ -27,6 +27,7 @@ public struct DrawCommand
 public sealed class Renderer
 {
 	private const int MaxVerticies = 6;
+	private const float TexelOffset = 0.05f;
 
 	private SFVertexBuffer _vertexBuffer;
 	private SFVertex[] _vertexCache;
@@ -72,6 +73,7 @@ public sealed class Renderer
 				var atlasSrc = new Rect2(sr.Left, sr.Top, sr.Width, sr.Height);
 
 				var quad = DrawQuad(
+					texture,
 					dstRect, atlasSrc, color,
 					origin ?? Vect2.Zero, scale ?? Vect2.One,
 					rotation, effects
@@ -89,6 +91,7 @@ public sealed class Renderer
 		);
 
 		var directQuad = DrawQuad(
+			texture,
 			dstRect, directSrc, color,
 			origin ?? Vect2.Zero, scale ?? Vect2.One,
 			rotation, effects
@@ -203,6 +206,7 @@ public sealed class Renderer
 		// 	texture.Load();
 
 		var quad = DrawQuad(
+				texture,
 				dstRect,
 				srcRect,
 				color,
@@ -248,6 +252,7 @@ public sealed class Renderer
 	}
 
 	internal SFVertex[] DrawQuad(
+		SFTexture texture,
 		Rect2 dstRect,
 		Rect2 srcRect,
 		Color color,
@@ -296,6 +301,18 @@ public sealed class Renderer
 		if (effects.HasFlag(TextureEffects.FlipVertical))
 		{
 			(v1, v2) = (v2, v1);
+		}
+
+		if (EngineSettings.Instance.HalfTexelOffset)
+		{
+			float texelOffsetX = TexelOffset / texture.Size.X;
+			float texelOffsetY = TexelOffset / texture.Size.Y;
+
+			if (u1 < u2) { u1 += texelOffsetX; u2 -= texelOffsetX; }
+			else { u1 -= texelOffsetX; u2 += texelOffsetX; }
+
+			if (v1 < v2) { v1 += texelOffsetY; v2 -= texelOffsetY; }
+			else { v1 -= texelOffsetY; v2 += texelOffsetY; }
 		}
 
 		// Build two triangles (6 vertices)

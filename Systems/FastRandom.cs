@@ -132,7 +132,7 @@ public sealed class FastRandom
 	/// <summary>
 	/// Returns a random int in [min, max] inclusive
 	/// </summary>
-	public int IntRange(int min, int max)
+	public int RangeInt(int min, int max)
 	{
 		if (min > max)
 			throw new ArgumentOutOfRangeException(nameof(min), "min must be less than or equal to max.");
@@ -145,7 +145,7 @@ public sealed class FastRandom
 	/// <summary>
 	/// Returns a random float in [min, max] inclusive
 	/// </summary>
-	public float FloatRange(float min, float max)
+	public float RangeFloat(float min, float max)
 	{
 		if (min > max)
 			throw new ArgumentOutOfRangeException(nameof(min), "min must be less than or equal to max.");
@@ -155,7 +155,7 @@ public sealed class FastRandom
 	/// <summary>
 	/// Returns a random double in [min, max] inclusive
 	/// </summary>
-	public double DoubleRange(double min, double max)
+	public double RangeDouble(double min, double max)
 	{
 		if (min > max)
 			throw new ArgumentOutOfRangeException(nameof(min), "min must be less than or equal to max.");
@@ -165,7 +165,7 @@ public sealed class FastRandom
 	/// <summary>
 	/// Returns a random long in [min, max] inclusive
 	/// </summary>
-	public long LongRange(long min, long max)
+	public long RangeLong(long min, long max)
 	{
 		if (min > max)
 			throw new ArgumentOutOfRangeException(nameof(min), "min must be less than or equal to max.");

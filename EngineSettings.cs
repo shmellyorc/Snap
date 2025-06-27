@@ -15,6 +15,17 @@ public sealed class EngineSettings
 
 
 
+
+
+	public bool HalfTexelOffset { get; private set; }
+	public EngineSettings WithHalfTexelOffset(bool value)
+	{
+		HalfTexelOffset = value;
+
+		return this;
+	}
+
+
 	public LogLevel LogLevel { get; private set; }
 	public EngineSettings WithLogLevel(LogLevel value)
 	{
