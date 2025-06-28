@@ -105,7 +105,19 @@ public sealed class Ninepatch : Entity
 			if (_dirtyFlags.HasFlag(NinePatchDirtyFlags.Source))
 				CreatePatches(_source, _src);
 			if (_dirtyFlags.HasFlag(NinePatchDirtyFlags.Dest))
-				CreatePatches(Bounds, _dst);
+			{
+				if (_rt != null)
+				{
+					var world = this.GetGlobalPosition();
+					var rtWorld = _rt.GetGlobalPosition();
+					var local = world - rtWorld;
+					var final = new Vect2(local.X, local.Y);
+
+					CreatePatches(new Rect2(final, Size), _dst);
+				}
+				else
+					CreatePatches(Bounds, _dst);
+			}
 
 			_dirtyFlags = NinePatchDirtyFlags.None;
 		}
@@ -131,6 +143,8 @@ public sealed class Ninepatch : Entity
 
 	private void CreatePatches(Rect2 sourceRectangle, Rect2[] patchCache)
 	{
+
+
 		float x = sourceRectangle.X;
 		float y = sourceRectangle.Y;
 		float w = sourceRectangle.Width;

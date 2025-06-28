@@ -13,6 +13,8 @@ public sealed class MapEntityInstance : MapInstance
 	public Vect2 Size { get; }
 	public Vect2 Coords { get; }
 	public List<string> Tags { get; }
+	public float Width => Size.X;
+	public float Height => Size.Y;
 	public Dictionary<uint, MapSetting> Settings { get; }
 
 	public List<TEnum> TagsAs<TEnum>() where TEnum : Enum

@@ -7,7 +7,7 @@ namespace Snap.Entities.Panels;
 
 public class HPanel : Panel
 {
-	private readonly int _spacing;
+	private float _spacing;
 	private bool _isAutoSize = true;
 	private HAlign _hAlign = HAlign.Left;
 	private VAlign _vAlign = VAlign.Top;
@@ -50,7 +50,18 @@ public class HPanel : Panel
 		}
 	}
 
-	public HPanel(int spacing, params Entity[] entities) : base(entities)
+	public float Spacing
+	{
+		get => _spacing;
+		set
+		{
+			if (_spacing == value) return;
+			_spacing = value;
+			SetDirtyState(DirtyState.Sort | DirtyState.Update);
+		}
+	}
+
+	public HPanel(float spacing, params Entity[] entities) : base(entities)
 	{
 		_spacing = spacing;
 
@@ -67,7 +78,7 @@ public class HPanel : Panel
 
 		if (allKids.Count == 0)
 		{
-			Size = Vect2.Zero;
+			base.Size = Vect2.Zero;
 			base.OnDirty(state);
 			return;
 		}
@@ -114,7 +125,7 @@ public class HPanel : Panel
 			return;
 		if (!children.Any())
 		{
-			Size = Vect2.Zero;
+			base.Size = Vect2.Zero;
 			return;
 		}
 
@@ -124,7 +135,7 @@ public class HPanel : Panel
 
 		if (vChildren.Count == 0)
 		{
-			Size = Vect2.Zero;
+			base.Size = Vect2.Zero;
 			return;
 		}
 
@@ -140,6 +151,6 @@ public class HPanel : Panel
 		var newSize = new Vect2(totalWidth, height);
 
 		if (Size != newSize)
-			Size = newSize;
+			base.Size = newSize;
 	}
 }

@@ -249,14 +249,6 @@ public class Screen
 			anyRemoved = true;
 		}
 
-		for (int i = 0; i < entities.Length; i++)
-		{
-			var e = entities[i];
-
-			foreach (var p in e.GetAncestorsOfType<Panel>())
-				p.SetDirtyState(DirtyState.Sort | DirtyState.Update);
-		}
-
 		if (anyRemoved)
 			UpdateDirtyState(DirtyState.Sort | DirtyState.Update);
 	}

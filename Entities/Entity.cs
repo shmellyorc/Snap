@@ -218,25 +218,10 @@ public class Entity
 		if (IsExiting)
 			return;
 
-		// Screen.RemoveEntity(this);
-		// RemoveChild(this);
-
-		if (_parent != null)
-		{
-			_parent.ForceRemoveChild(this);
-			_parent = null;
-		}
-		Screen.RemoveEntity(this);  // this fires EngineOnExit internally
+		Screen.RemoveEntity(this); 
 	}
 
 	#endregion
-
-
-	private void ForceRemoveChild(Entity child)
-	{
-		if (_children.Remove(child))
-			child._parent = null;
-	}
 
 
 
@@ -258,7 +243,10 @@ public class Entity
 		IsExiting = true;
 
 		foreach (var p in this.GetAncestorsOfType<Panel>())
+		{
+			p._children.Remove(this);
 			p.SetDirtyState(DirtyState.Sort | DirtyState.Update);
+		}
 
 		OnExit();
 	}
@@ -364,6 +352,8 @@ public class Entity
 				c._parent = null;
 				list.Add(c);
 			}
+
+			list.Add(c);
 		}
 
 		if (list.Count > 0)

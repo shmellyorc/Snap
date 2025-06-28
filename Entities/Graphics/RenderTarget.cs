@@ -133,7 +133,8 @@ public class RenderTarget : Panel
 				index = 0;
 
 				if (willOverflow)
-					EnsureVertexBufferCapacity(Math.Max(_vertexBufferSize * 2, cmd.Vertex.Length));
+					// EnsureVertexBufferCapacity(Math.Max(_vertexBufferSize * 2, cmd.Vertex.Length));
+					EnsureVertexBufferCapacity(index + cmd.Vertex.Length);
 			}
 
 			// copy verts into the cache
