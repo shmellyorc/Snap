@@ -5,7 +5,7 @@ namespace Snap.Resources;
 internal static class EmbeddedResources
 {
     private static readonly Assembly _assembly = typeof(EmbeddedResources).Assembly;
-    private const string _rootNamespace = "Snap.Resources";
+    private const string _rootNamespace = "Snap.Resources.Files";
 
     public static byte[] GetSdlDatabase()
         => ReadBytes("SdlDatabase.db");

@@ -35,7 +35,9 @@ public class InputMap
         _joysticks = new Dictionary<uint, bool>((int)_joyCount);
 
         for (uint i = 0; i < _joyCount; i++)
+        {
             _joysticks[i] = SFJoystick.IsConnected(i);
+        }
 
         _allEntries = SdlControllerDbParser.LoadAll();
     }
@@ -129,10 +131,6 @@ public class InputMap
     {
         if (!Engine.Instance.IsActive) return 0f;
         SFJoystick.Update();
-
-        // var joys = _joysticks
-        //     .Where(x => x.Value)
-        //     .Select(x => x.Key);
 
         // foreach (var joyId in joys)
         foreach (var (joyId, connected) in _joysticks.Where(kv => kv.Value))
@@ -287,6 +285,14 @@ public class InputMap
         w.JoystickDisconnected += OnJoystickDisconnected;
         w.MouseButtonReleased += OnMouseButtonReleased;
         w.KeyReleased += OnKeyReleased;
+
+        foreach (var (joyId, isConnected) in _joysticks)
+        {
+            if (!isConnected)
+                continue;
+
+            InternalConnectJoystick(joyId);
+        }
     }
 
     internal void Unload()
@@ -306,7 +312,7 @@ public class InputMap
     private void OnJoystickDisconnected(object sender, SFJoystickConnectEventArgs e)
     {
         SFJoystick.Update();
-        _joysticks[e.JoystickId] = SFJoystick.IsConnected(e.JoystickId);
+        _joysticks[e.JoystickId] = false;
 
         Logger.Instance.Log(LogLevel.Info, $"Gamepad disconnected on ID: {e.JoystickId}, joysticks ID is now: {_joysticks[e.JoystickId]}");
     }
@@ -315,20 +321,19 @@ public class InputMap
         SFJoystick.Update();
         _joysticks[e.JoystickId] = true;
 
-        // 1) Get the identification struct
-        var ident = SFJoystick.GetIdentification(e.JoystickId);
+        InternalConnectJoystick(e.JoystickId);
+    }
 
-        // 2) Build lowercase 4-digit hex strings
+    private void InternalConnectJoystick(uint joyId)
+    {
+        var ident = SFJoystick.GetIdentification(joyId);
         string vidHex = ident.VendorId.ToString("x4");  // e.g. "045e"
         string pidHex = ident.ProductId.ToString("x4"); // e.g. "028e"
-
-        // 3) Try to find an entry whose GUID contains both hex substrings
         var entry = _allEntries.FirstOrDefault(ent =>
             ent.Guid.IndexOf(vidHex, StringComparison.OrdinalIgnoreCase) >= 0 &&
             ent.Guid.IndexOf(pidHex, StringComparison.OrdinalIgnoreCase) >= 0
         );
 
-        // 4) Fallback: try matching by (partial) name
         if (entry == null && !string.IsNullOrEmpty(ident.Name))
         {
             string lowerName = ident.Name.ToLowerInvariant();
@@ -340,7 +345,7 @@ public class InputMap
 
         if (entry != null)
         {
-            _controllerMaps[e.JoystickId] = entry.ButtonMap;
+            _controllerMaps[joyId] = entry.ButtonMap;
 
             Logger.Instance.Log(LogLevel.Info,
                 $"[InputMap] Loaded mapping for “{entry.Name}” " +
