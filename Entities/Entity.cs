@@ -32,6 +32,7 @@ public class Entity
 
     public Screen Screen => _screen;
     public Entity Parent => _parent;
+
     public IReadOnlyList<Entity> Children => _children;
     public int ChildCount => Children.Count;
     public bool IsParent => _parent == null;
@@ -44,6 +45,8 @@ public class Entity
     public bool IsActiveScreen => _screen?.IsActivScreen ?? false;
 
     public int ChildIndex => Children.IndexOf(this);
+
+
 
     public bool KeepAlive
     {
@@ -188,6 +191,20 @@ public class Entity
 
     #region Helpers
     public float SafeRegion => EngineSettings.Instance.SafeRegion;
+
+    public TParent EntityAs<TParent>(Entity entity) where TParent : Entity
+    {
+        if (entity == null)
+            throw new InvalidOperationException("Cannot get parent: no parent is set.");
+
+        if (entity is TParent parent)
+            return parent;
+
+        throw new InvalidCastException(
+            $"Parent is of type {entity.GetType().Name}, not {typeof(TParent).Name}");
+    }
+    public TEntity ParentAs<TEntity>() where TEntity : Entity =>
+        EntityAs<TEntity>(_parent);
 
     public Logger Logger => Logger.Instance;
     public Clock Clock => Clock.Instance;
@@ -491,4 +508,3 @@ public class Entity
     // 	return entity != null;
     // }
 }
-

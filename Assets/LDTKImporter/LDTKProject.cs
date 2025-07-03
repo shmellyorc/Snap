@@ -104,46 +104,46 @@ public class LDTKProject : IAsset
 
 
 
-	#region CreateInstance
-	public static bool TryCreateInstance<T>(out T instance, string name, bool ignoreCase = true, params object[] args)
-	{
-		instance = CreateInstance<T>(name, ignoreCase, args);
+	// #region CreateInstance
+	// public static bool TryCreateInstance<T>(out T instance, string name, bool ignoreCase = true, params object[] args)
+	// {
+	// 	instance = CreateInstance<T>(name, ignoreCase, args);
 
-		return instance != null;
-	}
+	// 	return instance != null;
+	// }
 
-	public static T CreateInstance<T>(string name, bool ignoreCase, params object[] args)
-	{
-		if (name.IsEmpty())
-			return default!;
+	// public static T CreateInstance<T>(string name, bool ignoreCase, params object[] args)
+	// {
+	// 	if (name.IsEmpty())
+	// 		return default!;
 
-		var ap = AppDomain.CurrentDomain.GetAssemblies();
-		var ignoreType = ignoreCase
-			 ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+	// 	var ap = AppDomain.CurrentDomain.GetAssemblies();
+	// 	var ignoreType = ignoreCase
+	// 		 ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
-		for (int i = ap.Length - 1; i >= 0; i--)
-		{
-			var asm = ap[i];
-			var foundType = asm.GetType(name, false, ignoreCase);
+	// 	for (int i = ap.Length - 1; i >= 0; i--)
+	// 	{
+	// 		var asm = ap[i];
+	// 		var foundType = asm.GetType(name, false, ignoreCase);
 
-			if (foundType == null)
-			{
-				foundType = asm.GetTypes()
-					.FirstOrDefault(x => string.Equals(x.Name, name, ignoreType));
-			}
+	// 		if (foundType == null)
+	// 		{
+	// 			foundType = asm.GetTypes()
+	// 				.FirstOrDefault(x => string.Equals(x.Name, name, ignoreType));
+	// 		}
 
-			if (foundType == null)
-				continue;
+	// 		if (foundType == null)
+	// 			continue;
 
-			if (!typeof(T).IsAssignableFrom(foundType))
-				continue;
+	// 		if (!typeof(T).IsAssignableFrom(foundType))
+	// 			continue;
 
-			return (T)Activator.CreateInstance(foundType, args)!;
-		}
+	// 		return (T)Activator.CreateInstance(foundType, args)!;
+	// 	}
 
-		return default;
-	}
-	#endregion
+	// 	return default;
+	// }
+	// #endregion
 
 
 	#region Helpers

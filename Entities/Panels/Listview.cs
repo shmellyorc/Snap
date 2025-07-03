@@ -13,6 +13,7 @@ public class ListviewItem : Entity
     private bool _selected;
 
     public virtual void OnSelected(Listview listview, int selectedIndex) { }
+    public virtual void OnSelectedChanged(Listview listview, int selectedIndex) { }
 
     public bool Selected
     {
@@ -26,7 +27,10 @@ public class ListviewItem : Entity
             if (_bar != null)
                 _bar.IsVisible = _selected;
 
-            OnSelected((Listview)Parent, Parent.Children.IndexOf(this));
+            if (_selected)
+                OnSelected((Listview)Parent, ChildIndex);
+
+            OnSelectedChanged(ParentAs<Listview>(), ChildIndex);
         }
     }
 
