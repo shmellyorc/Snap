@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 using Snap.Entities.Graphics;
 using Snap.Screens;
 using Snap.Systems;
@@ -20,6 +18,7 @@ public class ListviewItem : Entity
         get => _selected;
         set
         {
+            bool oldValue = _selected;
             if (_selected == value)
                 return;
             _selected = value;
@@ -30,7 +29,8 @@ public class ListviewItem : Entity
             if (_selected)
                 OnSelected((Listview)Parent, ChildIndex);
 
-            OnSelectedChanged(ParentAs<Listview>(), ChildIndex);
+            if(_selected != oldValue)
+                OnSelectedChanged(ParentAs<Listview>(), ChildIndex);
         }
     }
 

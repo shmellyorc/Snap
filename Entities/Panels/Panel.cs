@@ -6,9 +6,9 @@ namespace Snap.Entities.Panels;
 public class Panel : Entity
 {
 	private readonly List<Entity> _entityAdd;
-	private DirtyState _state;
+    private DirtyState _state;// = DirtyState.Sort | DirtyState.Update;
 
-	public void SetDirtyState(DirtyState state) => _state |= state;
+    public void SetDirtyState(DirtyState state) => _state |= state;
 
 	public Panel(params Entity[] entities)
 	{

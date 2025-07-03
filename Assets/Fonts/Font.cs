@@ -80,7 +80,9 @@ public class Font : IAsset
 				result.Y = offsetY;
 		}
 
-		return result;
+        result.X += MathF.Abs(Spacing);
+
+        return result;
 	}
 
 	public virtual SFTexture GetTexture() { return default; }

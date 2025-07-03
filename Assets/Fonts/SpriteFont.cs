@@ -261,7 +261,7 @@ public sealed class SpriteFont : Font
 				Cell = new Rect2(innerRect),
 				XOffset = 0,
 				YOffset = 0,
-				Advance = innerW + (int)spacing,
+				Advance = advance,
 				Page = 0
 			};
 		}
