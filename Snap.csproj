@@ -7,7 +7,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>SnapEngine</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Shmellyorc</Authors>
     <Company>Shmellyorc</Company>
     <Description>Snap is a modular C# game engine using SFML, coroutines, pubsub, and more.</Description>
@@ -28,8 +28,8 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\Files\SdlDatabase.db" />
-    <!-- <EmbeddedResource Include="Resources\DefaultFont.ttf" />
-    <EmbeddedResource Include="Resources\AppIcon.png" /> -->
+    <!-- <EmbeddedResource Include="Resources\DefaultFont.ttf" />-->
+    <EmbeddedResource Include="Resources\Files\AppIcon.png" /> 
   </ItemGroup>
 
 </Project>
