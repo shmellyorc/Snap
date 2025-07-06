@@ -1,13 +1,10 @@
-// using SFML.Graphics;
-
-// public readonly struct AtlasHandle
-// {
-// 	public readonly uint PageId;
-// 	public readonly IntRect SourceRect;
-    
-// 	public AtlasHandle(uint pageId, IntRect rect)
-// 	{
-// 		PageId = pageId;
-// 		SourceRect = rect;
-// 	}
-// }
+public struct AtlasHandle
+{
+	public int PageId;
+	public SFRectI SourceRect;
+	public AtlasHandle(int pageId, SFRectI sourceRect)
+	{
+		PageId = pageId;
+		SourceRect = sourceRect;
+	}
+}

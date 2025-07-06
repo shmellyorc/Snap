@@ -1,190 +1,201 @@
-// using System.Diagnostics;
+using Snap.Logs;
 
-// using SFML.Graphics;
+public sealed class TextureAtlasManager
+{
+	private readonly Dictionary<int, AtlasPage> _pagesById = new();
+	private readonly Dictionary<(uint texHandle, SFRectI rect), SliceInfo> _registered = new();
+	public TimeSpan MaxIdle { get; set; }
 
-// using Snap.Systems;
-// public sealed class TextureAtlasManager
-// {
-// 	private readonly int _pageWidth, _pageHeight;
-// 	private readonly int _maxPages;
-// 	private uint _nextPageId = 0;
+	public static TextureAtlasManager Instance { get; private set; }
+	public int PageSize { get; }
+	public int MaxPages { get; }
+	public int Pages => _pagesById.Count;
 
-// 	private readonly Dictionary<uint, AtlasPage> _pagesById = new();
-// 	public int Count => _registered.Count;
+	public double TotalFillRatio
+		=> TotalCapacityPixels == 0
+		   ? 0
+		   : (double)TotalUsedPixels / TotalCapacityPixels;
 
-// 	private struct SliceInfo
-// 	{
-// 		public AtlasHandle Handle;
-// 		// public DateTime LastUsedUtc;
-// 		public DateTime LastUsedUtc;
-// 	}
-// 	// private readonly Dictionary<(uint nativeHandle, IntRect rect), SliceInfo> _registered
-// 	// 	= new();
-// 	private readonly Dictionary<(uint assetId, IntRect rect), SliceInfo> _registered
-//  		= new();
+	private long TotalCapacityPixels
+		=> (long)PageSize * PageSize * _pagesById.Count;
 
-// 	public Vect2 Size => new(_pageWidth, _pageHeight);
-// 	public int MaxPages => _maxPages;
-// 	public int PageSize => _pageWidth; // assume square pages
+	private long TotalUsedPixels
+		=> _pagesById.Values.Sum(p => p.UsedPixels);
 
-// 	public TextureAtlasManager(int pageSize = 2048, int maxPages = 8)
-// 	{
-// 		_pageWidth = pageSize;
-// 		_pageHeight = pageSize;
-// 		_maxPages = maxPages;
-// 	}
+	internal TextureAtlasManager(int pageSize, int maxPages)
+	{
+		Instance ??= this;
 
-// 	public IEnumerable<(uint assetId, SFRectI rect, DateTime lastUsedUtc)> DumpRegisteredSlices()
-//     {
-//         return _registered.Select(kv => (kv.Key.assetId, kv.Key.rect, kv.Value.LastUsedUtc));
-//     }
+		PageSize = pageSize;
+		MaxPages = maxPages;
+		MaxIdle = TimeSpan.FromMinutes(30);
 
-// 	public AtlasHandle? GetOrCreateSlice(Snap.Assets.Loaders.Texture srcTexture, IntRect srcRect)
-// 	{
-// 		// var key = (srcTexture.NativeHandle, srcRect);
-// 		var key = (srcTexture.Id, srcRect);
-// 		if (_registered.TryGetValue(key, out var info))
-// 		{
-// 			// Already exists → update timestamp
-// 			info.LastUsedUtc = DateTime.UtcNow;
-// 			_registered[key] = info;
-// 			return info.Handle;
-// 		}
+		// start with one page (id = 0)
+		_pagesById[0] = new AtlasPage(pageSize, 0);
+	}
 
-// 		// Try existing pages
-// 		foreach (var kv in _pagesById)
-// 		{
-// 			var page = kv.Value;
-// 			if (page.GpuTexture.Size.X == (uint)_pageWidth && page.GpuTexture.Size.Y == (uint)_pageHeight)
-// 			{
-// 				var region = page.TryPack(srcTexture, srcRect);
-// 				if (region.HasValue)
-// 				{
-// 					var handle = new AtlasHandle(page.PageId, region.Value);
-// 					_registered[key] = new SliceInfo
-// 					{
-// 						Handle = handle,
-// 						LastUsedUtc = DateTime.UtcNow
-// 					};
-// 					return handle;
-// 				}
-// 			}
-// 		}
+	// For debugging / metrics
+	public int Count => _registered.Count;
 
-// 		// Create new page if under max
-// 		if (_pagesById.Count < _maxPages)
-// 		{
-// 			uint id = _nextPageId++;
-// 			var newPage = new AtlasPage(id, _pageWidth, _pageHeight);
-// 			_pagesById[id] = newPage;
+	// Internal record per slice
+	private struct SliceInfo
+	{
+		public AtlasHandle Handle;
+		public DateTime LastUsedUtc;
+	}
 
-// 			var newRegion = newPage.TryPack(srcTexture, srcRect).Value;
-// 			var newHandle = new AtlasHandle(id, newRegion);
-// 			_registered[key] = new SliceInfo
-// 			{
-// 				Handle = newHandle,
-// 				LastUsedUtc = DateTime.UtcNow
-// 			};
-// 			return newHandle;
-// 		}
+	/// <summary>
+	/// Main entry: get an existing slice or pack it in. On failure,
+	/// evict stale, retry; on further failure do LRU eviction until it fits.
+	/// </summary>
+	public AtlasHandle? GetOrCreateSlice(SFTexture srcTexture, SFRectI srcRect)
+	{
+		var key = (srcTexture.NativeHandle, srcRect);
 
-// 		// Out of pages
-// 		return null;
-// 	}
+		// 0) EVICT STALE ON *EVERY* ACCESS (must be before cache lookup)
+		var evicted = EvictStaleSlices(MaxIdle);
+		if (evicted.Count > 0)
+			Logger.Instance.Log(LogLevel.Info, $"[Atlas] ⚠️ Evicted {evicted.Count} stale slices at {DateTime.UtcNow:HH:mm:ss}");
 
-// 	public Texture GetPageTexture(uint pageId)
-// 	{
-// 		return _pagesById[pageId].GpuTexture;
-// 	}
+		// 1) Cache hit?
+		if (_registered.TryGetValue(key, out var info))
+		{
+			info.LastUsedUtc = DateTime.UtcNow;
+			_registered[key] = info;
+			return info.Handle;
+		}
 
-// 	public void EvictStaleSlices(TimeSpan maxIdle)
-// 	{
-// 		// DateTime cutoff = DateTime.UtcNow - maxIdle;
-// 		// var toEvict = new List<(uint, IntRect)>();
+		AtlasHandle handle;
 
-// 		// foreach (var kv in _registered)
-// 		// {
-// 		// 	if (kv.Value.LastUsedUtc < cutoff)
-// 		// 		toEvict.Add(kv.Key);
-// 		// }
+		// 2) Try packing straight away (no eviction)
+		if (TryPackIntoAnyPage(srcTexture, srcRect, out handle))
+		{
+			_registered[key] = new SliceInfo { Handle = handle, LastUsedUtc = DateTime.UtcNow };
+			return handle;
+		}
 
-// 		// foreach (var key in toEvict)
-// 		// {
-// 		// 	RemoveSlice(key.Item1, key.Item2);
-// 		// 	_registered.Remove(key);
-// 		// }
+		// 3) Evict truly idle slices
+		// EvictStaleSlices(MaxIdle);
 
-// 		var cutoff = DateTime.UtcNow - maxIdle;
-// 		var toEvict = _registered
-// 			.Where(kv => kv.Value.LastUsedUtc < cutoff)
-// 			.Select(kv => kv.Key)
-// 			.ToList();
+		if (TryPackIntoAnyPage(srcTexture, srcRect, out handle))
+		{
+			_registered[key] = new SliceInfo { Handle = handle, LastUsedUtc = DateTime.UtcNow };
+			return handle;
+		}
 
-// 		foreach (var key in toEvict)
-// 		{
-// 			_pagesById[_registered[key].Handle.PageId]
-// 				.RemoveLazy(_registered[key].Handle.SourceRect);
+		// 4) LRU eviction: remove oldest one by one until it fits
+		var lruList = _registered
+			.OrderBy(kv => kv.Value.LastUsedUtc)
+			.Select(kv => kv.Key)
+			.ToList();
 
-// 			_registered.Remove(key);
-// 			Console.WriteLine($"[Atlas] Evicted slice: asset={key.assetId} rect={key.rect}");
-// 		}
-// 	}
+		foreach (var evictKey in lruList)
+		{
+			// remove from page & registry
+			RemoveSlice(evictKey.texHandle, evictKey.rect);
 
-// 	public bool RemoveSlice(uint nativeHandle, IntRect srcRect)
-// 	{
-// 		// look up the *handle* we originally stored
-// 		// var key = (nativeHandle, srcRect);
-// 		var key = (nativeHandle, srcRect); // if you call RemoveSlice yourself, pass in texture.Id here
-// 		if (!_registered.TryGetValue(key, out var info))
-// 			return false;
+			if (TryPackIntoAnyPage(srcTexture, srcRect, out handle))
+			{
+				_registered[key] = new SliceInfo { Handle = handle, LastUsedUtc = DateTime.UtcNow };
+				return handle;
+			}
+		}
 
-// 		// now evict *on the exact page* and use the atlas‐coords
-// 		var page = _pagesById[info.Handle.PageId];
-// 		page.RemoveLazy(info.Handle.SourceRect);
+		// 5) Still no room
+		return null;
+	}
 
-// 		// finally remove from our registry
-// 		_registered.Remove(key);
-// 		return true;
-// 	}
+	/// <summary>
+	/// Attempts a pack on every existing page, or creates a new one if under maxPages.
+	/// </summary>
+	private bool TryPackIntoAnyPage(SFTexture srcTexture, SFRectI srcRect, out AtlasHandle handle)
+	{
+		// 1) Existing pages
+		foreach (var page in _pagesById.Values)
+		{
+			if (page.TryPack(srcTexture, srcRect, out handle))
+				return true;
+		}
 
-// 	/// <summary>
-// 	/// Call this each time you draw the slice so it never ages out.
-// 	/// </summary>
-// 	public void TouchSlice(Snap.Assets.Loaders.Texture srcTexture, IntRect srcRect)
-// 	{
-// 		var key = (srcTexture.Id, srcRect);
-// 		if (_registered.TryGetValue(key, out var info))
-// 		{
-// 			info.LastUsedUtc = DateTime.UtcNow;
-// 			_registered[key] = info;
-// 		}
-// 	}
+		// 2) New page
+		if (_pagesById.Count < MaxPages)
+		{
+			int newId = _pagesById.Count;
+			var page = new AtlasPage(PageSize, newId);
+			_pagesById[newId] = page;
 
-// 	public int PagesUsed => _pagesById.Count;
-// 	public long TotalUsedPixels
-// 	{
-// 		get
-// 		{
-// 			long sum = 0;
-// 			foreach (var page in _pagesById.Values)
-// 				sum += page.UsedPixelArea;
-// 			return sum;
-// 		}
-// 	}
-// 	public long TotalCapacityPixels => (long)_pagesById.Count * _pageWidth * _pageHeight;
+			if (page.TryPack(srcTexture, srcRect, out handle))
+				return true;
+		}
 
-// 	public double TotalFillRatio
-// 	{
-// 		get
-// 		{
-// 			double sum = 0f;
-// 			foreach (var page in _pagesById.Values)
-// 				sum += page.FillRatio;
+		handle = default;
+		return false;
+	}
 
-// 			if (sum == 0)
-// 				return 0f;
+	/// <summary>
+	/// Evicts any slice not used in the last `maxIdle` span.
+	/// Returns the list of evicted keys for logging or metrics.
+	/// </summary>
+	public List<(uint texHandle, SFRectI rect)> EvictStaleSlices(TimeSpan maxIdle)
+	{
+		var cutoff = DateTime.UtcNow - maxIdle;
+		var toEvict = _registered
+			.Where(kv => kv.Value.LastUsedUtc < cutoff)
+			.Select(kv => kv.Key)
+			.ToList();
 
-// 			return sum / (1.0 * _pagesById.Count);
-// 		}
-// 	}
-// }
+		foreach (var key in toEvict)
+		{
+			var info = _registered[key];
+			_pagesById[info.Handle.PageId]
+				.RemoveLazy(info.Handle.SourceRect);
+			_registered.Remove(key);
+		}
+
+		return toEvict;
+	}
+
+	/// <summary>
+	/// Immediately evict one slice (called during LRU loop).
+	/// </summary>
+	public bool RemoveSlice(uint texHandle, SFRectI rect)
+	{
+		var key = (texHandle, rect);
+		if (!_registered.TryGetValue(key, out var info))
+			return false;
+
+		_pagesById[info.Handle.PageId]
+			.RemoveLazy(info.Handle.SourceRect);
+		_registered.Remove(key);
+		return true;
+	}
+
+	/// <summary>
+	/// Fetch the SFTexture for a given page.
+	/// </summary>
+	public SFTexture GetPageTexture(int pageId)
+	{
+		if (!_pagesById.TryGetValue(pageId, out var page))
+			throw new ArgumentOutOfRangeException(nameof(pageId));
+		return page.Texture;
+	}
+
+
+
+	public void UnloadAsset(uint texHandle)
+	{
+		// find every key for that handle
+		var keys = _registered.Keys
+			.Where(k => k.texHandle == texHandle)
+			.ToList();
+
+		foreach (var key in keys)
+		{
+			// remove from registry and page
+			var info = _registered[key];
+			_pagesById[info.Handle.PageId]
+				.RemoveLazy(info.Handle.SourceRect);
+			_registered.Remove(key);
+		}
+	}
+}
