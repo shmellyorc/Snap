@@ -1,6 +1,5 @@
 using Snap.Enums;
 using Snap.Helpers;
-using Snap.Inputs.Types;
 using Snap.Logs;
 using Snap.Screens;
 using Snap.Systems;

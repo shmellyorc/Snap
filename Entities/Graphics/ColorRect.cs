@@ -5,7 +5,6 @@ namespace Snap.Entities.Graphics;
 
 public sealed class ColorRect : Entity
 {
-
 	private Texture _texture;
 
 	public Color Color { get; set; } = Color.White;

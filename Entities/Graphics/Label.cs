@@ -1,7 +1,4 @@
-using System.Runtime.CompilerServices;
-
 using Snap.Assets.Fonts;
-using Snap.Entities.Panels;
 using Snap.Enums;
 using Snap.Helpers;
 using Snap.Systems;
@@ -17,6 +14,8 @@ public sealed class Label : Entity
 	private int _visibleLength = -1; // Default: Show full text
 	private readonly Dictionary<string, Vect2> _cachedMeasurements = new();
 	private float _cachedMaxHeight = 0f;
+	private RenderTarget? _rt;
+	private bool _rtChecked;
 
 	public Vect2 ShadowOffset { get; set; } = Vect2.One;
 	public Vect2 Offset { get; set; } = Vect2.Zero;
@@ -26,7 +25,6 @@ public sealed class Label : Entity
 	public HAlign HAlign { get; set; }
 	public VAlign VAlign { get; set; }
 	public int Length => _text.Length;
-
 
 	public string Text
 	{
@@ -52,7 +50,6 @@ public sealed class Label : Entity
 		}
 	}
 
-
 	public int VisibleLength
 	{
 		get => _visibleLength;
@@ -68,8 +65,7 @@ public sealed class Label : Entity
 
 	public Label(Font font) => _font = font;
 
-	private RenderTarget? _rt;
-	private bool _rtChecked;
+	
 
 	protected override void OnUpdate()
 	{

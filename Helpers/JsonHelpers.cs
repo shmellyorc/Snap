@@ -1,4 +1,3 @@
-using System.Reflection.Metadata;
 using System.Text.Json;
 
 using Snap.Assets.LDTKImporter;

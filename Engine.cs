@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using System.Text;
+﻿using System.Text;
 
 using Snap.Assets.Loaders;
 using Snap.Beacons;
@@ -235,8 +234,6 @@ public class Engine : IDisposable
 		// init
 		if (!_initialized)
 		{
-
-
 			if (Settings.Services != null && Settings.Services.Length > 0)
 			{
 				_log.Log(LogLevel.Info, $"Adding {Settings.Services.Length} service{(Settings.Services.Length > 1 ? "s" : string.Empty)}.");

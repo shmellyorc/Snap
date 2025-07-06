@@ -1,11 +1,5 @@
-using System.Dynamic;
-using System.Security.Cryptography.X509Certificates;
-
-using Microsoft.VisualBasic;
-
 using Snap.Assets.Loaders;
 using Snap.Assets.Spritesheets;
-using Snap.Entities.Panels;
 using Snap.Systems;
 
 namespace Snap.Entities.Graphics;
@@ -139,12 +133,8 @@ public sealed class Ninepatch : Entity
 		base.OnUpdate();
 	}
 
-
-
 	private void CreatePatches(Rect2 sourceRectangle, Rect2[] patchCache)
 	{
-
-
 		float x = sourceRectangle.X;
 		float y = sourceRectangle.Y;
 		float w = sourceRectangle.Width;

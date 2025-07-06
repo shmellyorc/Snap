@@ -1,5 +1,3 @@
-using System.Runtime.Intrinsics.X86;
-
 using Snap.Assets.Loaders;
 using Snap.Assets.Spritesheets;
 using Snap.Enums;
@@ -44,9 +42,6 @@ public class Sprite : Entity
 			this.TryGetAncestorOfType(out _rt);
 			_rtChecked = true;
 		}
-
-		// if (Color.A == 0 || !IsVisible)
-		// 	return;
 
 		var offsetX = AlignHelpers.AlignWidth(Size.X, Source.Size.X, HAlign);
 		var offsetY = AlignHelpers.AlignHeight(Size.Y, Source.Size.Y, VAlign);
