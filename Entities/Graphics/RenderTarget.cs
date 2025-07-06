@@ -1,14 +1,10 @@
 
 using System.Collections;
-using System.Linq.Expressions;
 using System.Runtime.InteropServices;
-
-using Microsoft.Win32;
 
 using Snap.Assets.Fonts;
 using Snap.Assets.Loaders;
 using Snap.Coroutines.Routines.Conditionals;
-using Snap.Coroutines.Routines.Time;
 using Snap.Entities.Panels;
 using Snap.Enums;
 using Snap.Graphics;

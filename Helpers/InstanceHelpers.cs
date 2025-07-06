@@ -1,3 +1,7 @@
+using System.Net.Cache;
+using System.Reflection;
+using Snap.Coroutines.Routines.Animations;
+
 namespace Snap.Helpers;
 
 public static class InstanceHelpers
@@ -7,6 +11,47 @@ public static class InstanceHelpers
         instance = CreateInstance<T>(name, ignoreCase, args);
 
         return instance != null;
+    }
+
+    public static T CreateInstanceFromType<T>(Type type, params object[] args)
+    {
+        if (type == null)
+            throw new ArgumentNullException(nameof(type));
+
+        if (!typeof(T).IsAssignableFrom(type))
+            throw new ArgumentException($"Type {type.FullName} is not assignable to {typeof(T).FullName}");
+
+        try
+        {
+            var instance = Activator.CreateInstance(type, args);
+            return (T)instance!;
+        }
+        catch (MissingMethodException ex)
+        {
+            throw new InvalidOperationException($"No matching constructor found for type {type.FullName}", ex);
+        }
+        catch (TargetInvocationException ex)
+        {
+            throw new InvalidOperationException($"Constructor of type {type.FullName} threw an exception", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to create instance of type {type.FullName}", ex);
+        }
+    }
+
+    public static bool TryCreateInstanceFromType<T>(out T result, Type type, params object[] args)
+    {
+        try
+        {
+            result = CreateInstanceFromType<T>(type, args);
+            return true;
+        }
+        catch
+        {
+            result = default!;
+            return false;
+        }
     }
 
     public static T CreateInstance<T>(string name, bool ignoreCase, params object[] args)

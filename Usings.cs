@@ -1,5 +1,5 @@
 global using System.Diagnostics.CodeAnalysis;
-
+global using System.Reflection;
 global using SFBlendMode = SFML.Graphics.BlendMode;
 global using SFColor = SFML.Graphics.Color;
 global using SFContext = SFML.Window.ContextSettings;

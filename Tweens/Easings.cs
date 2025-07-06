@@ -1,11 +1,9 @@
-using System;
-
 namespace Snap.Systems
 {
-	/// <summary>
-	/// All supported easing types, combining “family” (Quad, Cubic, etc.) with direction (In, Out, InOut).
-	/// </summary>
-	public enum EaseType
+    /// <summary>
+    /// All supported easing types, combining “family” (Quad, Cubic, etc.) with direction (In, Out, InOut).
+    /// </summary>
+    public enum EaseType
 	{
 		// 1) Simple linear (no easing)
 		Linear,
