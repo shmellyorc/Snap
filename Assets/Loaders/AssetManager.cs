@@ -187,6 +187,38 @@ public sealed class AssetManager
     #endregion
 
 
+    #region TilesetTexture
+
+
+    public Texture GetTilesetTexture(LDTKProject project, int tilesetId)
+    {
+        // -1 = happens when the LDTK layer has no tileset on that insance layer. 
+        // 
+        // Usually happens when no tilset is set OR the layer isnt a tile instance.
+
+        if (tilesetId == -1)
+            throw new InvalidOperationException("Tileset ID is -1. This usually means the layer has no tilset assigned or is not a tile instance layer.");
+        if (!project.Tilesets.TryGetValue(tilesetId, out var tileset))
+            throw new KeyNotFoundException($"Tileset with ID {tilesetId} was not found in LDTK project");
+
+        string ldtlPath = FileHelpers.RemapLDTKPath(tileset.Path, EngineSettings.Instance.AppContentRoot);
+
+        Texture texture = _assets
+            .Where(x => x.Value.Asset is Texture)
+            .Select(x => x.Value.Asset as Texture)
+            .FirstOrDefault(x => Path.GetFullPath(x.Tag).Equals(ldtlPath, StringComparison.OrdinalIgnoreCase));
+
+        return texture;
+    }
+    public bool TryGetTilesetTexture(LDTKProject project, int TilesetID, out Texture texture)
+    {
+        texture = GetTilesetTexture(project, TilesetID);
+
+        return texture != null;
+    }
+    #endregion
+
+
     #region Private Methods
     private static bool TryFindFullPath(string assetPathWithoutExtention, string[] extentions,
     out string foundFullPath)

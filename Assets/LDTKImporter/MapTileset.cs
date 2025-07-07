@@ -7,7 +7,7 @@ namespace Snap.Assets.LDTKImporter;
 
 public sealed class MapTileset
 {
-	public uint Id { get; }
+	public int Id { get; }
 	public string Name { get; }
 	public Vect2 CellSize { get; }
 	public Vect2 Size { get; }
@@ -17,7 +17,7 @@ public sealed class MapTileset
 	public int Padding { get; }
 	public List<string> Tags { get; }
 
-	internal MapTileset(uint id, string name, Vect2 cellSize, Vect2 size,
+	internal MapTileset(int id, string name, Vect2 cellSize, Vect2 size,
 		string path, int tileSize, int spacing, int padding, List<string> tags)
 	{
 		Id = id;
@@ -31,16 +31,16 @@ public sealed class MapTileset
 		Tags = tags;
 	}
 
-	internal static Dictionary<uint, MapTileset> Process(JsonElement e)
+	internal static Dictionary<int, MapTileset> Process(JsonElement e)
 	{
-		var result = new Dictionary<uint, MapTileset>(e.GetArrayLength());
+		var result = new Dictionary<int, MapTileset>(e.GetArrayLength());
 
 		foreach (var t in e.EnumerateArray())
 		{
 			var cWidth = t.GetPropertyOrDefault<int>("__cWid");
 			var cHeight = t.GetPropertyOrDefault<int>("__cHei");
 			var name = t.GetPropertyOrDefault<string>("identifier");
-			var id = t.GetPropertyOrDefault<uint>("uid");
+			var id = t.GetPropertyOrDefault<int>("uid");
 			var path = t.GetPropertyOrDefault("relPath", string.Empty);
 			var pxWid = t.GetPropertyOrDefault<int>("pxWid");
 			var pxHei = t.GetPropertyOrDefault<int>("pxHei");

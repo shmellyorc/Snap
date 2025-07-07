@@ -38,7 +38,7 @@ public class Screen
     public bool IsUiScreen { get; set; }
     public bool IsActivScreen => IsActive && IsTopmostScreen && !IsExiting;
 
-    
+
 
     public bool IsVisible
     {
@@ -96,20 +96,40 @@ public class Screen
 
     public Texture GetTexture(string name) => AssetManager.GetTexture(name);
     public Texture GetTexture(Enum name) => AssetManager.GetTexture(name);
+    public bool TryGetTexture(string name, out Texture texture) => AssetManager.TryGetTexture(name, out texture);
+    public bool TryGetTexture(Enum name, out Texture texture) => AssetManager.TryGetTexture(name, out texture);
+
     public LDTKProject GetMap(string name) => AssetManager.GetMap(name);
     public LDTKProject GetMap(Enum name) => AssetManager.GetMap(name);
+    public bool TryGetMap(string name, out LDTKProject texture) => AssetManager.TryGetMap(name, out texture);
+    public bool TryGetMap(Enum name, out LDTKProject texture) => AssetManager.TryGetMap(name, out texture);
+
     public Spritesheet GetSheet(string name) => AssetManager.GetSheet(name);
     public Spritesheet GetSheet(Enum name) => AssetManager.GetSheet(name);
+    public bool TryGetSheet(string name, out Spritesheet texture) => AssetManager.TryGetSheet(name, out texture);
+    public bool TryGetSheet(Enum name, out Spritesheet texture) => AssetManager.TryGetSheet(name, out texture);
+
     public Font GetFont(string name) => AssetManager.GetFont(name);
     public Font GetFont(Enum name) => AssetManager.GetFont(name);
+    public bool TryGetFont(string name, out Font texture) => AssetManager.TryGetFont(name, out texture);
+    public bool TryGetFont(Enum name, out Font texture) => AssetManager.TryGetFont(name, out texture);
+
     public BitmapFont GetBitmapFont(string name) => AssetManager.GetBitmapFont(name);
     public BitmapFont GetBitmapFont(Enum name) => AssetManager.GetBitmapFont(name);
+    public bool TryGetBitmapFont(string name, out BitmapFont texture) => AssetManager.TryGetBitmapFont(name, out texture);
+    public bool TryGetBitmapFont(Enum name, out BitmapFont texture) => AssetManager.TryGetBitmapFont(name, out texture);
+
     public SpriteFont GetSpriteFont(string name) => AssetManager.GetSpriteFont(name);
     public SpriteFont GetSpriteFont(Enum name) => AssetManager.GetSpriteFont(name);
+    public bool TryGetSpriteFont(string name, out SpriteFont texture) => AssetManager.TryGetSpriteFont(name, out texture);
+    public bool TryGetSpriteFont(Enum name, out SpriteFont texture) => AssetManager.TryGetSpriteFont(name, out texture);
+
     public Sound GetSound(string name) => AssetManager.GetSound(name);
     public Sound GetSound(Enum name) => AssetManager.GetSound(name);
+    public bool TryGetSound(string name, out Sound texture) => AssetManager.TryGetSound(name, out texture);
+    public bool TryGetSound(Enum name, out Sound texture) => AssetManager.TryGetSound(name, out texture);
 
-	public int GetEntityIndex(Entity entity) => _entities.IndexOf(entity);
+    public int GetEntityIndex(Entity entity) => _entities.IndexOf(entity);
 
     public void ExitScreen()
     {

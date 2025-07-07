@@ -89,4 +89,12 @@ public static class FileHelpers
 
 		return folder;
 	}
+
+	public static string RemapLDTKPath(string ldtkPath, string contentRoot)
+    {
+        string baseContentRoot = Path.Combine(AppContext.BaseDirectory, contentRoot);
+        string final = ldtkPath.Replace("\\", "/").Replace("../", string.Empty);
+
+        return Path.Combine(baseContentRoot, final);
+    }
 }
