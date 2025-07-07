@@ -1,23 +1,72 @@
-using System.Text.Json;
-
-using Snap.Helpers;
-using Snap.Systems;
-
 namespace Snap.Assets.LDTKImporter;
 
+/// <summary>
+/// Represents a single level within an LDTK-based map.
+/// Contains level metadata, spatial dimensions, background styling, associated layers, and custom settings.
+/// </summary>
 public class MapLevel
 {
+	/// <summary>
+	/// The display name of the level, as assigned in the source project.
+	/// </summary>
 	public string Name { get; }
+
+	/// <summary>
+	/// The unique instance identifier for this level.
+	/// </summary>
 	public string Id { get; }
+
+	/// <summary>
+	/// The pixel-based world position of the level's top-left corner.
+	/// </summary>
 	public Vect2 Coords { get; }
-	public int WorthDepth { get; }
+
+	/// <summary>
+	/// The relative depth or ordering of the level in the world.
+	/// Often used to sort level instances visually or logically.
+	/// </summary>
+	public int WorldDepth { get; }
+
+	/// <summary>
+	/// The size of the level in pixels (width × height).
+	/// </summary>
 	public Vect2 Size { get; }
+
+	/// <summary>
+	/// The size of the level in grid units, derived from its pixel dimensions and tile size.
+	/// </summary>
 	public Vect2 GridSize { get; }
+
+	/// <summary>
+	/// The background color assigned to this level, parsed from LDTK.
+	/// </summary>
 	public Color Color { get; }
+
+	/// <summary>
+	/// The relative file path to the background image, if one is defined.
+	/// </summary>
 	public string BgPath { get; }
+
+	/// <summary>
+	/// The pixel position at which the background image is rendered.
+	/// </summary>
 	public Vect2 BgPosition { get; }
+
+	/// <summary>
+	/// The normalized pivot point used for aligning the background image (0.0 to 1.0).
+	/// </summary>
 	public Vect2 BgPivot { get; }
+
+	/// <summary>
+	/// A collection of all layers contained within the level.
+	/// Layers include tilemaps, entities, and int grids.
+	/// </summary>
 	public List<MapLayer> Layers { get; }
+
+	/// <summary>
+	/// A dictionary of user-defined custom field values attached to the level.
+	/// Keys are hashed field identifiers mapped to typed <see cref="MapSetting"/> entries.
+	/// </summary>
 	public Dictionary<uint, MapSetting> Settings { get; }
 
 	internal MapLevel(string name, string id, Vect2 coords, int worthDepth, Vect2 size,
@@ -27,7 +76,7 @@ public class MapLevel
 		Name = name;
 		Id = id;
 		Coords = coords;
-		WorthDepth = worthDepth;
+		WorldDepth = worthDepth;
 		Size = size;
 		GridSize = gridSize;
 		Color = color;

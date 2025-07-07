@@ -1,23 +1,4 @@
-using System.Collections;
-
-using Snap.Assets.Fonts;
-using Snap.Assets.LDTKImporter;
-using Snap.Assets.Loaders;
-using Snap.Assets.Spritesheets;
-using Snap.Beacons;
-using Snap.Coroutines;
-using Snap.Entities;
-using Snap.Entities.Graphics;
-using Snap.Entities.Panels;
-using Snap.Graphics;
-using Snap.Helpers;
-using Snap.Inputs;
-using Snap.Logs;
-using Snap.Sounds;
-using Snap.Systems;
-
 namespace Snap.Screens;
-
 
 public class Screen
 {

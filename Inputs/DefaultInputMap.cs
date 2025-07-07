@@ -1,5 +1,3 @@
-using Snap.Enums;
-
 namespace Snap.Inputs;
 
 public enum DefaultInputs

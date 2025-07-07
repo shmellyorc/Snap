@@ -1,5 +1,3 @@
-using Snap.Logs;
-
 public sealed class TextureAtlasManager
 {
 	private readonly Dictionary<int, AtlasPage> _pagesById = new();

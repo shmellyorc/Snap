@@ -1,11 +1,3 @@
-using System.Runtime.InteropServices;
-
-using Snap.Assets.Fonts;
-using Snap.Assets.Loaders;
-using Snap.Enums;
-using Snap.Logs;
-using Snap.Systems;
-
 namespace Snap.Graphics;
 
 public struct DrawCommand

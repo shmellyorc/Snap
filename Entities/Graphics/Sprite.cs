@@ -1,10 +1,3 @@
-using Snap.Assets.Loaders;
-using Snap.Assets.Spritesheets;
-using Snap.Enums;
-using Snap.Graphics;
-using Snap.Helpers;
-using Snap.Systems;
-
 namespace Snap.Entities.Graphics;
 
 public class Sprite : Entity

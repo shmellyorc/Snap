@@ -1,7 +1,3 @@
-using Snap.Entities;
-using Snap.Enums;
-using Snap.Systems;
-
 namespace Snap.Helpers;
 
 public static class AlignHelpers

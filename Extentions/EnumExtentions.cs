@@ -1,6 +1,3 @@
-using Snap.Assets.Loaders;
-using Snap.Systems;
-
 namespace System;
 
 public static class EnumExtensions

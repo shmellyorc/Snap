@@ -1,6 +1,3 @@
-using Snap.Assets.Loaders;
-using Snap.Systems;
-
 namespace Snap.Entities.Graphics;
 
 public sealed class ColorRect : Entity

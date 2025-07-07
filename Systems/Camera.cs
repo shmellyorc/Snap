@@ -1,5 +1,4 @@
-using Snap.Entities;
-using Snap.Screens;
+using Snap.Tweens;
 
 namespace Snap.Systems;
 

@@ -36,9 +36,9 @@ namespace Snap.Coroutines
 	public sealed class CoroutineManager
 	{
 		private static object _publicOwner = new();
-		private List<IEnumerator> _running = new List<IEnumerator>();
-		private List<float> _delays = new List<float>();
-		private List<object> _owners = new();
+		private List<IEnumerator> _running = [];
+		private List<float> _delays = [];
+		private List<object> _owners = [];
 
 		/// <summary>
 		/// How many coroutines are currently running.
@@ -47,10 +47,7 @@ namespace Snap.Coroutines
 
 		public static CoroutineManager Instance { get; private set; }
 
-		internal CoroutineManager()
-		{
-			Instance ??= this;
-		}
+		internal CoroutineManager() => Instance ??= this;
 
 		/// <summary>
 		/// Run a coroutine.
@@ -173,16 +170,6 @@ namespace Snap.Coroutines
 			}
 
 			bool result = routine.MoveNext();
-			// if (!result)
-			// 	return false;
-
-			// if (routine.Current is IEnumerator nested)
-			// {
-			// 	if (MoveNext(nested, index))
-			// 		return true;
-			// 	_delays[index] = 0;
-			// 	return true;
-			// }
 
 			if (routine.Current is float fValue)
 				_delays[index] = fValue;

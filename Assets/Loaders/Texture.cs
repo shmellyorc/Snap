@@ -1,7 +1,3 @@
-using Snap.Graphics;
-using Snap.Logs;
-using Snap.Systems;
-
 namespace Snap.Assets.Loaders;
 
 public class Texture : IAsset

@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using System.Text;
-
 namespace Snap.Logs;
 
 public enum LogLevel

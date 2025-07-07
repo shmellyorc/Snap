@@ -1,7 +1,3 @@
-using System.ComponentModel;
-
-using Snap.Helpers;
-
 namespace Snap.Systems;
 
 public struct Vect2 : IEquatable<Vect2>

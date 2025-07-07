@@ -1,8 +1,3 @@
-using System.IO.Compression;
-using System.Reflection.Metadata;
-using System.Security.Cryptography;
-using System.Text;
-
 namespace Snap.Saves;
 
 public sealed class ContentTypeWriterReaderMetadata

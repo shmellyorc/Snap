@@ -1,8 +1,10 @@
-using Snap.Assets.Loaders;
-using Snap.Systems;
-
 namespace Snap.Assets.Fonts;
 
+/// <summary>
+/// Represents a texture-atlas-based bitmap font where glyphs are detected by scanning 
+/// bounded regions within a font image. 
+/// Glyphs are extracted using a color-based flood-fill border detection algorithm.
+/// </summary>
 public sealed class SpriteFont : Font
 {
 	private readonly bool _smoothing;
@@ -11,7 +13,14 @@ public sealed class SpriteFont : Font
 	private readonly string _charList;
 	private float _finalLineSpacing;
 
+	/// <summary>
+	/// Gets the adjusted line height used for rendering multiline text.
+	/// </summary>
 	public override float LineSpacing => _finalLineSpacing + _lineSpacing;
+
+	/// <summary>
+	/// Gets the spacing between glyphs in pixels.
+	/// </summary>
 	public override float Spacing => _spacing;
 
 	internal SpriteFont(uint id, string filename, float spacing, float lineSpacing,
@@ -22,8 +31,10 @@ public sealed class SpriteFont : Font
 		_lineSpacing = lineSpacing;
 		_charList = charList;
 	}
-	// ~SpriteFont() => Dispose();
 
+	/// <summary>
+	/// Releases the resources held by this font, including glyph data and internal texture.
+	/// </summary>
 	public override void Dispose()
 	{
 		if (!IsValid)
@@ -34,6 +45,9 @@ public sealed class SpriteFont : Font
 		base.Dispose();
 	}
 
+	/// <summary>
+	/// Unloads the font from memory. Actual unloading logic is handled in the base implementation.
+	/// </summary>
 	public override void Unload()
 	{
 		// Unload not used here. Dont remove but keep it 
@@ -42,6 +56,11 @@ public sealed class SpriteFont : Font
 		base.Unload();
 	}
 
+	/// <summary>
+	/// Loads the font texture and maps glyphs using image border detection.
+	/// </summary>
+	/// <returns>The estimated byte length of the loaded texture.</returns>
+	/// <exception cref="Exception">Thrown if the image file is missing or glyph extraction fails.</exception>
 	public override ulong Load()
 	{
 		if (IsValid)
@@ -72,27 +91,21 @@ public sealed class SpriteFont : Font
 		return Length;
 	}
 
+	/// <summary>
+	/// Returns the underlying texture atlas used by this font. Triggers loading if not already loaded.
+	/// </summary>
+	/// <returns>The font texture atlas.</returns>
 	public override SFTexture GetTexture()
 	{
 		if (!IsValid || Texture == null || Texture.IsInvalid)
 			Load();
-
-		// if (Texture == null || Texture.IsInvalid)
-		// {
-		// 	Texture?.Dispose();
-
-		// 	Texture = new SFTexture(File.ReadAllBytes(Tag))
-		// 	{
-		// 		Smooth = _smoothing
-		// 	};
-		// }
 
 		return Texture;
 	}
 
 	private Dictionary<char, Glyph> LoadBorderCells(string imagePath, string asciiSequence, float spacing = 0f)
 	{
-		SFImage img = new SFImage(imagePath);
+		SFImage img = new(imagePath);
 		uint w = img.Size.X, h = img.Size.Y;
 
 		SFColor topLeft = img.GetPixel(0, 0);

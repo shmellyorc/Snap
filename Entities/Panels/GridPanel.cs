@@ -1,6 +1,3 @@
-using Snap.Screens;
-using Snap.Systems;
-
 namespace Snap.Entities.Panels;
 
 public class GridPanel : Panel

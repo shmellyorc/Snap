@@ -1,7 +1,3 @@
-using System.Text;
-
-using Snap.Assets.Fonts;
-
 namespace Snap.Helpers;
 
 public static class TextHelpers

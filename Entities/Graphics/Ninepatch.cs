@@ -1,7 +1,3 @@
-using Snap.Assets.Loaders;
-using Snap.Assets.Spritesheets;
-using Snap.Systems;
-
 namespace Snap.Entities.Graphics;
 
 public sealed class Ninepatch : Entity
@@ -19,7 +15,9 @@ public sealed class Ninepatch : Entity
 	private int _left, _right, _top, _bottom;
 	private readonly Rect2[] _src = new Rect2[9], _dst = new Rect2[9];
 	private NinePatchDirtyFlags _dirtyFlags;
-
+	private RenderTarget? _rt;
+	private bool _rtChecked;
+	private Rect2 _oldBounds;
 
 	public Color Color { get; set; } = Color.White;
 	public new Vect2 Position
@@ -53,7 +51,6 @@ public sealed class Ninepatch : Entity
 		_texture = texture;
 		_source = source;
 
-		// after storing _srcRegion = source;
 		_left = (int)corners.Left;
 		_top = (int)corners.Top;
 		_right = (int)corners.Right;
@@ -64,11 +61,6 @@ public sealed class Ninepatch : Entity
 
 	public Ninepatch(Texture texture, Spritesheet sheet, string patchName)
 		: this(texture, sheet.GetBounds(patchName), sheet.GetPatch(patchName)) { }
-
-	private RenderTarget? _rt;
-	private bool _rtChecked;
-
-	Rect2 _oldBounds;
 
 	protected override void OnEnter()
 	{
@@ -115,9 +107,6 @@ public sealed class Ninepatch : Entity
 
 			_dirtyFlags = NinePatchDirtyFlags.None;
 		}
-
-		// if (Color.A <= 0 || !IsVisible)
-		// 	return;
 
 		if (_rt != null)
 		{

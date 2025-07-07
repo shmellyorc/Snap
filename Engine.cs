@@ -1,19 +1,4 @@
-﻿using System.Text;
-
-using Snap.Assets.Loaders;
-using Snap.Beacons;
-using Snap.Coroutines;
-using Snap.Graphics;
-using Snap.Helpers;
-using Snap.Inputs;
-using Snap.Logs;
-using Snap.Resources;
-using Snap.Screens;
-using Snap.Services;
-using Snap.Sounds;
-using Snap.Systems;
-
-namespace Snap;
+﻿namespace Snap;
 
 public class WindowCreationException : Exception
 {
@@ -143,13 +128,7 @@ public class Engine : IDisposable
         AppDomain.CurrentDomain.UnhandledException += (object sender, UnhandledExceptionEventArgs args) =>
         {
             if (args.ExceptionObject is Exception ex)
-            {
-                // var msg = new StringBuilder();
-                // msg.AppendLine($"Crash detected: {ex.Message}");
-                // msg.AppendLine($"Stack Trace:\n{ex.StackTrace}");
-
                 _log.LogException(ex);
-            }
 
             _log.Log(LogLevel.Warning, "SNAP force Stopped\n");
         };
@@ -337,8 +316,6 @@ public class Engine : IDisposable
             _titleTimeout += 1.0f;
         }
     }
-
-
 
     internal SFRenderWindow ToRenderer => _window;
 }

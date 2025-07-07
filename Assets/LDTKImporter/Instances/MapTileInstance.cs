@@ -1,16 +1,29 @@
-using System.Text.Json;
-
-using Snap.Enums;
-using Snap.Helpers;
-using Snap.Systems;
-
 namespace Snap.Assets.LDTKImporter.Instances;
 
+/// <summary>
+/// Represents an individual tile placed on a map layer.
+/// Includes visual frame data, flipping effects, alpha transparency, and grid metadata.
+/// </summary>
 public sealed class MapTileInstance : MapInstance
 {
+	/// <summary>
+	/// The source rectangle within the tileset texture that defines this tile's graphic.
+	/// </summary>
 	public Rect2 Source { get; }
+
+	/// <summary>
+	/// Optional texture transformations such as horizontal or vertical flipping.
+	/// </summary>
 	public TextureEffects Effects { get; }
+
+	/// <summary>
+	/// The unique tile identifier, typically referencing a tileset index.
+	/// </summary>
 	public int Tile { get; }
+
+	/// <summary>
+	/// The alpha transparency level for the tile. Ranges from 0.0 (fully transparent) to 1.0 (opaque).
+	/// </summary>
 	public float Alpha { get; }
 
 	internal MapTileInstance(Rect2 source, TextureEffects effects, int tile, float alpha,

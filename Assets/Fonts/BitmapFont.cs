@@ -1,7 +1,9 @@
-using Snap.Assets.Loaders;
-
 namespace Snap.Assets.Fonts;
 
+/// <summary>
+/// Represents a bitmap font parsed from an FNT file. Provides fixed-size glyph rendering 
+/// with custom spacing and line height control.
+/// </summary>
 public sealed class BitmapFont : Font
 {
 	private readonly float _spacing;
@@ -10,7 +12,11 @@ public sealed class BitmapFont : Font
 
 	private float _finalLineSpacing;
 	private readonly Dictionary<int, SFTexture> _pageTextures = new();
+
+	/// <inheritdoc />
 	public override float Spacing => _spacing;
+
+	/// <inheritdoc />
 	public override float LineSpacing => _finalLineSpacing + _lineSpacing;
 
 	internal BitmapFont(uint id, string filename, float spacing, float lineSpacing, bool smoothing)
@@ -20,9 +26,15 @@ public sealed class BitmapFont : Font
 		_lineSpacing = lineSpacing;
 		_smoothing = smoothing;
 	}
-	// ~BitmapFont() => Dispose();
 
+	/// <summary>
+	/// Loads the font data and associated page textures from the configured FNT file.
+	/// Uses lazy-loading to ensure data is loaded only once.
+	/// </summary>
+	/// <returns>The number of bytes read from the FNT file.</returns>
+	/// <exception cref="FileNotFoundException">Thrown if the font or associated texture file is not found.</exception>
 	public override ulong Load()
+
 	{
 		if (IsValid)
 			return 0u;
@@ -31,7 +43,7 @@ public sealed class BitmapFont : Font
 			throw new FileNotFoundException($"Font file not found: {Tag}");
 
 		var bytes = File.ReadAllBytes(Tag);
-		var pagesFolder = Path.GetDirectoryName(Tag) ?? "";
+		var pagesFolder = Path.GetDirectoryName(Tag) ?? string.Empty;
 
 		byte[] PageLoader(string fileName)
 		{
@@ -53,6 +65,9 @@ public sealed class BitmapFont : Font
 		return Length;
 	}
 
+	/// <summary>
+	/// Unloads the font data if it is currently loaded.
+	/// </summary>
 	public override void Unload()
 	{
 		if (!IsValid)
@@ -61,6 +76,10 @@ public sealed class BitmapFont : Font
 		base.Unload();
 	}
 
+	/// <summary>
+	/// Releases all resources used by the <see cref="BitmapFont"/>.
+	/// Disposes texture data and glyph caches.
+	/// </summary>
 	public override void Dispose()
 	{
 		if (!IsValid)
@@ -75,6 +94,11 @@ public sealed class BitmapFont : Font
 		base.Dispose();
 	}
 
+	/// <summary>
+	/// Gets the primary page texture used by this font.
+	/// </summary>
+	/// <returns>The first available and valid texture, or throws if none are loaded.</returns>
+	/// <exception cref="InvalidOperationException">Thrown if no page textures are loaded.</exception>
 	public override SFTexture GetTexture()
 	{
 		if (_pageTextures.TryGetValue(0, out var tex0) && tex0.IsInvalid)

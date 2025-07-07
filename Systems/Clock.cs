@@ -1,6 +1,3 @@
-using SFClock = SFML.System.Clock;
-using SFTime = SFML.System.Time;
-
 namespace Snap.Systems;
 
 public sealed class Clock

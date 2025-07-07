@@ -1,12 +1,9 @@
-using Snap.Helpers;
-using Snap.Screens;
-
 namespace Snap.Entities.Panels;
 
 public class Panel : Entity
 {
 	private readonly List<Entity> _entityAdd;
-    private DirtyState _state;// = DirtyState.Sort | DirtyState.Update;
+    private DirtyState _state;
 
     public void SetDirtyState(DirtyState state) => _state |= state;
 

@@ -1,6 +1,3 @@
-using System.Text;
-using Snap.Resources;
-
 namespace Snap.Inputs;
 
 internal static class SdlControllerDbParser

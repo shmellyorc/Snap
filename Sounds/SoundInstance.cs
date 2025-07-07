@@ -1,8 +1,3 @@
-using System.Text.RegularExpressions;
-
-using Snap.Assets.Loaders;
-using Snap.Logs;
-
 namespace Snap.Sounds;
 
 public enum SoundStatus
@@ -16,7 +11,6 @@ public class SoundInstance : IDisposable
 {
 	#region Fields
 	private uint _soundId;
-	// private SFSoundBuffer _buffer;
 	private SFSound _sound;
 	private float _volume, _pitch, _pan;
 	private bool _isDisposed;

@@ -1,5 +1,3 @@
-using System.Collections;
-
 namespace Snap.Coroutines.Routines.Time;
 
 public sealed class WaitForFrames : IEnumerator

@@ -1,23 +1,3 @@
-using System.Collections;
-using System.Net.Sockets;
-
-using Snap.Assets.Fonts;
-using Snap.Assets.LDTKImporter;
-using Snap.Assets.Loaders;
-using Snap.Assets.Spritesheets;
-using Snap.Beacons;
-using Snap.Coroutines;
-using Snap.Coroutines.Routines.Conditionals;
-using Snap.Entities.Graphics;
-using Snap.Entities.Panels;
-using Snap.Graphics;
-using Snap.Helpers;
-using Snap.Inputs;
-using Snap.Logs;
-using Snap.Screens;
-using Snap.Sounds;
-using Snap.Systems;
-
 namespace Snap.Entities;
 
 public class Entity
@@ -43,10 +23,7 @@ public class Entity
     public bool IsActive => _screen?.IsActive ?? false;
     public bool IsTopmostScreen => _screen?.IsTopmostScreen ?? false;
     public bool IsActiveScreen => _screen?.IsActivScreen ?? false;
-
     public int ChildIndex => Children.IndexOf(this);
-
-
 
     public bool KeepAlive
     {
@@ -64,7 +41,6 @@ public class Entity
 
             _keepAlive = value;
 
-            // _screen.UpdateDirtyState(DirtyState.Update);
             if (_screen == null)
             {
                 CoroutineManager.Start(CoroutineHelpers.WaitWhileThan(() => _screen == null,
@@ -129,20 +105,6 @@ public class Entity
                 return;
 
             _position = value;
-
-            // if (_screen == null)
-            // {
-            // 	StartRoutine(CoroutineHelpers.WaitWhileThan(() => _screen == null, () =>
-            // 	{
-            // 		if (!_screen.Camera.CullBounds.Intersects(Bounds))
-            // 			_screen.UpdateDirtyState(DirtyState.Sort | DirtyState.Update);
-            // 	}));
-            // }
-            // else
-            // {
-            // 	if (!_screen.Camera.CullBounds.Intersects(Bounds))
-            // 		_screen.UpdateDirtyState(DirtyState.Sort | DirtyState.Update);
-            // }
         }
     }
 
@@ -154,7 +116,6 @@ public class Entity
 
     private Vect2 _size = Vect2.Zero;
 
-    // public Vect2 Size { get; set; } = Vect2.Zero;
     public Vect2 Size
     {
         get => _size;
@@ -170,10 +131,6 @@ public class Entity
     }
 
     public Rect2 Bounds
-    // => IsChild
-    // ? new Rect2(_parent.Position + _position, Size)
-    // : new Rect2(_position, Size);
-
     {
         get
         {
@@ -483,48 +440,4 @@ public class Entity
     public Screen GetScreen(Screen screen) => ScreenManager.Get(screen);
     public Screen GetScreenById(uint id) => ScreenManager.GetById(id);
     #endregion
-
-
-    // public static Vect2 GetLocalPositon(Entity entity)
-    // {
-    // 	if (entity == null)
-    // 		throw new ArgumentNullException(nameof(entity));
-
-    // 	var parent = entity._parent;
-    // 	if (parent == null)
-    // 	{
-    // 		// no parent => local == global
-    // 		return entity.Position;
-    // 	}
-
-    // 	return entity.Position - parent.Position;
-    // }
-
-    // public static Vect2 GetGlobalPosition(Entity entity)
-    // {
-    // 	if (entity.IsChild)
-    // 		return entity.Parent?.Position + entity._position ?? entity._position;
-    // 	else
-    // 		return entity._position;
-    // }
-
-    // public static IEnumerable<Entity> GetAncestors(Entity entity)
-    // {
-    // 	var current = entity.Parent;
-    // 	while (current != null)
-    // 	{
-    // 		yield return current;
-    // 		current = current.Parent;
-    // 	}
-    // }
-
-    // public static T GetAncestorsOfType<T>(Entity entity) where T : Entity =>
-    // 	(T)GetAncestors(entity).FirstOrDefault(x => x is T);
-
-    // public static bool TryGetAncestorsOfType<T>(Entity entity, out T result) where T : Entity
-    // {
-    // 	result = GetAncestorsOfType<T>(entity);
-
-    // 	return entity != null;
-    // }
 }

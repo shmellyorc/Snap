@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Snap.Helpers;
 
 public static class HashHelpers

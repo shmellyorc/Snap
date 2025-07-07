@@ -1,8 +1,3 @@
-using System.Runtime.CompilerServices;
-
-using Snap.Logs;
-using Snap.Systems;
-
 namespace Snap.Graphics;
 
 public sealed class DebugRenderer

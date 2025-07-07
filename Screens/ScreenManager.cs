@@ -1,6 +1,3 @@
-using Snap.Beacons;
-using Snap.Graphics;
-
 namespace Snap.Screens;
 
 [Flags]
@@ -143,7 +140,7 @@ public sealed class ScreenManager
 		if (_screens.Count == 0)
 			return;
 
-		Remove(_screens.ToArray());
+		Remove([.. _screens]);
 
 		_dirtyState = DirtyState.Update;
 	}

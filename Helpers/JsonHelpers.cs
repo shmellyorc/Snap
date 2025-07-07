@@ -1,9 +1,3 @@
-using System.Text.Json;
-
-using Snap.Assets.LDTKImporter;
-using Snap.Assets.LDTKImporter.Settings;
-using Snap.Systems;
-
 namespace Snap.Helpers;
 
 internal static class JsonHelpers

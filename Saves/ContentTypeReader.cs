@@ -1,7 +1,3 @@
-using System.Xml.Serialization;
-
-using Snap.Systems;
-
 namespace Snap.Saves;
 
 public sealed class ContentTypeReader : BinaryReader

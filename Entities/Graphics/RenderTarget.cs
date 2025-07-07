@@ -1,16 +1,3 @@
-
-using System.Collections;
-using System.Runtime.InteropServices;
-
-using Snap.Assets.Fonts;
-using Snap.Assets.Loaders;
-using Snap.Coroutines.Routines.Conditionals;
-using Snap.Entities.Panels;
-using Snap.Enums;
-using Snap.Graphics;
-using Snap.Logs;
-using Snap.Systems;
-
 namespace Snap.Entities.Graphics;
 
 public class RenderTarget : Panel
@@ -26,6 +13,8 @@ public class RenderTarget : Panel
 	private Texture _texture;
 	public bool IsRendering;
 	private SFView _view;
+	private Vect2 _offset;
+	private long _seqCounter;
 
 	public Color Color { get; set; } = Color.White;
 
@@ -100,23 +89,11 @@ public class RenderTarget : Panel
 	{
 		var index = 0;
 		SFTexture currentTexture = null;
-		// var all = new List<DrawCommand>(_drawCommands.Sum(kv => kv.Value.Count));
-		// foreach (var bucket in _drawCommands.Values)
-		// 	all.AddRange(bucket);
 		var allCommands = _drawCommands.Values
 			.SelectMany(list => list)
 			.OrderBy(cmd => cmd.Depth)
 			.ThenBy(cmd => cmd.Sequence);
 
-		// all.Sort((a, b) => a.Depth.CompareTo(b.Depth));
-		// allCommands.Sort((a, b) =>
-		// {
-		// 	int d = a.Depth.CompareTo(b.Depth);
-		// 	return d != 0 ? d : a.Sequence.CompareTo(b.Sequence);
-		// });
-
-		// 2) Iterate in perfect depth/sequence order,
-		//    but still batch whenever the texture doesn't change
 		foreach (ref readonly var cmd in CollectionsMarshal.AsSpan(allCommands.ToList()))
 		{
 			bool willOverflow = index + cmd.Vertex.Length > _vertexBufferSize;
@@ -129,7 +106,6 @@ public class RenderTarget : Panel
 				index = 0;
 
 				if (willOverflow)
-					// EnsureVertexBufferCapacity(Math.Max(_vertexBufferSize * 2, cmd.Vertex.Length));
 					EnsureVertexBufferCapacity(index + cmd.Vertex.Length);
 			}
 
@@ -142,41 +118,12 @@ public class RenderTarget : Panel
 			currentTexture = cmd.Texture;
 		}
 
-		// 3) Final flush
+		// Final flush
 		if (index > 0 && currentTexture != null)
 			Flush(index, _vertexCache, currentTexture);
 
-		// int index = 0;
-		// SFTexture currentTexture = null;
-		// foreach (var cmd in allCommands)
-		// {
-		// 	bool willOverflow = index + cmd.Vertex.Length > _vertexBufferSize;
-		// 	bool textureChanged = currentTexture != null && currentTexture != cmd.Texture;
-
-		// 	if (willOverflow || textureChanged)
-		// 	{
-		// 		if (index > 0 && currentTexture != null)
-		// 			Flush(index, _vertexCache, currentTexture);
-		// 		index = 0;
-
-		// 		if (willOverflow)
-		// 			EnsureVertexBufferCapacity(Math.Max(_vertexBufferSize * 2, cmd.Vertex.Length));
-		// 	}
-
-		// 	var src = cmd.Vertex.AsSpan();
-		// 	var dst = _vertexCache.AsSpan(index, src.Length);
-		// 	src.CopyTo(dst);
-		// 	index += src.Length;
-
-		// 	currentTexture = cmd.Texture;
-		// }
-
-		// if (index > 0 && currentTexture != null)
-		// 	Flush(index, _vertexCache, currentTexture);
-
 		_drawCommands.Clear();
 		_seqCounter = 0;
-		// _batches = 0;
 	}
 
 	private void EnsureVertexBufferCapacity(int neededSize)
@@ -221,7 +168,7 @@ public class RenderTarget : Panel
 		_batches++;
 	}
 
-	private Vect2 _offset;
+	
 	public Vect2 Offset
 	{
 		get => _offset;
@@ -347,7 +294,7 @@ public class RenderTarget : Panel
 		EnqueueCommand(texture.NativeHandle, texture, directQuad, depth);
 	}
 
-	private long _seqCounter;
+	
 
 
 
@@ -464,5 +411,4 @@ public class RenderTarget : Panel
 
 		onReady?.Invoke();
 	}
-
 }

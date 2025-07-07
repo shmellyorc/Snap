@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Snap.Logs;
 
 /// <summary>

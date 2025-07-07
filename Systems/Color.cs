@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace Snap.Systems;
 
 public struct Color : IEquatable<Color>

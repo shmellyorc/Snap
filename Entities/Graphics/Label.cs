@@ -1,18 +1,13 @@
-using Snap.Assets.Fonts;
-using Snap.Enums;
-using Snap.Helpers;
-using Snap.Systems;
-
 namespace Snap.Entities.Graphics;
 
 public sealed class Label : Entity
 {
 	private string _text = string.Empty;
 	private bool _isDirty = true;
-	private readonly List<string> _displayText = new();
+	private readonly List<string> _displayText = [];
 	private readonly Font _font;
 	private int _visibleLength = -1; // Default: Show full text
-	private readonly Dictionary<string, Vect2> _cachedMeasurements = new();
+	private readonly Dictionary<string, Vect2> _cachedMeasurements = [];
 	private float _cachedMaxHeight = 0f;
 	private RenderTarget? _rt;
 	private bool _rtChecked;
@@ -65,8 +60,6 @@ public sealed class Label : Entity
 
 	public Label(Font font) => _font = font;
 
-	
-
 	protected override void OnUpdate()
 	{
 		if (!_rtChecked)
@@ -82,7 +75,6 @@ public sealed class Label : Entity
 
 			var processedText = _visibleLength == -1 ? _text : _text.TrimToLength(_visibleLength);
 
-			// var lines = _text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
 			var lines = _font.FormatText(processedText, (int)Size.X).Split(Environment.NewLine);
 
 			foreach (var line in lines)
@@ -94,17 +86,10 @@ public sealed class Label : Entity
 					continue;
 				}
 
-				var trimmedLine = line.Trim(); //_visibleLength == -1 ? line : line.TrimToLength(_visibleLength);
-											   // var wrappedLines = _font.FormatText(trimmedLine, (int)Size.X).Split(Environment.NewLine);
+				var trimmedLine = line.Trim();
+
 				_displayText.Add(trimmedLine);
 				_cachedMeasurements[trimmedLine] = _font.Measure(trimmedLine);// Cache measurement
-
-				// foreach (var wrappedLine in wrappedLines)
-				// {
-				// 	string processed = wrappedLine.Trim();
-				// 	_displayText.Add(processed);
-				// 	_cachedMeasurements[processed] = _font.Measure(processed); // Cache measurement
-				// }
 			}
 
 			if (_cachedMeasurements.Count == 0)
@@ -113,9 +98,6 @@ public sealed class Label : Entity
 			_cachedMaxHeight = _displayText.Sum(x => _cachedMeasurements[x].Y); // Cached total height
 			_isDirty = false;
 		}
-
-		// if (Color.A <= 0 || !IsVisible)
-		// 	return;
 
 		float offset = 0f;
 
@@ -126,8 +108,7 @@ public sealed class Label : Entity
 			var offsetX = AlignHelpers.AlignWidth(Size.X, measure.X, HAlign);
 			var offsetY = AlignHelpers.AlignHeight(Size.Y, _cachedMaxHeight, VAlign);
 
-			// if (this.TryGetAncestorOfType<RenderTarget>(out var rt))
-			if(_rt != null)
+			if (_rt != null)
 			{
 				var world = this.GetGlobalPosition();
 				var rtWorld = _rt.GetGlobalPosition();

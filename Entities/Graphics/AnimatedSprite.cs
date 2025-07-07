@@ -1,8 +1,3 @@
-using Snap.Assets.Loaders;
-using Snap.Enums;
-using Snap.Helpers;
-using Snap.Systems;
-
 namespace Snap.Entities.Graphics;
 
 public sealed class Animation

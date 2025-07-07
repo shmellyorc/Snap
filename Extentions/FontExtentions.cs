@@ -1,7 +1,3 @@
-using Snap.Assets.Fonts;
-using Snap.Helpers;
-using Snap.Systems;
-
 namespace System;
 
 public static class FontExtentions

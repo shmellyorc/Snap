@@ -1,5 +1,3 @@
-using Snap.Enums;
-
 namespace Snap.Inputs;
 
 public sealed class KeyboardInputState : InputMapEntry

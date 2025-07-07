@@ -1,5 +1,3 @@
-using Snap.Systems;
-
 namespace Snap.Helpers;
 
 public static class MathHelpers

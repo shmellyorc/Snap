@@ -1,7 +1,3 @@
-using System.Collections;
-
-using Snap.Systems;
-
 namespace Snap.Coroutines.Routines.Time;
 
 public sealed class WaitForSeconds : IEnumerator

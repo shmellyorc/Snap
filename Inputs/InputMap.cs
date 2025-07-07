@@ -1,9 +1,3 @@
-using Snap.Enums;
-using Snap.Helpers;
-using Snap.Logs;
-using Snap.Screens;
-using Snap.Systems;
-
 namespace Snap.Inputs;
 
 public enum ActiveInput
@@ -13,7 +7,6 @@ public enum ActiveInput
 }
 public class InputMap
 {
-
     private readonly uint _joyCount;
     private bool _mouseJustPressed, _keyJustPressed, _joystickJustPressed;
     private readonly Dictionary<uint, bool> _joysticks = new();

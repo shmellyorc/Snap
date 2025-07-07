@@ -1,8 +1,3 @@
-using Snap.Enums;
-using Snap.Helpers;
-using Snap.Screens;
-using Snap.Systems;
-
 namespace Snap.Entities.Panels;
 
 public class VPanel : Panel
