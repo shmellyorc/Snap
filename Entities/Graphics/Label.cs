@@ -114,8 +114,8 @@ public sealed class Label : Entity
 			_isDirty = false;
 		}
 
-		if (Color.A <= 0 || !IsVisible)
-			return;
+		// if (Color.A <= 0 || !IsVisible)
+		// 	return;
 
 		float offset = 0f;
 
