@@ -116,8 +116,8 @@ public sealed class Ninepatch : Entity
 			_dirtyFlags = NinePatchDirtyFlags.None;
 		}
 
-		if (Color.A <= 0 || !IsVisible)
-			return;
+		// if (Color.A <= 0 || !IsVisible)
+		// 	return;
 
 		if (_rt != null)
 		{

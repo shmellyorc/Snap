@@ -126,17 +126,18 @@ public sealed class Label : Entity
 			var offsetX = AlignHelpers.AlignWidth(Size.X, measure.X, HAlign);
 			var offsetY = AlignHelpers.AlignHeight(Size.Y, _cachedMaxHeight, VAlign);
 
-			if (this.TryGetAncestorOfType<RenderTarget>(out var rt))
+			// if (this.TryGetAncestorOfType<RenderTarget>(out var rt))
+			if(_rt != null)
 			{
 				var world = this.GetGlobalPosition();
-				var rtWorld = rt.GetGlobalPosition();
+				var rtWorld = _rt.GetGlobalPosition();
 				var local = world - rtWorld;
 				var final = new Vect2(local.X + offsetX, local.Y + offsetY + offset);
 
 				if (Shadow)
-					rt.DrawText(_font, txt, final + ShadowOffset + Offset, ShadowColor, Layer);
+					_rt.DrawText(_font, txt, final + ShadowOffset + Offset, ShadowColor, Layer);
 
-				rt.DrawText(_font, txt, final + Offset, Color, Layer + 1);
+				_rt.DrawText(_font, txt, final + Offset, Color, Layer + 1);
 			}
 			else
 			{
