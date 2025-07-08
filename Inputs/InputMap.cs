@@ -5,12 +5,13 @@ public enum ActiveInput
     Keyboard,
     Gamepad
 }
+
 public class InputMap
 {
     private readonly uint _joyCount;
     private bool _mouseJustPressed, _keyJustPressed, _joystickJustPressed;
     private readonly Dictionary<uint, bool> _joysticks = new();
-    private readonly Dictionary<uint, List<InputMapEntry>> _actions = new(20);
+    internal readonly Dictionary<uint, List<InputMapEntry>> _actions = new(20);
     private readonly List<SdlControllerEntry> _allEntries = [];
     private readonly Dictionary<uint, Dictionary<char, int>> _controllerMaps = [];
 

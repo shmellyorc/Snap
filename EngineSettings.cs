@@ -32,10 +32,11 @@ public sealed class EngineSettings
 	public string SaveDirectory { get; private set; }
 	public EngineSettings WithSaveDirectory(string value)
 	{
-		if (value.IsEmpty())
-			throw new Exception();
+		if (string.IsNullOrWhiteSpace(value))
+			throw new ArgumentNullException(nameof(value), "Save directory path cannot be null or empty.");
+
 		if (value.Contains(Path.PathSeparator))
-			throw new Exception();
+			throw new ArgumentException($"Save directory path cannot contain the path separator character '{Path.PathSeparator}'.", nameof(value));
 
 		SaveDirectory = value;
 
@@ -46,10 +47,12 @@ public sealed class EngineSettings
 	public string LogDirectory { get; private set; }
 	public EngineSettings WithLogDirectory(string value)
 	{
-		if (value.IsEmpty())
-			throw new Exception();
+		if (string.IsNullOrWhiteSpace(value))
+			throw new ArgumentNullException(nameof(value), "Log directory path cannot be null or whitespace.");
+		if (value.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
+			throw new ArgumentException("Log directory path contains invalid characters.", nameof(value));
 		if (value.Contains(Path.PathSeparator))
-			throw new Exception();
+			throw new ArgumentException($"Log directory path cannot contain the path separator character '{Path.PathSeparator}'.", nameof(value));
 
 		LogDirectory = value;
 
@@ -104,8 +107,11 @@ public sealed class EngineSettings
 	public int DrawCallCache { get; private set; }
 	public EngineSettings WithDrawCallCache(uint value)
 	{
-		if (value < 512)
-			throw new Exception();
+		const uint minimumDrawllCallCacheSize = 512;
+
+		if (value < minimumDrawllCallCacheSize)
+			throw new ArgumentOutOfRangeException(nameof(value),
+				$"Draw call cache size must be at least {minimumDrawllCallCacheSize}.");
 
 		DrawCallCache = (int)value;
 
@@ -116,8 +122,11 @@ public sealed class EngineSettings
 	public int AtlasPageSize { get; private set; }
 	public EngineSettings WithAtlasPageSize(uint value)
 	{
-		if (value < 512)
-			throw new Exception();
+		const uint minimumAtlasPageSize = 512;
+
+		if (value < minimumAtlasPageSize)
+			throw new ArgumentOutOfRangeException(nameof(value),
+				$"Atlas page size must be at least {minimumAtlasPageSize}.");
 
 		AtlasPageSize = (int)value;
 
@@ -127,8 +136,12 @@ public sealed class EngineSettings
 	public int MaxAtlasPages { get; private set; }
 	public EngineSettings WithMaxAtlasPages(uint value)
 	{
-		if (value < 3 || value > 8)
-			throw new Exception();
+		const uint MinPages = 3;
+		const uint MaxPages = 8;
+
+		if (value < MinPages || value > MaxPages)
+			throw new ArgumentOutOfRangeException(nameof(value),
+				$"Max atlas pages must be between {MinPages} and {MaxPages} inclusive.");
 
 		MaxAtlasPages = (int)value;
 
@@ -142,7 +155,8 @@ public sealed class EngineSettings
 	public EngineSettings WithDeadZone(float value)
 	{
 		if (value < 0 || value > 1.0f)
-			throw new Exception();
+			throw new ArgumentOutOfRangeException(nameof(value),
+				"Dead zone must be between 0.0 and 1.0 inclusive.");
 
 		DeadZone = (int)value;
 
@@ -155,7 +169,9 @@ public sealed class EngineSettings
 	public EngineSettings WithInputMap(InputMap value)
 	{
 		if (value == null)
-			throw new Exception();
+			throw new ArgumentNullException(nameof(value), "Input map cannot be null.");
+		if (value._actions.Count == 0)
+			throw new InvalidOperationException("Actions collection must contain at least one item.");
 
 		InputMap = value;
 
@@ -166,8 +182,8 @@ public sealed class EngineSettings
 	public string AppTitle { get; private set; }
 	public EngineSettings WithAppTitle(string value)
 	{
-		if (value.IsEmpty())
-			throw new Exception();
+		if (string.IsNullOrWhiteSpace(value))
+			throw new ArgumentNullException(nameof(value), "App title cannot be null.");
 
 		AppTitle = value;
 
@@ -177,8 +193,8 @@ public sealed class EngineSettings
 	public string AppName { get; private set; }
 	public EngineSettings WithAppName(string value)
 	{
-		if (value.IsEmpty())
-			throw new Exception();
+		if (string.IsNullOrWhiteSpace(value))
+			throw new ArgumentNullException(nameof(value), "App name cannot be null.");
 
 		AppName = value;
 
@@ -188,10 +204,10 @@ public sealed class EngineSettings
 	public string AppContentRoot { get; private set; }
 	public EngineSettings WithAppContentRoot(string value)
 	{
-		if (value.IsEmpty())
-			throw new Exception();
+		if (string.IsNullOrWhiteSpace(value))
+			throw new ArgumentNullException(nameof(value), "App coontent root cannot be null, empty, or whitespace.");
 		if (!Directory.Exists(value))
-			throw new Exception();
+			throw new DirectoryNotFoundException($"The specified content root directory does not exist: '{value}'.");
 
 		AppContentRoot = value;
 
@@ -201,8 +217,10 @@ public sealed class EngineSettings
 	public Vect2 Window { get; private set; }
 	public EngineSettings WithWindow(uint width, uint height)
 	{
-		if (width == 0 || height == 0)
-			throw new Exception();
+		if (width == 0)
+			throw new ArgumentOutOfRangeException(nameof(width), "Window width must be greater than zero");
+		if (height == 0)
+			throw new ArgumentOutOfRangeException(nameof(width), "Window height must be greater than zero");
 
 		Window = new Vect2(width, height);
 
@@ -212,8 +230,10 @@ public sealed class EngineSettings
 	public Vect2 Viewport { get; private set; }
 	public EngineSettings WithViewport(uint width, uint height)
 	{
-		if (width == 0 || height == 0)
-			throw new Exception();
+		if (width == 0)
+			throw new ArgumentOutOfRangeException(nameof(width), "Viewport width must be greater than zero");
+		if (height == 0)
+			throw new ArgumentOutOfRangeException(nameof(width), "Viewport height must be greater than zero");
 
 		Viewport = new Vect2(width, height);
 
@@ -232,7 +252,7 @@ public sealed class EngineSettings
 	public EngineSettings WithClearColor(Color color)
 	{
 		if (color.A != 255)
-			throw new Exception();
+			throw new ArgumentException("Clear color must be fully opaque (Alpha = 255).", nameof(color));
 
 		ClearColor = color;
 
@@ -240,12 +260,14 @@ public sealed class EngineSettings
 	}
 
 	public Screen[] Screens { get; private set; }
-	public EngineSettings WithScreens(params Screen[] screens)
+	public EngineSettings WithScreens(params Screen[] values)
 	{
-		if (screens == null || screens.Length == 0)
-			throw new Exception();
+		if (values == null)
+			throw new ArgumentNullException(nameof(values), "Values cannot be null.");
+		if (values.Length == 0)
+			throw new ArgumentException("At least one screen must be provided");
 
-		Screens = screens;
+		Screens = values;
 
 		return this;
 	}
@@ -253,8 +275,10 @@ public sealed class EngineSettings
 	public GameService[] Services { get; private set; }
 	public EngineSettings WithService(params GameService[] values)
 	{
-		if (values == null || values.Length == 0)
-			throw new Exception();
+		if (values == null)
+			throw new ArgumentNullException(nameof(values), "Values cannot be null.");
+		if (values.Length == 0)
+			throw new ArgumentException("At least one service must be provided");
 
 		Services = values;
 
@@ -265,10 +289,14 @@ public sealed class EngineSettings
 	public int LogFileSizeCap { get; private set; }
 	public EngineSettings WithLogFileCap(uint value)
 	{
-		if (value == 0 || value >= 50_000_000)
-			throw new Exception();
+		const uint MaxLogFileSizeBytes = 50;
+		const uint BytesPerMB = 1_048_576;
 
-		LogFileSizeCap = (int)value;
+		if (value == 0 || value > MaxLogFileSizeBytes)
+			throw new ArgumentOutOfRangeException(nameof(value),
+				$"Log file size must be between 1 and {MaxLogFileSizeBytes} megabytes.");
+
+		LogFileSizeCap = (int)(value * BytesPerMB);
 
 		return this;
 	}
@@ -277,8 +305,11 @@ public sealed class EngineSettings
 	public int LogMaxRecentEntries { get; private set; }
 	public EngineSettings WithLogMaxRecentEntries(uint value)
 	{
-		if (value == 0 || value >= 100)
-			throw new Exception();
+		const uint MaxEntries = 99;
+
+		if (value == 0 || value > MaxEntries)
+			throw new ArgumentOutOfRangeException(nameof(value),
+				$"Log max recent entries must be between 1 and {MaxEntries} inclusive.");
 
 		LogMaxRecentEntries = (int)value;
 
