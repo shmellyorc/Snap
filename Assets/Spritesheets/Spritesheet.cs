@@ -1,13 +1,24 @@
 namespace Snap.Assets.Spritesheets;
 
+/// <summary>
+/// Represents a collection of sprite metadata parsed from a JSON spritesheet definition.
+/// Provides lookup access to bounds, pivot, and 9-slice patch regions for named sprites.
+/// </summary>
 public sealed class Spritesheet : IAsset
 {
+	/// <inheritdoc/>
 	public uint Id { get; }
+
+	/// <inheritdoc/>
 	public string Tag { get; }
+
+	/// <inheritdoc/>
 	public bool IsValid { get; private set; }
+
+	/// <inheritdoc/>
 	public uint Handle { get; }
 
-	private readonly Dictionary<uint, SpritesheetEntry> _spritesheets = new();
+	private readonly Dictionary<uint, SpritesheetEntry> _spritesheets = [];
 
 	internal Spritesheet(uint id, string filename)
 	{
@@ -15,8 +26,19 @@ public sealed class Spritesheet : IAsset
 		Tag = filename;
 	}
 
+	/// <summary>
+	/// Destructor that ensures the asset is disposed if not already unloaded.
+	/// </summary>
 	~Spritesheet() => Dispose();
 
+	/// <summary>
+	/// Loads sprite definitions from the metadata file specified by <see cref="Tag"/>.
+	/// Parses pivot, bounds, and 9-slice information into internal lookup structures.
+	/// </summary>
+	/// <returns>The number of bytes read from disk.</returns>
+	/// <exception cref="FileNotFoundException">
+	/// Thrown if the metadata file does not exist.
+	/// </exception>
 	public ulong Load()
 	{
 		if (IsValid)
@@ -77,6 +99,9 @@ public sealed class Spritesheet : IAsset
 		return (ulong)bytes.Length;
 	}
 
+	/// <summary>
+	/// Unloads the asset and clears all parsed sprite metadata.
+	/// </summary>
 	public void Unload()
 	{
 		if (!IsValid)
@@ -85,6 +110,9 @@ public sealed class Spritesheet : IAsset
 		Dispose();
 	}
 
+	/// <summary>
+	/// Releases all internal resources and unregisters any managed metadata.
+	/// </summary>
 	public void Dispose()
 	{
 		_spritesheets.Clear();
@@ -93,6 +121,14 @@ public sealed class Spritesheet : IAsset
 		Logger.Instance.Log(LogLevel.Info, $"Unloaded asset with ID {Id}, type: '{GetType().Name}'.");
 	}
 
+	/// <summary>
+	/// Retrieves the bounding rectangle of a sprite by name.
+	/// </summary>
+	/// <param name="name">The name of the sprite.</param>
+	/// <returns>The <see cref="Rect2"/> representing the sprite’s bounds within the sheet.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if <paramref name="name"/> is null or empty.</exception>
+	/// <exception cref="KeyNotFoundException">Thrown if no sprite is found with the given name.</exception>
+	/// <exception cref="InvalidOperationException">Thrown if the bounds are not defined.</exception>
 	public Rect2 GetBounds(string name)
 	{
 		if (name.IsEmpty())
@@ -105,6 +141,14 @@ public sealed class Spritesheet : IAsset
 		return result.Bounds;
 	}
 
+	/// <summary>
+	/// Retrieves the 9-slice patch rectangle (center region) of a sprite by name.
+	/// </summary>
+	/// <param name="name">The sprite’s name in the metadata file.</param>
+	/// <returns>The center patch region as a <see cref="Rect2"/>.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if <paramref name="name"/> is null or empty.</exception>
+	/// <exception cref="KeyNotFoundException">Thrown if no entry is found for the specified name.</exception>
+	/// <exception cref="Exception">Thrown if the patch region is not defined for that sprite.</exception>
 	public Rect2 GetPatch(string name)
 	{
 		if (name.IsEmpty())
@@ -117,6 +161,14 @@ public sealed class Spritesheet : IAsset
 		return result.Patch;
 	}
 
+	/// <summary>
+	/// Retrieves the pivot point of the sprite for alignment or transformation.
+	/// </summary>
+	/// <param name="name">The name of the sprite within the sheet.</param>
+	/// <returns>The pivot position as a <see cref="Vect2"/>.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if <paramref name="name"/> is null or empty.</exception>
+	/// <exception cref="KeyNotFoundException">Thrown if no entry is found for the name provided.</exception>
+	/// <exception cref="Exception">Thrown if the pivot is unset.</exception>
 	public Vect2 GetPivot(string name)
 	{
 		if (name.IsEmpty())
