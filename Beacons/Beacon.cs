@@ -1,7 +1,7 @@
 namespace Snap.Beacons;
 
 /// <summary>
-/// A high-performance publish/subscribe (Beacon) System
+/// Manages topic-based messaging between components using a lightweight pub/sub system.
 /// </summary>
 public sealed class BeaconManager
 {
@@ -30,16 +30,38 @@ public sealed class BeaconManager
     */
 
 	private static readonly object _publicOwner = new();
-	private readonly Dictionary<uint, TopicEntry> _topics = new();
+	private readonly Dictionary<uint, TopicEntry> _topics = [];
 	private readonly object _mapLock = new();
 
+	/// <summary>
+	/// Singleton instance of the <see cref="BeaconManager"/>.
+	/// </summary>
 	public static BeaconManager Instance { get; private set; }
+
+	/// <summary>
+	/// Gets the number of active topic entries.
+	/// </summary>
 	public int Count => _topics.Count;
 
 	internal BeaconManager() => Instance ??= this;
 
+	/// <summary>
+	/// Subscribes a handler to the specified topic, using an enum as the topic identifier.
+	/// </summary>
+	/// <param name="topic">An <see cref="Enum"/> value used to identify the topic.</param>
+	/// <param name="handler">The method to invoke when the topic is emitted.</param>
+	/// <exception cref="ArgumentException">Thrown if the topic is null or empty.</exception>
+	/// <exception cref="ArgumentNullException">Thrown if the handler is null.</exception>
 	public void Connect(Enum topic, Action<BeaconHandle> handler) =>
 		Connect(topic.ToEnumString(), _publicOwner, handler);
+
+	/// <summary>
+	/// Subscribes a handler to the specified topic, using a string identifier.
+	/// </summary>
+	/// <param name="topic">The name of the topic.</param>
+	/// <param name="handler">The method to invoke when the topic is emitted.</param>
+	/// <exception cref="ArgumentException">Thrown if the topic is null or empty.</exception>
+	/// <exception cref="ArgumentNullException">Thrown if the handler is null.</exception>
 	public void Connect(string topic, Action<BeaconHandle> handler) =>
 		Connect(topic, _publicOwner, handler);
 	internal void Connect(string topic, object owner, Action<BeaconHandle> handler)
@@ -70,8 +92,19 @@ public sealed class BeaconManager
 		}
 	}
 
+	/// <summary>
+	/// Unsubscribes a handler from the specified topic.
+	/// </summary>
+	/// <param name="topic">The name of the topic to unsubscribe from.</param>
+	/// <param name="handler">The handler method to remove.</param>
 	public void Disconnect(string topic, Action<BeaconHandle> handler) =>
 		Disconnect(topic, _publicOwner, handler);
+
+	/// <summary>
+	/// Unsubscribes a handler from the specified topic, using an enum identifier.
+	/// </summary>
+	/// <param name="topic">The topic enum value to unsubscribe from.</param>
+	/// <param name="handler">The handler method to remove.</param>
 	public void Disconnect(Enum topic, Action<BeaconHandle> handler) =>
 		Disconnect(topic.ToEnumString(), _publicOwner, handler);
 	internal void Disconnect(string topic, object owner, Action<BeaconHandle> handler)
@@ -100,8 +133,21 @@ public sealed class BeaconManager
 		}
 	}
 
+	/// <summary>
+	/// Emits the specified topic to all subscribers after a delay.
+	/// </summary>
+	/// <param name="topic">The topic enum to emit.</param>
+	/// <param name="seconds">The delay in seconds before emitting.</param>
+	/// <param name="args">Optional arguments to pass to the handler.</param>
 	public void EmitDelayed(Enum topic, float seconds, params object[] args) =>
 		EmitDelayed(_publicOwner, topic.ToEnumString(), seconds, args);
+
+	/// <summary>
+	/// Emits the specified topic to all subscribers after a delay.
+	/// </summary>
+	/// <param name="topic">The topic name to emit.</param>
+	/// <param name="seconds">The delay in seconds before emitting.</param>
+	/// <param name="args">Optional arguments to pass to the handler.</param>
 	public void EmitDelayed(string topic, float seconds, params object[] args) =>
 		EmitDelayed(_publicOwner, topic, seconds, args);
 	internal void EmitDelayed(object owner, string topic, float seconds, params object[] args)
@@ -116,8 +162,21 @@ public sealed class BeaconManager
 		CoroutineManager.Instance.Start(Delayed(seconds), owner);
 	}
 
+	/// <summary>
+	/// Emits the specified topic immediately to all subscribers.
+	/// </summary>
+	/// <param name="topic">The topic enum to emit.</param>
+	/// <param name="args">Optional arguments to pass to the handler.</param>
+	/// <exception cref="ArgumentException">Thrown if the topic is null or empty.</exception>
 	public void Emit(Enum topic, params object[] args) =>
 		Emit(topic.ToEnumString(), args);
+
+	/// <summary>
+	/// Emits the specified topic immediately to all subscribers.
+	/// </summary>
+	/// <param name="topic">The topic name to emit.</param>
+	/// <param name="args">Optional arguments to pass to the handler.</param>
+	/// <exception cref="ArgumentException">Thrown if the topic is null or empty.</exception>
 	public void Emit(string topic, params object[] args)
 	{
 		if (string.IsNullOrEmpty(topic))
@@ -161,7 +220,8 @@ public sealed class BeaconManager
 
 	internal void ClearOwner(object owner)
 	{
-		if (owner == null) throw new ArgumentNullException(nameof(owner));
+		if (owner == null)
+			throw new ArgumentNullException(nameof(owner));
 
 		lock (_mapLock)
 		{
@@ -285,15 +345,32 @@ public sealed class BeaconManager
 		t.IsValueType ? Activator.CreateInstance(t) : null;
 }
 
+/// <summary>
+/// Attribute used to mark a method as a beacon handler for a specific topic.
+/// </summary>
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 public sealed class BeaconAttribute : Attribute
 {
+	/// <summary>
+	/// The topic this handler responds to. Can be a string or an <see cref="Enum"/>.
+	/// </summary>
 	public object Name { get; set; }
+
+	/// <summary>
+	/// Whether to enforce strict argument checking before invoking the handler.
+	/// </summary>
+	/// <remarks>
+	/// If true, the handler will only be invoked if the number and types of arguments match exactly.
+	/// If false, default values may be used to fill in missing or mismatched arguments.
+	/// </remarks>
 	public bool Strict { get; set; }
 
 	internal string Topic => Name is Enum e
 		? $"{e.GetType().FullName}.{e}"
 		: Name?.ToString() ?? throw new InvalidOperationException("Beacon.Name was null");
 
+	/// <summary>
+	/// Creates a new <see cref="BeaconAttribute"/>.
+	/// </summary>
 	public BeaconAttribute() { }
 }

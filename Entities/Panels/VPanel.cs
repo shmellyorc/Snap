@@ -73,7 +73,8 @@ public class VPanel : Panel
 
 		if (allKids.Count == 0)
 		{
-			base.Size = Vect2.Zero;
+			if (_isAutoSize)
+				base.Size = Vect2.Zero;
 			base.OnDirty(state);
 			return;
 		}

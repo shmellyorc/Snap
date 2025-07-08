@@ -161,11 +161,11 @@ public class Camera
 
 			float normalized = _shakeTimeRemaining / _shakeDuration; // 1→0
 			float currentMag = _shakeMagnitude * normalized;
-			float offsetX = (FastRandom.Instance.NextFloat() * 2f - 1f) * currentMag;
-			float offsetY = (FastRandom.Instance.NextFloat() * 2f - 1f) * currentMag;
+			float offsetX = FastRandom.Instance.RangeFloat(-1, 1f) * currentMag;
+			float offsetY = FastRandom.Instance.RangeFloat(-1, 1f) * currentMag;
 			desired += new Vect2(offsetX, offsetY);
 
-			if(_shakeTimeRemaining == 0)
+			if(_shakeTimeRemaining <= 0)
 				desired = _orginalOffset;
 		}
 

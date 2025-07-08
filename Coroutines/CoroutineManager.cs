@@ -35,10 +35,10 @@ namespace Snap.Coroutines
 	/// </summary>
 	public sealed class CoroutineManager
 	{
-		private static object _publicOwner = new();
-		private List<IEnumerator> _running = [];
-		private List<float> _delays = [];
-		private List<object> _owners = [];
+		private readonly static object PublicOwner = new();
+		private readonly List<IEnumerator> _running = [];
+		private readonly List<float> _delays = [];
+		private readonly List<object> _owners = [];
 
 		/// <summary>
 		/// How many coroutines are currently running.
@@ -55,7 +55,7 @@ namespace Snap.Coroutines
 		/// <returns>A handle to the new coroutine.</returns>
 		/// <param name="delay">How many seconds to delay before starting.</param>
 		/// <param name="routine">The routine to run.</param>
-		public CoroutineHandle StartDelayed(float delay, IEnumerator routine) => StartDelayed(delay, _publicOwner, routine);
+		public CoroutineHandle StartDelayed(float delay, IEnumerator routine) => StartDelayed(delay, PublicOwner, routine);
 
 		internal CoroutineHandle StartDelayed(float delay, object owner, IEnumerator routine)
 		{
@@ -123,7 +123,7 @@ namespace Snap.Coroutines
 			}
 		}
 
-		internal void StopAllPublicOwner() => StopAll(_publicOwner);
+		internal void StopAllPublicOwner() => StopAll(PublicOwner);
 
 		/// <summary>
 		/// Check if the routine is currently running.
@@ -139,11 +139,6 @@ namespace Snap.Coroutines
 		/// <param name="routine">The routine to check.</param>
 		public bool IsRunning(CoroutineHandle routine) => routine.IsRunning;
 
-		/// <summary>
-		/// Update all running coroutines.
-		/// </summary>
-		/// <returns>True if any routines were updated.</returns>
-		/// <param name="deltaTime">How many seconds have passed sinced the last update.</param>
 		internal void Update()
 		{
 			for (int i = 0; i < _running.Count; i++)

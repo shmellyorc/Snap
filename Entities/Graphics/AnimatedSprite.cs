@@ -147,11 +147,11 @@ public sealed class AnimatedSprite : Entity
 			}
 		}
 
-		Size = anim.Frames.First().Size;
+		Size = anim.Frames[0].Size;
 
 		Current = anim;
 		_currentHash = hash;
-		_currentFrames = anim.Frames as Rect2[] ?? anim.Frames.ToArray();
+		_currentFrames = anim.Frames as Rect2[] ?? [.. anim.Frames];
 		_currentDuration = anim.FrameDuration;
 		IsPlaying = true;
 
@@ -213,8 +213,8 @@ public sealed class AnimatedSprite : Entity
 			_rtChecked = true;
 		}
 
-		if (Color.A <= 0 || !IsVisible)
-			return;
+		// if (Color.A <= 0 || !IsVisible)
+		// 	return;
 
 		var idx = Frame;
 		var frame = _currentFrames[idx];
