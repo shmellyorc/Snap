@@ -9,9 +9,9 @@ public static class DiscoverableHelper
     private static readonly object _allTypesLock = new();
 
     // Cache metadata per type to avoid repeated reflection
-    private static readonly ConcurrentDictionary<Type, DiscoverableAttribute?> _metaCache = new();
+    private static readonly ConcurrentDictionary<Type, DiscoverableAttribute?> _metaCache = [];
     // Cache results of FindAll<T> to avoid repeated enumeration overhead
-    private static readonly ConcurrentDictionary<Type, IReadOnlyList<Type>> _findAllCache = new();
+    private static readonly ConcurrentDictionary<Type, IReadOnlyList<Type>> _findAllCache = [];
 
     // Invalidate caches whenever a new assembly is loaded
     static DiscoverableHelper()
