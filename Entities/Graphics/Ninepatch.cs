@@ -1,5 +1,9 @@
 namespace Snap.Entities.Graphics;
 
+/// <summary>
+/// Represents a nine-patch image entity that divides a texture into 9 regions (corners, edges, center)
+/// to allow scalable UI elements without distortion.
+/// </summary>
 public sealed class Ninepatch : Entity
 {
 	[Flags]
@@ -10,16 +14,24 @@ public sealed class Ninepatch : Entity
 		Source = 2,
 	}
 
-	private Texture _texture;
+	private readonly Texture _texture;
 	private readonly Rect2 _source;
-	private int _left, _right, _top, _bottom;
+	private readonly int _left, _right, _top, _bottom;
 	private readonly Rect2[] _src = new Rect2[9], _dst = new Rect2[9];
 	private NinePatchDirtyFlags _dirtyFlags;
 	private RenderTarget? _rt;
 	private bool _rtChecked;
 	private Rect2 _oldBounds;
 
+	/// <summary>
+	/// Gets or sets the tint color applied to the ninepatch when rendering.
+	/// </summary>
 	public Color Color { get; set; } = Color.White;
+
+	/// <summary>
+	/// Gets or sets the position of the ninepatch.
+	/// Setting this flag marks the destination as dirty, triggering recalculation.
+	/// </summary>
 	public new Vect2 Position
 	{
 		get => base.Position;
@@ -33,6 +45,10 @@ public sealed class Ninepatch : Entity
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the size of the ninepatch.
+	/// Setting this flag marks the destination as dirty, triggering recalculation.
+	/// </summary>
 	public new Vect2 Size
 	{
 		get => base.Size;
@@ -46,6 +62,13 @@ public sealed class Ninepatch : Entity
 		}
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Ninepatch"/> class with the given texture,
+	/// source rectangle defining the full texture region, and corner sizes for patch slicing.
+	/// </summary>
+	/// <param name="texture">The source texture containing the ninepatch image.</param>
+	/// <param name="source">The rectangle region of the texture to use.</param>
+	/// <param name="corners">The thickness of the corners to preserve in the ninepatch (left, top, right, bottom).</param>
 	public Ninepatch(Texture texture, Rect2 source, Rect2 corners)
 	{
 		_texture = texture;
@@ -59,9 +82,19 @@ public sealed class Ninepatch : Entity
 		_dirtyFlags = NinePatchDirtyFlags.Dest | NinePatchDirtyFlags.Source;
 	}
 
+	// <summary>
+	/// Initializes a new instance of the <see cref="Ninepatch"/> class using a spritesheet and patch name.
+	/// </summary>
+	/// <param name="texture">The source texture.</param>
+	/// <param name="sheet">The spritesheet containing patch data.</param>
+	/// <param name="patchName">The name of the patch in the spritesheet.</param>
 	public Ninepatch(Texture texture, Spritesheet sheet, string patchName)
 		: this(texture, sheet.GetBounds(patchName), sheet.GetPatch(patchName)) { }
 
+	/// <summary>
+	/// Called when the entity enters the scene.
+	/// Initializes the source and destination patches based on current bounds.
+	/// </summary>
 	protected override void OnEnter()
 	{
 		_oldBounds = Bounds;
@@ -72,6 +105,10 @@ public sealed class Ninepatch : Entity
 		base.OnEnter();
 	}
 
+	/// <summary>
+	/// Called every frame to update and render the ninepatch.
+	/// Recalculates patches if position, size, or source changes.
+	/// </summary>
 	protected override void OnUpdate()
 	{
 		if (!_rtChecked)

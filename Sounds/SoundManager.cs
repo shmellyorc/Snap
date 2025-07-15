@@ -58,11 +58,31 @@ public sealed class SoundManager
 	{
 		if (!_banks.TryGetValue(bankId, out var bank))
 			throw new Exception($"Bank ID: {bankId} not found in sound banks.");
+		if (sound == null)
+			throw new Exception();
 
 		Logger.Instance.Log(LogLevel.Info, $"Playing sound ID: {sound.Id} in sound bank ID: {bankId}.");
 
 		return bank.Add(sound);
 	}
+
+	public SoundBank GetBank(Enum bankId) => GetBank(Convert.ToUInt32(bankId));
+	public SoundBank GetBank(uint bankId)
+	{
+		if (!_banks.TryGetValue(bankId, out var bank))
+			throw new Exception($"Bank ID: {bankId} not found in sound banks.");
+
+		return bank;
+	}
+
+	public bool TryGetBank(Enum bankId, out SoundBank bank) => TryGetBank(Convert.ToUInt32(bankId), out bank);
+	public bool TryGetBank(uint bankId, out SoundBank bank)
+	{
+		bank = GetBank(bankId);
+
+		return bank != null;
+	}
+
 
 	public bool StopAll(Enum bankId) => StopAll(Convert.ToUInt32(bankId));
 	public bool StopAll(uint bankId)

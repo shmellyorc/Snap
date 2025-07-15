@@ -1,11 +1,24 @@
 namespace Snap.Entities.Graphics;
 
+/// <summary>
+/// An entity that renders a solid colored rectangle.
+/// </summary>
 public sealed class ColorRect : Entity
 {
 	private Texture _texture;
+	private RenderTarget? _rt;
+	private bool _rtChecked;
 
+	/// <summary>
+	/// Gets or sets the color used to tint the rectangle.
+	/// Defaults to the engine's clear color on initialization.
+	/// </summary>
 	public Color Color { get; set; } = Color.White;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="ColorRect"/> class.
+	/// Sets default size and color based on engine settings.
+	/// </summary>
 	public ColorRect()
 	{
 		// Always default to engine clear color
@@ -13,6 +26,10 @@ public sealed class ColorRect : Entity
 		Size = EngineSettings.Instance.Viewport;
 	}
 
+	/// <summary>
+	/// Called when the entity enters the scene.
+	/// Initializes the white 1x1 pixel texture used for rendering.
+	/// </summary>
 	protected override void OnEnter()
 	{
 		_texture = new Texture(Vect2.One); // Tint of White/Nothing
@@ -20,9 +37,9 @@ public sealed class ColorRect : Entity
 		base.OnEnter();
 	}
 
-	private RenderTarget? _rt;
-	private bool _rtChecked;
-
+	/// <summary>
+	/// Called every frame to update and render the colored rectangle.
+	/// </summary>
 	protected override void OnUpdate()
 	{
 		if (!_rtChecked)

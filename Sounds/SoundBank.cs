@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace Snap.Sounds;
 
 public sealed class SoundBank
@@ -11,6 +13,31 @@ public sealed class SoundBank
 	private float _volume = 1.0f, _pan = 0f, _pitch = 0f;
 	private readonly float _evictAfterMinutes;
 	private readonly Dictionary<Sound, List<SoundInstanceWrapped>> _instances = new(128);
+
+	public ReadOnlyDictionary<Sound, List<SoundInstance>> Instances
+	{
+		get
+		{
+			Dictionary<Sound, List<SoundInstance>> flattened = new(_instances.Count);
+
+			foreach (var pair in _instances)
+			{
+				Sound key = pair.Key;
+				List<SoundInstanceWrapped> wrapper = pair.Value;
+				List<SoundInstance> instanceList = new(pair.Value.Count);
+
+				foreach (var wrapped in wrapper)
+				{
+					if (wrapped?.Instance != null)
+						instanceList.Add(wrapped.Instance);
+				}
+
+				flattened[key] = instanceList;
+			}
+
+			return new ReadOnlyDictionary<Sound, List<SoundInstance>>(flattened);
+		}
+	}
 
 	public int Count => _instances.SelectMany(x => x.Value).Count(x => !x.Instance.IsValid);
 	public uint Id { get; private set; }
@@ -161,6 +188,8 @@ public sealed class SoundBank
 
 	internal bool Remove(Sound sound)
 	{
+		if (_instances.Count == 0)
+			return false;
 		if (!_instances.TryGetValue(sound, out var inst))
 			return false;
 
@@ -190,11 +219,24 @@ public sealed class SoundBank
 
 	internal bool IsSoundPlaying(Sound sound)
 	{
-		if(_instances.Count == 0)
+		if (_instances.Count == 0)
 			return false;
 		if (!_instances.TryGetValue(sound, out var instances))
 			return false;
 
 		return instances.Any(x => x.Instance.IsPlaying);
+	}
+
+	internal SoundInstance GetSound(Sound sound)
+	{
+		if (sound == null)
+			throw new Exception();
+		if (!_instances.TryGetValue(sound, out var instances))
+			return null;
+
+		return instances
+			.Where(x => x.Instance.IsPlaying)
+			.Select(x => x.Instance)
+			.FirstOrDefault();
 	}
 }

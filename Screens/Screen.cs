@@ -130,7 +130,7 @@ public class Screen
 
         Camera?.Update(Clock.DeltaTime);
 
-        if (_entities.Count == 0)
+		if (_entities.Count == 0)
         {
             OnUpdate();
             return;
@@ -297,7 +297,10 @@ public class Screen
     public bool StopRoutine(CoroutineHandle handle) => CoroutineManager.Stop(handle);
     public bool HasRoutine(CoroutineHandle handle) => CoroutineManager.IsRunning(handle);
     public void ClearRoutines() => CoroutineManager.StopAll(this);
-    #endregion
+	#endregion
 
-    internal void UpdateDirtyState(DirtyState state) => _dirtyState |= state;
+	internal void UpdateDirtyState(DirtyState state)
+    {
+		_dirtyState |= state;
+	}
 }

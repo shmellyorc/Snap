@@ -195,8 +195,8 @@ public sealed class Renderer
     TextureEffects effects = TextureEffects.None,
     int depth = 0)
     {
-        // if (!texture.IsValid)
-        // 	texture.Load();
+        if (!texture.IsValid)
+        	texture.Load();
 
         var quad = DrawQuad(
                 texture,

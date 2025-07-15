@@ -1,13 +1,43 @@
 namespace Snap.Entities.Graphics;
 
+/// <summary>
+/// Represents a single animation, including its name, texture, frames, playback speed, and loop setting.
+/// </summary>
 public sealed class Animation
 {
+	/// <summary>
+	/// Gets the name of the animation.
+	/// </summary>
 	public string Name { get; }
+
+	/// <summary>
+	/// Gets the texture containing the animation frames.
+	/// </summary>
 	public Texture Texture { get; }
+
+	/// <summary>
+	/// Gets the list of frames represented as rectangles within the texture.
+	/// </summary>
 	public IReadOnlyList<Rect2> Frames { get; }
+
+	/// <summary>
+	/// Gets the playback speed of the animation in frames per second.
+	/// </summary>
 	public float Speed { get; }
+
+	/// <summary>
+	/// Gets a value indicating whether the animation loops when it reaches the end.
+	/// </summary>
 	public bool Looped { get; }
+
+	/// <summary>
+	/// Gets a value indicating whether the animation has no name or is considered empty.
+	/// </summary>
 	public bool IsEmpty => Name.IsEmpty();
+
+	/// <summary>
+	/// Gets the duration of each frame in seconds (calculated as 1 / Speed).
+	/// </summary>
 	public float FrameDuration { get; }
 
 	internal Animation(string name, Texture texture, Rect2[] frames, float speed, bool looped)
@@ -22,8 +52,16 @@ public sealed class Animation
 	}
 }
 
+/// <summary>
+/// An entity that handles multiple animations, allowing playback, pausing, and drawing of animated sprites.
+/// </summary>
 public sealed class AnimatedSprite : Entity
 {
+	// Micro-opt:
+	// No Diretory or property lookup in OnUpdate for frames and duration;
+	// Single array lookup instead of Current.Frames[Frame] (two property calls)
+	// FrameDuration Fetched once per Play, not devided every frame.
+
 	private const float MinSpeed = 0.0001f;
 
 	private readonly Dictionary<uint, Animation> _animations = new(16);
@@ -31,38 +69,130 @@ public sealed class AnimatedSprite : Entity
 	private int _frame;
 	private RenderTarget? _rt;
 	private bool _rtChecked;
-
 	private uint _currentHash;
-
-	// Micro-opt:
-	// No Diretory or property lookup in OnUpdate for frames and duration;
-	// Single array lookup instead of Current.Frames[Frame] (two property calls)
-	// FrameDuration Fetched once per Play, not devided every frame.
 	private Rect2[] _currentFrames;
 	private float _currentDuration;
 
+	/// <summary>
+	/// Gets a value indicating whether an animation is currently playing.
+	/// </summary>
 	public bool IsPlaying { get; private set; }
+
+	/// <summary>
+	/// Gets a value indicating whether the current animation is finished (not playing and not looped).
+	/// </summary>
 	public bool IsFinished => !IsPlaying && !Current.Looped;
+
+	/// <summary>
+	/// Gets or sets the speed multiplier for the animation playback.
+	/// </summary>
 	public float SpeedScale { get; set; } = 1f;
+
+	/// <summary>
+	/// Gets the currently playing animation.
+	/// </summary>
 	public Animation Current { get; private set; }
+
+	/// <summary>
+	/// Gets the current frame index of the playing animation, clamped to valid frame range.
+	/// </summary>
 	public int Frame => Current.IsEmpty ? 0 : Math.Clamp(_frame, 0, Current.Frames.Count - 1);
+
+	/// <summary>
+	/// Gets or sets the color to tint the sprite when drawn.
+	/// </summary>
 	public Color Color { get; set; } = Color.White;
+
+	/// <summary>
+	/// Gets or sets the origin offset for rendering transformations.
+	/// </summary>
 	public Vect2 Origin { get; set; } = Vect2.Zero;
+
+	/// <summary>
+	/// Gets or sets the rotation angle of the sprite in radians.
+	/// </summary>
 	public float Rotation { get; set; }
+
+	/// <summary>
+	/// Gets or sets the scale factor for the sprite.
+	/// </summary>
 	public Vect2 Scale { get; set; } = Vect2.One;
+
+	/// <summary>
+	/// Gets or sets any special texture effects (e.g. flipping) to apply when drawing.
+	/// </summary>
 	public TextureEffects Effects { get; set; }
+
+	/// <summary>
+	/// Gets or sets the horizontal alignment used when rendering.
+	/// </summary>
 	public HAlign HAlign { get; set; }
+
+	/// <summary>
+	/// Gets or sets the vertical alignment used when rendering.
+	/// </summary>
 	public VAlign VAlign { get; set; }
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="AnimatedSprite"/> class.
+	/// </summary>
 	public AnimatedSprite() { }
 
+	/// <summary>
+	/// Adds an animation by specifying the frame range and grid size for the texture atlas.
+	/// </summary>
+	/// <param name="name">The unique animation name.</param>
+	/// <param name="texture">The texture atlas containing frames.</param>
+	/// <param name="grid">The size of each frame in pixels.</param>
+	/// <param name="frame">The single frame index in the texture atlas.</param>
+	/// <param name="speed">The playback speed in frames per second.</param>
+	/// <param name="looped">Whether the animation should loop.</param>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance (for chaining).</returns>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown if grid size is invalid or speed is negative.</exception>
 	public AnimatedSprite AddAnimation(Enum name, Texture texture, Vect2 grid, int frame, float speed, bool looped) =>
-		AddAnimation(name.ToEnumString(), texture, grid, new[] { frame }, speed, looped);
-	public AnimatedSprite AddAnimation(string name, Texture texture, Vect2 grid, int frame, float speed, bool looped) =>
-		AddAnimation(name, texture, grid, new[] { frame }, speed, looped);
+		AddAnimation(name.ToEnumString(), texture, grid, [frame], speed, looped);
 
+	/// <summary>
+	/// Adds an animation by specifying the frame range and grid size for the texture atlas.
+	/// </summary>
+	/// <param name="name">The unique animation name.</param>
+	/// <param name="texture">The texture atlas containing frames.</param>
+	/// <param name="grid">The size of each frame in pixels.</param>
+	/// <param name="frame">The single frame index in the texture atlas.</param>
+	/// <param name="speed">The playback speed in frames per second.</param>
+	/// <param name="looped">Whether the animation should loop.</param>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance (for chaining).</returns>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown if grid size is invalid or speed is negative.</exception>
+	public AnimatedSprite AddAnimation(string name, Texture texture, Vect2 grid, int frame, float speed, bool looped) =>
+		AddAnimation(name, texture, grid, [frame], speed, looped);
+
+	/// <summary>
+	/// Adds an animation by specifying the frame range and grid size for the texture atlas.
+	/// </summary>
+	/// <param name="name">The unique animation name.</param>
+	/// <param name="texture">The texture atlas containing frames.</param>
+	/// <param name="grid">The size of each frame in pixels.</param>
+	/// <param name="startFrame">The starting frame index in the texture atlas.</param>
+	/// <param name="endFrame">The ending frame index in the texture atlas.</param>
+	/// <param name="speed">The playback speed in frames per second.</param>
+	/// <param name="looped">Whether the animation should loop.</param>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance (for chaining).</returns>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown if grid size is invalid or speed is negative.</exception>
 	public AnimatedSprite AddAnimation(Enum name, Texture texture, Vect2 grid, int startFrame, int endFrame,
 	float speed, bool looped) => AddAnimation(name.ToEnumString(), texture, grid, startFrame, endFrame, speed, looped);
+
+	/// <summary>
+	/// Adds an animation by specifying the frame range and grid size for the texture atlas.
+	/// </summary>
+	/// <param name="name">The unique animation name.</param>
+	/// <param name="texture">The texture atlas containing frames.</param>
+	/// <param name="grid">The size of each frame in pixels.</param>
+	/// <param name="startFrame">The starting frame index in the texture atlas.</param>
+	/// <param name="endFrame">The ending frame index in the texture atlas.</param>
+	/// <param name="speed">The playback speed in frames per second.</param>
+	/// <param name="looped">Whether the animation should loop.</param>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance (for chaining).</returns>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown if grid size is invalid or speed is negative.</exception>
 	public AnimatedSprite AddAnimation(string name, Texture texture, Vect2 grid, int startFrame, int endFrame,
 	float speed, bool looped)
 	{
@@ -81,8 +211,31 @@ public sealed class AnimatedSprite : Entity
 		return this;
 	}
 
+	/// <summary>
+	/// Adds an animation by specifying the frame range and grid size for the texture atlas.
+	/// </summary>
+	/// <param name="name">The unique animation name.</param>
+	/// <param name="texture">The texture atlas containing frames.</param>
+	/// <param name="grid">The size of each frame in pixels.</param>
+	/// <param name="frames">The frames in the texture atlas.</param>
+	/// <param name="speed">The playback speed in frames per second.</param>
+	/// <param name="looped">Whether the animation should loop.</param>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance (for chaining).</returns>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown if grid size is invalid or speed is negative.</exception>
 	public AnimatedSprite AddAnimation(Enum name, Texture texture, Vect2 grid, int[] frames, float speed, bool looped) =>
 		AddAnimation(name.ToEnumString(), texture, grid, frames, speed, looped);
+
+	/// <summary>
+	/// Adds an animation by specifying the frame range and grid size for the texture atlas.
+	/// </summary>
+	/// <param name="name">The unique animation name.</param>
+	/// <param name="texture">The texture atlas containing frames.</param>
+	/// <param name="grid">The size of each frame in pixels.</param>
+	/// <param name="frames">The frames in the texture atlas.</param>
+	/// <param name="speed">The playback speed in frames per second.</param>
+	/// <param name="looped">Whether the animation should loop.</param>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance (for chaining).</returns>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown if grid size is invalid or speed is negative.</exception>
 	public AnimatedSprite AddAnimation(string name, Texture texture, Vect2 grid, int[] frames, float speed, bool looped)
 	{
 		if (frames == null || frames.Length == 0)
@@ -110,6 +263,10 @@ public sealed class AnimatedSprite : Entity
 		return this;
 	}
 
+	/// <summary>
+	/// Stops the current animation playback.
+	/// </summary>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance.</returns>
 	public AnimatedSprite Stop()
 	{
 		if (!IsPlaying)
@@ -119,11 +276,58 @@ public sealed class AnimatedSprite : Entity
 		return this;
 	}
 
+	/// <summary>
+	/// Starts playing the specified animation.
+	/// </summary>
+	/// <param name="name">The name of the animation to play.</param>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance.</returns>
+	/// <exception cref="KeyNotFoundException">Thrown if animation with the given name does not exist.</exception>
 	public AnimatedSprite Play(Enum name) => Play(name.ToEnumString(), false, true);
+
+	/// <summary>
+	/// Starts playing the specified animation.
+	/// </summary>
+	/// <param name="name">The name of the animation to play.</param>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance.</returns>
+	/// <exception cref="KeyNotFoundException">Thrown if animation with the given name does not exist.</exception>
 	public AnimatedSprite Play(string name) => Play(name, false, true);
+
+	/// <summary>
+	/// Starts playing the specified animation.
+	/// </summary>
+	/// <param name="name">The name of the animation to play.</param>
+	/// <param name="repeat">Whether to repeat the animation if it's already playing.</param>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance.</returns>
+	/// <exception cref="KeyNotFoundException">Thrown if animation with the given name does not exist.</exception>
 	public AnimatedSprite Play(Enum name, bool repeat) => Play(name.ToEnumString(), repeat, true);
+
+	/// <summary>
+	/// Starts playing the specified animation.
+	/// </summary>
+	/// <param name="name">The name of the animation to play.</param>
+	/// <param name="repeat">Whether to repeat the animation if it's already playing.</param>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance.</returns>
+	/// <exception cref="KeyNotFoundException">Thrown if animation with the given name does not exist.</exception>
 	public AnimatedSprite Play(string name, bool repeat) => Play(name, repeat, true);
+
+	/// <summary>
+	/// Starts playing the specified animation.
+	/// </summary>
+	/// <param name="name">The name of the animation to play.</param>
+	/// <param name="repeat">Whether to repeat the animation if it's already playing.</param>
+	/// <param name="reset">Whether to reset the animation frame index when playing.</param>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance.</returns>
+	/// <exception cref="KeyNotFoundException">Thrown if animation with the given name does not exist.</exception>
 	public AnimatedSprite Play(Enum name, bool repeat, bool reset) => Play(name.ToEnumString(), repeat, reset);
+
+	/// <summary>
+	/// Starts playing the specified animation.
+	/// </summary>
+	/// <param name="name">The name of the animation to play.</param>
+	/// <param name="repeat">Whether to repeat the animation if it's already playing.</param>
+	/// <param name="reset">Whether to reset the animation frame index when playing.</param>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance.</returns>
+	/// <exception cref="KeyNotFoundException">Thrown if animation with the given name does not exist.</exception>
 	public AnimatedSprite Play(string name, bool repeat, bool reset)
 	{
 		var hash = HashHelpers.Hash32(name);
@@ -158,6 +362,10 @@ public sealed class AnimatedSprite : Entity
 		return this;
 	}
 
+	/// <summary>
+	/// Pauses the currently playing animation.
+	/// </summary>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance.</returns>
 	public AnimatedSprite Pause()
 	{
 		if (!Current.IsEmpty)
@@ -165,6 +373,10 @@ public sealed class AnimatedSprite : Entity
 		return this;
 	}
 
+	/// <summary>
+	/// Resumes playback of a paused animation.
+	/// </summary>
+	/// <returns>The current <see cref="AnimatedSprite"/> instance.</returns>
 	public AnimatedSprite Resume()
 	{
 		if (!Current.IsEmpty)
@@ -172,17 +384,21 @@ public sealed class AnimatedSprite : Entity
 		return this;
 	}
 
+	/// <summary>
+	/// Updates the animation frame based on elapsed time and speed.
+	/// Called automatically each frame.
+	/// </summary>
 	protected override void OnUpdate()
 	{
 		if (IsPlaying && Current != null)
 		{
-			var FrameDuration = _currentDuration;
+			var frameDuration = _currentDuration;
 			var delta = Clock.DeltaTime * SpeedScale;
 			_frameDelta += delta;
 
-			while (_frameDelta >= FrameDuration)
+			while (_frameDelta >= frameDuration)
 			{
-				_frameDelta -= FrameDuration;
+				_frameDelta -= frameDuration;
 				_frame++;
 
 				if (_frame >= _currentFrames.Length)
@@ -212,9 +428,6 @@ public sealed class AnimatedSprite : Entity
 			this.TryGetAncestorOfType(out _rt);
 			_rtChecked = true;
 		}
-
-		// if (Color.A <= 0 || !IsVisible)
-		// 	return;
 
 		var idx = Frame;
 		var frame = _currentFrames[idx];

@@ -207,8 +207,8 @@ public class Entity
 
 	public Sound GetSound(string name) => AssetManager.GetSound(name);
 	public Sound GetSound(Enum name) => AssetManager.GetSound(name);
-	public bool TryGetSound(string name, out Sound texture) => AssetManager.TryGetSound(name, out texture);
-	public bool TryGetSound(Enum name, out Sound texture) => AssetManager.TryGetSound(name, out texture);
+	public bool TryGetSound(string name, out Sound sound) => AssetManager.TryGetSound(name, out sound);
+	public bool TryGetSound(Enum name, out Sound sound) => AssetManager.TryGetSound(name, out sound);
 
 	public void Destroy()
 	{

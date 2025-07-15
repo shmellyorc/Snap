@@ -1,5 +1,9 @@
 namespace Snap.Entities.Graphics;
 
+/// <summary>
+/// A render target panel that renders entities or draw commands into an offscreen texture,
+/// which can then be drawn to the main screen. Supports batching, draw ordering, and texture atlasing.
+/// </summary>
 public class RenderTarget : Panel
 {
 	private const int MaxDrawCalls = 256;
@@ -11,13 +15,23 @@ public class RenderTarget : Panel
 	private SFVertexBuffer _vertexBuffer;
 	private SFVertex[] _vertexCache;
 	private Texture _texture;
-	public bool IsRendering;
 	private SFView _view;
 	private Vect2 _offset;
 	private long _seqCounter;
 
+	/// <summary>
+	/// Indicates whether the render target is currently rendering.
+	/// </summary>
+	public bool IsRendering { get; private set; }
+
+	/// <summary>
+	/// Gets or sets the color tint applied when drawing the render target texture.
+	/// </summary>
 	public Color Color { get; set; } = Color.White;
 
+	/// <summary>
+	/// Gets or sets the size of the render target. Resizes and recreates the underlying render texture and view.
+	/// </summary>
 	public new Vect2 Size
 	{
 		get => base.Size;
@@ -41,9 +55,16 @@ public class RenderTarget : Panel
 		}
 	}
 
-
+	/// <summary>
+	/// Initializes a new instance of the <see cref="RenderTarget"/> class.
+	/// </summary>
+	/// <param name="entities">Optional child entities to add to this panel.</param>
 	public RenderTarget(params Entity[] entities) : base(entities) { }
 
+	/// <summary>
+	/// Called when the entity enters the scene. Initializes vertex buffer, render texture, and view.
+	/// Throws if size is invalid or if nested RenderTargets are detected.
+	/// </summary>
 	protected override void OnEnter()
 	{
 		if (Size.X <= 0 || Size.Y <= 0)
@@ -168,7 +189,10 @@ public class RenderTarget : Panel
 		_batches++;
 	}
 
-	
+	/// <summary>
+	/// Gets or sets the offset applied to the view center for panning.
+	/// Changing this updates the internal view center position.
+	/// </summary>
 	public Vect2 Offset
 	{
 		get => _offset;
@@ -186,9 +210,22 @@ public class RenderTarget : Panel
 		}
 	}
 
+	/// <summary>
+	/// Adjusts the view's center by the given delta for panning.
+	/// </summary>
+	/// <param name="delta">Amount to pan the view.</param>
 	public void Pan(Vect2 delta) => _view.Center += delta;
+
+	/// <summary>
+	/// Zooms the view by the specified factor.
+	/// </summary>
+	/// <param name="factor">Zoom factor, where &gt;1 zooms in and &lt;1 zooms out.</param>
 	public void Zoom(float factor) => _view.Zoom(factor);
 
+	/// <summary>
+	/// Updates the render target by clearing, rendering all queued commands,
+	/// displaying the render texture, and drawing it to the screen.
+	/// </summary>
 	protected override void OnUpdate()
 	{
 		IsRendering = true;
@@ -209,7 +246,7 @@ public class RenderTarget : Panel
 		base.OnUpdate();
 	}
 
-
+	
 	public void Draw(Texture texture, Rect2 dstRect, Rect2 srcRect, Color color, Vect2? origin = null,
 		Vect2? scale = null, float rotation = 0f, TextureEffects effects = TextureEffects.None, int depth = 0) =>
 		EngineDraw(texture, dstRect, srcRect, color, origin, scale, rotation, effects, depth);
@@ -294,7 +331,7 @@ public class RenderTarget : Panel
 		EnqueueCommand(texture.NativeHandle, texture, directQuad, depth);
 	}
 
-	
+
 
 
 

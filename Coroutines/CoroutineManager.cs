@@ -24,10 +24,6 @@ SOFTWARE.
 
 */
 
-using System.Collections;
-
-using Snap.Systems;
-
 namespace Snap.Coroutines
 {
 	/// <summary>

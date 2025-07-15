@@ -1,5 +1,8 @@
 namespace Snap.Entities.Graphics;
 
+/// <summary>
+/// Represents a drawable text label entity with support for multi-line text, alignment, shadow, and partial text display.
+/// </summary>
 public sealed class Label : Entity
 {
 	private string _text = string.Empty;
@@ -12,15 +15,50 @@ public sealed class Label : Entity
 	private RenderTarget? _rt;
 	private bool _rtChecked;
 
+	/// <summary>
+	/// Gets or sets the offset for the text shadow.
+	/// </summary>
 	public Vect2 ShadowOffset { get; set; } = Vect2.One;
+
+	/// <summary>
+	/// Gets or sets the offset applied to the text position.
+	/// </summary>
 	public Vect2 Offset { get; set; } = Vect2.Zero;
+
+	/// <summary>
+	/// Gets or sets the color of the text.
+	/// </summary>
 	public Color Color { get; set; } = Color.White;
+
+	/// <summary>
+	/// Gets or sets the color of the text shadow.
+	/// </summary>
 	public Color ShadowColor { get; set; } = Color.Black * 0.2f;
+
+	/// <summary>
+	/// Gets or sets whether the text shadow is enabled.
+	/// </summary>
 	public bool Shadow { get; set; }
+
+	/// <summary>
+	/// Gets or sets the horizontal alignment of the text within the label's bounds.
+	/// </summary>
 	public HAlign HAlign { get; set; }
+
+	/// <summary>
+	/// Gets or sets the vertical alignment of the text within the label's bounds.
+	/// </summary>
 	public VAlign VAlign { get; set; }
+
+	/// <summary>
+	/// Gets the total length of the label's text.
+	/// </summary>
 	public int Length => _text.Length;
 
+	/// <summary>
+	/// Gets or sets the text displayed by the label.
+	/// Setting the text marks the label as dirty, triggering a redraw.
+	/// </summary>
 	public string Text
 	{
 		get => _text;
@@ -33,6 +71,10 @@ public sealed class Label : Entity
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the size of the label.
+	/// Changing the size marks the label as dirty, triggering a redraw.
+	/// </summary>
 	public new Vect2 Size
 	{
 		get => base.Size;
@@ -45,6 +87,10 @@ public sealed class Label : Entity
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the maximum visible length of the text.
+	/// Use -1 to show the full text.
+	/// </summary>
 	public int VisibleLength
 	{
 		get => _visibleLength;
@@ -58,8 +104,16 @@ public sealed class Label : Entity
 		}
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Label"/> class with the specified font.
+	/// </summary>
+	/// <param name="font">The font used to render the text.</param>
 	public Label(Font font) => _font = font;
 
+	/// <summary>
+	/// Called every frame to update the label's visual representation.
+	/// Recalculates text layout if the label is marked dirty.
+	/// </summary>
 	protected override void OnUpdate()
 	{
 		if (!_rtChecked)

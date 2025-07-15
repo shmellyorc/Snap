@@ -36,6 +36,7 @@ global using Snap.Screens;
 global using Snap.Services;
 global using Snap.Sounds;
 global using Snap.Systems;
+global using Snap.Tweens;
 
 global using SFBlendMode = SFML.Graphics.BlendMode;
 global using SFClock = SFML.System.Clock;

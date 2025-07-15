@@ -23,6 +23,7 @@ public sealed class ServiceManager
 
 		_services[service.GetType()] = service;
 
+		BeaconManager.Initialize(service);
 		service?.Iniitialize();
 	}
 
