@@ -233,7 +233,7 @@ public sealed class Renderer
         if (!texture.IsValid)
             texture.Load();
 
-        // convert float‐Rect2 → IntRect
+        // convert float Rect2 → IntRect
         var srcInt = new SFRectI(
             (int)srcRect.Left,
             (int)srcRect.Top,
@@ -373,11 +373,11 @@ public sealed class Renderer
             currentTexture = cmd.Texture;
         }
 
-        // 3) Final flush
+        // Final flush
         if (index > 0 && currentTexture != null)
             Flush(index, _vertexCache, currentTexture);
 
-        // 4) reset for next frame
+        // reset for next frame
         _drawCommands.Clear();
         _seqCounter = 0;
     }

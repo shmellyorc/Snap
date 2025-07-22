@@ -4,7 +4,7 @@ namespace Snap.Assets.LDTKImporter;
 /// Represents a single level within an LDTK-based map.
 /// Contains level metadata, spatial dimensions, background styling, associated layers, and custom settings.
 /// </summary>
-public class MapLevel
+public sealed class MapLevel
 {
 	/// <summary>
 	/// The display name of the level, as assigned in the source project.

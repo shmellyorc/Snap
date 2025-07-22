@@ -42,7 +42,7 @@ public static class FileHelpers
 
 	/// <summary>
 	/// Returns a writable per-user application data directory, creating it if necessary:
-	///   • Windows:   %APPDATA%\[company]\[appname]  
+	///   • Windows:   %APPDATA%/[company]/[appname]  
 	///   • macOS:     ~/Library/Application Support/[company]/[appname]  
 	///   • Linux:     ~/.config/[company]/[appname]  
 	///   • Others:    same as Linux

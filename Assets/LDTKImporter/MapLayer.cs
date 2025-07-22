@@ -41,7 +41,7 @@ public enum MapLayerType
 /// Represents a single layer within a level.
 /// Can contain int grid data, placed entities, or tiles depending on the layer type.
 /// </summary>
-public class MapLayer
+public sealed class MapLayer
 {
 	/// <summary>
 	/// The display name of the layer as defined in the editor.

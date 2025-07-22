@@ -4,7 +4,7 @@ namespace Snap.Assets.LDTKImporter;
 /// Represents a parsed LDTK project asset, exposing access to levels, layers, entities, and tilesets.
 /// Manages internal caches for fast hashed and indexed lookups.
 /// </summary>
-public class LDTKProject : IAsset
+public sealed class LDTKProject : IAsset
 {
 	// cachced levels, entities, etc:
 	private Dictionary<uint, MapLevel> _levelCache = [];

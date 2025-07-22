@@ -5,55 +5,55 @@ namespace Snap.Tweens;
 /// </summary>
 public enum EaseType
 {
-	// 1) Simple linear (no easing)
+	// Simple linear (no easing)
 	Linear,
 
-	// 2) Quadratic
+	// Quadratic
 	QuadIn,
 	QuadOut,
 	QuadInOut,
 
-	// 3) Cubic
+	// Cubic
 	CubicIn,
 	CubicOut,
 	CubicInOut,
 
-	// 4) Quartic
+	// Quartic
 	QuartIn,
 	QuartOut,
 	QuartInOut,
 
-	// 5) Quintic
+	// Quintic
 	QuintIn,
 	QuintOut,
 	QuintInOut,
 
-	// 6) Sine
+	// Sine
 	SineIn,
 	SineOut,
 	SineInOut,
 
-	// 7) Exponential
+	// Exponential
 	ExpoIn,
 	ExpoOut,
 	ExpoInOut,
 
-	// 8) Circular
+	// Circular
 	CircIn,
 	CircOut,
 	CircInOut,
 
-	// 9) Back (overshoot)
+	// Back (overshoot)
 	BackIn,
 	BackOut,
 	BackInOut,
 
-	// 10) Elastic (oscillatory)
+	// Elastic (oscillatory)
 	ElasticIn,
 	ElasticOut,
 	ElasticInOut,
 
-	// 11) Bounce (discrete bounces)
+	// Bounce (discrete bounces)
 	BounceIn,
 	BounceOut,
 	BounceInOut

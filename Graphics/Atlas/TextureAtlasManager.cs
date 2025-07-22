@@ -50,12 +50,12 @@ public sealed class TextureAtlasManager
 	{
 		var key = (srcTexture.NativeHandle, srcRect);
 
-		// 0) EVICT STALE ON *EVERY* ACCESS (must be before cache lookup)
+		// EVICT STALE ON *EVERY* ACCESS (must be before cache lookup)
 		var evicted = EvictStaleSlices(MaxIdle);
 		if (evicted.Count > 0)
 			Logger.Instance.Log(LogLevel.Info, $"[Atlas] ⚠️ Evicted {evicted.Count} stale slices at {DateTime.UtcNow:HH:mm:ss}");
 
-		// 1) Cache hit?
+		// Cache hit?
 		if (_registered.TryGetValue(key, out var info))
 		{
 			info.LastUsedUtc = DateTime.UtcNow;
@@ -65,14 +65,14 @@ public sealed class TextureAtlasManager
 
 		AtlasHandle handle;
 
-		// 2) Try packing straight away (no eviction)
+		// Try packing straight away (no eviction)
 		if (TryPackIntoAnyPage(srcTexture, srcRect, out handle))
 		{
 			_registered[key] = new SliceInfo { Handle = handle, LastUsedUtc = DateTime.UtcNow };
 			return handle;
 		}
 
-		// 3) Evict truly idle slices
+		// Evict truly idle slices
 		// EvictStaleSlices(MaxIdle);
 
 		if (TryPackIntoAnyPage(srcTexture, srcRect, out handle))
@@ -81,7 +81,7 @@ public sealed class TextureAtlasManager
 			return handle;
 		}
 
-		// 4) LRU eviction: remove oldest one by one until it fits
+		// LRU eviction: remove oldest one by one until it fits
 		var lruList = _registered
 			.OrderBy(kv => kv.Value.LastUsedUtc)
 			.Select(kv => kv.Key)
@@ -99,7 +99,7 @@ public sealed class TextureAtlasManager
 			}
 		}
 
-		// 5) Still no room
+		// Still no room
 		return null;
 	}
 
@@ -108,14 +108,14 @@ public sealed class TextureAtlasManager
 	/// </summary>
 	private bool TryPackIntoAnyPage(SFTexture srcTexture, SFRectI srcRect, out AtlasHandle handle)
 	{
-		// 1) Existing pages
+		// Existing pages
 		foreach (var page in _pagesById.Values)
 		{
 			if (page.TryPack(srcTexture, srcRect, out handle))
 				return true;
 		}
 
-		// 2) New page
+		// New page
 		if (_pagesById.Count < MaxPages)
 		{
 			int newId = _pagesById.Count;

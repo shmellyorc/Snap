@@ -1,5 +1,3 @@
-
-
 namespace System;
 
 public static class EntityExtentions
@@ -150,16 +148,6 @@ public static class EntityExtentions
 
     public static bool HasAncestorOfType<T>(this Entity e) where T : Entity =>
         TryGetAncestorOfType<T>(e, out _);
-
-
-
-
-
-
-
-
-
-
 
     public static void AlignToRenderer(this Entity entity, HAlign hAlign, VAlign vAlign) =>
         AlignHelpers.AlignToRenderer(entity, hAlign, vAlign);
