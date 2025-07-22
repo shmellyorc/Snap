@@ -11,6 +11,7 @@ global using System.Security.Cryptography;
 global using System.Text;
 global using System.Text.Json;
 global using System.Xml.Serialization;
+global using System.Collections.ObjectModel;
 
 global using Snap.Assets.Fonts;
 global using Snap.Assets.LDTKImporter;

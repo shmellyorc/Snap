@@ -1,5 +1,3 @@
-using System.Collections.ObjectModel;
-
 namespace Snap.Sounds;
 
 public sealed class SoundBank
