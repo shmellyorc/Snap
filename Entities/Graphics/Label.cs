@@ -25,10 +25,10 @@ public sealed class Label : Entity
 	/// </summary>
 	public Vect2 Offset { get; set; } = Vect2.Zero;
 
-	/// <summary>
-	/// Gets or sets the color of the text.
-	/// </summary>
-	public Color Color { get; set; } = Color.White;
+	// /// <summary>
+	// /// Gets or sets the color of the text.
+	// /// </summary>
+	// public Color Color { get; set; } = Color.White;
 
 	/// <summary>
 	/// Gets or sets the color of the text shadow.

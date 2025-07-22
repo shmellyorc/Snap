@@ -8,6 +8,7 @@ public class Entity
 
 	private bool _keepAlive, _visible = true;
 	private int _layer;
+	private Color _color = Color.White;
 	private readonly List<Entity> _children = new(64); // Used for referencing.
 
 	public Screen Screen => _screen;
@@ -43,8 +44,9 @@ public class Entity
 
 			if (_screen == null)
 			{
-				CoroutineManager.Start(CoroutineHelpers.WaitWhileThan(() => _screen == null,
-					() => _screen.UpdateDirtyState(DirtyState.Update)));
+				CoroutineManager.Start(WaitForNullScreen(() => _screen.UpdateDirtyState(DirtyState.Sort)));
+				// CoroutineManager.Start(CoroutineHelpers.WaitWhileThan(() => _screen == null,
+				// 	() => _screen.UpdateDirtyState(DirtyState.Update)));
 			}
 			else
 				_screen.UpdateDirtyState(DirtyState.Update);
@@ -63,6 +65,20 @@ public class Entity
 		set => _visible = value;
 	}
 
+
+	public Color Color
+	{
+		get
+		{
+			if (IsChild)
+				return _parent.Color * _color;
+
+			return _color;
+		}
+		set => _color = value;
+	}
+
+
 	public int Layer
 	{
 		get
@@ -80,8 +96,8 @@ public class Entity
 
 			if (_screen == null)
 			{
-				CoroutineManager.Start(CoroutineHelpers.WaitWhileThan(() => _screen == null,
-					() => _screen.UpdateDirtyState(DirtyState.Sort)));
+				// CoroutineManager.Start(CoroutineHelpers.WaitWhileThan(() => _screen == null,
+				CoroutineManager.Start(WaitForNullScreen(() => _screen.UpdateDirtyState(DirtyState.Sort)));
 			}
 			else
 				_screen.UpdateDirtyState(DirtyState.Sort);
@@ -406,7 +422,12 @@ public class Entity
 
 
 
+	private IEnumerator WaitForNullScreen(Action onReady)
+	{
+		yield return new WaitWhile(() => Screen == null);
 
+		onReady?.Invoke();
+	}
 
 
 

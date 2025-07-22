@@ -24,10 +24,10 @@ public class RenderTarget : Panel
 	/// </summary>
 	public bool IsRendering { get; private set; }
 
-	/// <summary>
-	/// Gets or sets the color tint applied when drawing the render target texture.
-	/// </summary>
-	public Color Color { get; set; } = Color.White;
+	// /// <summary>
+	// /// Gets or sets the color tint applied when drawing the render target texture.
+	// /// </summary>
+	// public Color Color { get; set; } = Color.White;
 
 	/// <summary>
 	/// Gets or sets the size of the render target. Resizes and recreates the underlying render texture and view.

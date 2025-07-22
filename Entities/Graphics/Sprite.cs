@@ -2,12 +2,12 @@ namespace Snap.Entities.Graphics;
 
 public class Sprite : Entity
 {
-	private Texture _texture;
+	private readonly Texture _texture;
 	private RenderTarget? _rt;
 	private bool _rtChecked;
 
 	public Rect2 Source { get; set; }
-	public Color Color { get; set; } = Color.White;
+	// public Color Color { get; set; } = Color.White;
 	public Vect2 Origin { get; set; }
 	public TextureEffects Effects { get; set; }
 	public Vect2 Scale { get; set; } = Vect2.One;

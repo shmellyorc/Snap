@@ -23,10 +23,10 @@ public sealed class Ninepatch : Entity
 	private bool _rtChecked;
 	private Rect2 _oldBounds;
 
-	/// <summary>
-	/// Gets or sets the tint color applied to the ninepatch when rendering.
-	/// </summary>
-	public Color Color { get; set; } = Color.White;
+	// /// <summary>
+	// /// Gets or sets the tint color applied to the ninepatch when rendering.
+	// /// </summary>
+	// public Color Color { get; set; } = Color.White;
 
 	/// <summary>
 	/// Gets or sets the position of the ninepatch.

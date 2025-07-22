@@ -98,10 +98,10 @@ public sealed class AnimatedSprite : Entity
 	/// </summary>
 	public int Frame => Current.IsEmpty ? 0 : Math.Clamp(_frame, 0, Current.Frames.Count - 1);
 
-	/// <summary>
-	/// Gets or sets the color to tint the sprite when drawn.
-	/// </summary>
-	public Color Color { get; set; } = Color.White;
+	// /// <summary>
+	// /// Gets or sets the color to tint the sprite when drawn.
+	// /// </summary>
+	// public Color Color { get; set; } = Color.White;
 
 	/// <summary>
 	/// Gets or sets the origin offset for rendering transformations.

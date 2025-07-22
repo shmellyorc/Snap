@@ -9,11 +9,11 @@ public sealed class ColorRect : Entity
 	private RenderTarget? _rt;
 	private bool _rtChecked;
 
-	/// <summary>
-	/// Gets or sets the color used to tint the rectangle.
-	/// Defaults to the engine's clear color on initialization.
-	/// </summary>
-	public Color Color { get; set; } = Color.White;
+	// /// <summary>
+	// /// Gets or sets the color used to tint the rectangle.
+	// /// Defaults to the engine's clear color on initialization.
+	// /// </summary>
+	// public Color Color { get; set; } = Color.White;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ColorRect"/> class.
