@@ -143,14 +143,34 @@ public static class DiscoverableHelper
 
 
 
-
+/// <summary>
+/// Marks a class or member as discoverable by reflection-based search or registration systems.
+/// </summary>
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 public sealed class DiscoverableAttribute : Attribute
 {
-    public object? Name { get; set; }
-    public object? Category { get; set; }
-    public int Priority { get; set; }
-    public bool Enabled { get; set; } = true;
+	/// <summary>
+	/// The display name or identifier for this discoverable item.  
+	/// Can be any object, but typically a string or enum value.
+	/// </summary>
+	public object? Name { get; set; }
+
+	/// <summary>
+	/// The category under which this discoverable item should be grouped.  
+	/// Can be any object, but typically a string or enum value.
+	/// </summary>
+	public object? Category { get; set; }
+
+	/// <summary>
+	/// Ordering priority for this discoverable item within its category.  
+	/// Lower numbers indicate higher priority.
+	/// </summary>
+	public int Priority { get; set; }
+
+	/// <summary>
+	/// Indicates whether this discoverable item is enabled and should be included in searches or registrations.
+	/// </summary>
+	public bool Enabled { get; set; } = true;
 
     internal string InternalName =>
         Name is Enum e
