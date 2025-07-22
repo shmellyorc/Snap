@@ -1,7 +1,19 @@
 namespace Snap.Helpers;
 
+/// <summary>
+/// Provides helper methods for common file and path operations,
+/// such as validation, directory creation, and path remapping.
+/// </summary>
 public static class FileHelpers
 {
+	/// <summary>
+	/// Determines whether the specified string is a syntactically valid file path.
+	/// </summary>
+	/// <param name="path">The file path to validate.</param>
+	/// <returns>
+	/// <c>true</c> if <paramref name="path"/> is not null or whitespace and does not contain invalid characters;
+	/// otherwise, <c>false</c>.
+	/// </returns>
 	public static bool IsValidFilePath(string path)
 	{
 		if (string.IsNullOrWhiteSpace(path)) return false;
@@ -17,6 +29,14 @@ public static class FileHelpers
 		}
 	}
 
+	/// <summary>
+	/// Checks whether a file is currently locked (in use) by another process.
+	/// </summary>
+	/// <param name="path">The full path to the file to test.</param>
+	/// <returns>
+	/// <c>true</c> if the file exists and cannot be opened for exclusive read access;
+	/// otherwise, <c>false</c>.
+	/// </returns>
 	public static bool IsFileInUse(string path)
 	{
 		if (!File.Exists(path)) return false;
@@ -32,6 +52,10 @@ public static class FileHelpers
 		}
 	}
 
+	/// <summary>
+	/// Ensures that the directory at the specified path exists, creating it if necessary.
+	/// </summary>
+	/// <param name="path">The directory path to check or create.</param>
 	public static void EnsureDirectoryExists(string path)
 	{
 		if (Directory.Exists(path))
@@ -41,11 +65,13 @@ public static class FileHelpers
 	}
 
 	/// <summary>
-	/// Returns a writable per-user application data directory, creating it if necessary:
-	///   • Windows:   %APPDATA%/[company]/[appname]  
-	///   • macOS:     ~/Library/Application Support/[company]/[appname]  
-	///   • Linux:     ~/.config/[company]/[appname]  
-	///   • Others:    same as Linux
+	/// Returns a writable per-user application data directory, creating it if necessary.
+	/// <list type="bullet">
+	///   <item><description>Windows:   %APPDATA%/[company]/[appname]</description></item>
+	///   <item><description>macOS:     ~/Library/Application Support/[company]/[appname]</description></item>
+	///   <item><description>Linux:     ~/.config/[company]/[appname]</description></item>
+	///   <item><description>Others:    same as Linux</description></item>
+	/// </list>
 	/// </summary>
 	/// <param name="company">Your company or organization name (optional).</param>
 	/// <param name="appName">Your application’s name (required).</param>
@@ -88,6 +114,14 @@ public static class FileHelpers
 		return folder;
 	}
 
+	/// <summary>
+	/// Remaps an LDtk-relative asset path into an absolute runtime path under the application's content root.
+	/// </summary>
+	/// <param name="ldtkPath">The original path from the LDtk file (may contain "../" or backslashes).</param>
+	/// <param name="contentRoot">The subfolder under <see cref="AppContext.BaseDirectory"/> where content is located.</param>
+	/// <returns>
+	/// A combined path under the application's base directory, with normalized separators and without any "../" segments.
+	/// </returns>
 	public static string RemapLDTKPath(string ldtkPath, string contentRoot)
     {
         string baseContentRoot = Path.Combine(AppContext.BaseDirectory, contentRoot);

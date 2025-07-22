@@ -2,18 +2,11 @@ namespace Snap.Helpers;
 
 public static class DiscoverableHelper
 {
-    // Weakly cache the full type list to allow GC of collectible assemblies
-    // Initialize without a strong reference to avoid premature collection
     private static readonly WeakReference<List<Type>> _allTypesRef = new(null);
-    // Lock object to synchronize cache initialization
     private static readonly object _allTypesLock = new();
-
-    // Cache metadata per type to avoid repeated reflection
     private static readonly ConcurrentDictionary<Type, DiscoverableAttribute?> _metaCache = [];
-    // Cache results of FindAll<T> to avoid repeated enumeration overhead
     private static readonly ConcurrentDictionary<Type, IReadOnlyList<Type>> _findAllCache = [];
 
-    // Invalidate caches whenever a new assembly is loaded
     static DiscoverableHelper()
     {
         AppDomain.CurrentDomain.AssemblyLoad += (sender, args) =>
@@ -24,7 +17,6 @@ public static class DiscoverableHelper
         };
     }
 
-    // Retrieve or rebuild the type cache on demand with thread safety
     private static List<Type> AllTypes
     {
         get
@@ -54,13 +46,11 @@ public static class DiscoverableHelper
         }
     }
 
-    // Project each type once with its cached metadata
     private static IEnumerable<(Type Type, DiscoverableAttribute Meta)> AllWithMeta() =>
         AllTypes.Select(t => (Type: t, Meta: _metaCache.GetOrAdd(t, GetMeta)))
                 .Where(x => x.Meta != null)
                 .Select(x => (x.Type, x.Meta!));
 
-    // Central filter for discoverable types of T
     private static IEnumerable<(Type Type, DiscoverableAttribute Meta)> Filter<T>() =>
         AllWithMeta()
             .Where(x =>

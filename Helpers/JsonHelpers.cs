@@ -1,7 +1,24 @@
 namespace Snap.Helpers;
 
-internal static class JsonHelpers
+/// <summary>
+/// Extension methods for safely reading values from <see cref="JsonElement"/>s with defaults.
+/// </summary>
+public static class JsonHelpers
 {
+	/// <summary>
+	/// Attempts to read a named property from a JSON object and convert it to <typeparamref name="T"/>, 
+	/// returning <paramref name="defaultValue"/> if the property is missing, null, undefined, or cannot be converted.
+	/// </summary>
+	/// <typeparam name="T">The target type to convert the JSON value to. Supported: <c>string</c>, <c>int</c>, <c>uint</c>, <c>float</c>, and <c>bool</c>.</typeparam>
+	/// <param name="parent">The <see cref="JsonElement"/> expected to be a JSON object.</param>
+	/// <param name="propName">The name of the property to retrieve.</param>
+	/// <param name="defaultValue">The value to return if the property is missing, null, undefined, or conversion fails.</param>
+	/// <returns>
+	/// The converted property value if present and of a supported type; otherwise, <paramref name="defaultValue"/>.
+	/// </returns>
+	/// <exception cref="ArgumentException">
+	/// Thrown when <typeparamref name="T"/> is not one of the supported types.
+	/// </exception>
 	public static T GetPropertyOrDefault<T>(this JsonElement parent, string propName, T defaultValue = default!)
 	{
 		if (parent.ValueKind != JsonValueKind.Object)
@@ -24,18 +41,19 @@ internal static class JsonHelpers
 		};
 	}
 
-	public static Vect2 GetPosition(this JsonElement parent, string propName)
-	{
-		if (parent.ValueKind != JsonValueKind.Object)
-			return Vect2.Zero;
-		if (!parent.TryGetProperty(propName, out var child))
-			return Vect2.Zero;
-
-		var arr = child.EnumerateArray();
-
-		return new Vect2(arr.First().GetSingle(), arr.Last().GetSingle());
-	}
-
+	/// <summary>
+	/// Attempts to convert a <see cref="JsonElement"/> itself to <typeparamref name="T"/>, 
+	/// returning <paramref name="defaultValue"/> if the element is null, undefined, or cannot be converted.
+	/// </summary>
+	/// <typeparam name="T">The target type to convert the JSON element to. Supported: <c>string</c>, <c>int</c>, <c>uint</c>, <c>float</c>, and <c>bool</c>.</typeparam>
+	/// <param name="parent">The <see cref="JsonElement"/> to convert.</param>
+	/// <param name="defaultValue">The value to return if the element is null, undefined, or conversion fails.</param>
+	/// <returns>
+	/// The converted value if the element is of a supported type; otherwise, <paramref name="defaultValue"/>.
+	/// </returns>
+	/// <exception cref="ArgumentException">
+	/// Thrown when <typeparamref name="T"/> is not one of the supported types.
+	/// </exception>
 	public static T GetElementyOrDefault<T>(this JsonElement parent, T defaultValue = default!)
 	{
 		if (parent.ValueKind == JsonValueKind.Null || parent.ValueKind == JsonValueKind.Undefined)
@@ -54,7 +72,19 @@ internal static class JsonHelpers
 		};
 	}
 
-	public static Dictionary<uint, MapSetting> GetSettings(JsonElement e)
+	internal static Vect2 GetPosition(this JsonElement parent, string propName)
+	{
+		if (parent.ValueKind != JsonValueKind.Object)
+			return Vect2.Zero;
+		if (!parent.TryGetProperty(propName, out var child))
+			return Vect2.Zero;
+
+		var arr = child.EnumerateArray();
+
+		return new Vect2(arr.First().GetSingle(), arr.Last().GetSingle());
+	}
+
+	internal static Dictionary<uint, MapSetting> GetSettings(JsonElement e)
 	{
 		var result = new Dictionary<uint, MapSetting>(e.GetArrayLength());
 
