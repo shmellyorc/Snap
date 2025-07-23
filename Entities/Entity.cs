@@ -71,7 +71,8 @@ public class Entity
 		get
 		{
 			if (IsChild)
-				return _parent.Color * _color;
+				// TODO: Fix, it must blend colors not multi
+				return _color;
 
 			return _color;
 		}

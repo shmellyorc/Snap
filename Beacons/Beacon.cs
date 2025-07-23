@@ -352,7 +352,7 @@ public sealed class BeaconManager
 public sealed class BeaconAttribute : Attribute
 {
 	/// <summary>
-	/// The topic this handler responds to. Can be a string or an <see cref="Enum"/>.
+	/// The topic this handler responds to. Can be a <see cref="String"/> or an <see cref="Enum"/>.
 	/// </summary>
 	public object Name { get; set; }
 

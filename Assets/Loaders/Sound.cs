@@ -81,16 +81,64 @@ public sealed class Sound : IAsset, IEquatable<Sound>
 		if (!IsValid)
 			return null;
 
-		// remove dead instance if any...
-		int count = _instances.RemoveAll(x => x.IsValid);
-		if (count > 0)
-			Logger.Instance.Log(LogLevel.Info, $"Unloaded asset {Id} ({_instances.Count} instances removed), type: '{GetType().Name}'.");
+		// Try to reuse a stopped (inactive) instance
+		var reusable = _instances.FirstOrDefault(x => x.Status == SoundStatus.Stopped);
+		if (reusable != null)
+		{
+			// reusable.Volume = 1f;  // Reset defaults
+			// reusable.Pan = 0f;
+			// reusable.Pitch = 1f;
+			return reusable;
+		}
 
+		// If we're over the cap, force recycle the oldest stopped instance
+		if (_instances.Count >= 32)
+		{
+			var fallback = _instances.FirstOrDefault(x => !x.IsPlaying && x.IsValid);
+			if (fallback != null)
+			{
+				Logger.Instance.Log(LogLevel.Warning, $"[Audio] Reusing oldest stopped instance for sound {Id}");
+				return fallback;
+			}
+
+			// Nothing to recycle — fail safely
+			Logger.Instance.Log(LogLevel.Warning, $"Too many active instances for sound {Id}. Reuse limit reached.");
+			return null;
+		}
+
+		// Allocate new instance
 		var instance = new SoundInstance(AssetManager.Id++, this, Buffer);
 		_instances.Add(instance);
-
 		return instance;
 	}
+
+	// public SoundInstance CreateInstance()
+	// {
+	// 	if (!IsValid)
+	// 		return null;
+
+	// 	// remove dead instance if any...
+	// 	int count = _instances.RemoveAll(x => !x.IsValid);
+	// 	if (count > 0)
+	// 		Logger.Instance.Log(LogLevel.Info, $"Unloaded asset {Id} ({_instances.Count} instances removed), type: '{GetType().Name}'.");
+
+	// 	if(_instances.Count >= 32)
+	// 	{
+	// 		var reusable = _instances.FirstOrDefault(x => x.Status == SoundStatus.Stopped);
+	// 		if(reusable != null)
+	// 		{
+	// 			return reusable;
+	// 		}
+
+	// 		Logger.Instance.Log(LogLevel.Warning, $"Too many instances, active for sound {Id}");
+	// 		return null;
+	// 	}
+
+	// 	var instance = new SoundInstance(AssetManager.Id++, this, Buffer);
+	// 	_instances.Add(instance);
+
+	// 	return instance;
+	// }
 
 
 	/// <summary>

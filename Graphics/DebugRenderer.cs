@@ -21,6 +21,8 @@ public sealed class DebugRenderer
 
 	public void DrawLine(Vect2 a, Vect2 b, Color color)
 	{
+		if(!EngineSettings.Instance.DebugDraw)
+			return;
 		if (_vertexCount + 2 > _vertexes.Length)
 			GrowVertexArray(_vertexCount + 2);
 
@@ -30,6 +32,9 @@ public sealed class DebugRenderer
 
 	public void DrawRect(Rect2 rect, Color color)
 	{
+		if (!EngineSettings.Instance.DebugDraw)
+			return;
+
 		var topLeft = rect.TopLeft;
 		var topRight = rect.TopRight;
 		var bottomRight = rect.BottomRight;
@@ -43,6 +48,8 @@ public sealed class DebugRenderer
 
 	public void DrawCircle(Vect2 center, float radius, Color color, int segmentCount = 16)
 	{
+		if (!EngineSettings.Instance.DebugDraw)
+			return;
 		if (segmentCount < 3)
 			segmentCount = 3;
 

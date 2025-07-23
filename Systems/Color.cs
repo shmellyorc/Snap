@@ -100,10 +100,10 @@ public struct Color : IEquatable<Color>
 
 	#region Operator: *
 	public static Color operator *(in Color a, in Color b) => new(
-			(byte)Math.Clamp(a.R + b.R, 0, 255),
-			(byte)Math.Clamp(a.G + b.G, 0, 255),
-			(byte)Math.Clamp(a.B + b.B, 0, 255),
-			(byte)Math.Clamp(a.A + b.A, 0, 255)
+			(byte)Math.Clamp(a.R * b.R, 0, 255),
+			(byte)Math.Clamp(a.G * b.G, 0, 255),
+			(byte)Math.Clamp(a.B * b.B, 0, 255),
+			(byte)Math.Clamp(a.A * b.A, 0, 255)
 		);
 	public static Color operator *(Color a, float b) => new(
 		(byte)Math.Clamp(a.R * b, 0f, 255f),
@@ -122,10 +122,10 @@ public struct Color : IEquatable<Color>
 
 	#region Operator: /
 	public static Color operator /(in Color a, in Color b) => new(
-			(byte)Math.Clamp(a.R + b.R, 0, 255),
-			(byte)Math.Clamp(a.G + b.G, 0, 255),
-			(byte)Math.Clamp(a.B + b.B, 0, 255),
-			(byte)Math.Clamp(a.A + b.A, 0, 255)
+			(byte)Math.Clamp(a.R / b.R, 0, 255),
+			(byte)Math.Clamp(a.G / b.G, 0, 255),
+			(byte)Math.Clamp(a.B / b.B, 0, 255),
+			(byte)Math.Clamp(a.A / b.A, 0, 255)
 		);
 	public static Color operator /(in Color a, float b) => new(
 		(byte)Math.Clamp(a.R / b, 0f, 255f),
