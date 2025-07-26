@@ -204,12 +204,13 @@ public sealed class AssetManager
 	/// <param name="lineSpacing">Optional vertical spacing between lines.</param>
 	/// <returns>The loaded <see cref="SpriteFont"/>.</returns>
 	/// <exception cref="FileNotFoundException">Thrown if the file is missing.</exception>
-	public static SpriteFont LoadSpriteFont(string filename, float spacing = 0f, float lineSpacing = 0f)
+	public static SpriteFont LoadSpriteFont(string filename, float spacing = 0f, float lineSpacing = 0f,
+		bool smoothing = false, string charList = null)
 	{
 		if (!TryFindFullPath(filename, SpriteFontExtentions, out var fullPath))
 			throw new FileNotFoundException($"Sprite font file '{filename}' could not be found.");
 
-		return new SpriteFont(Id++, fullPath, spacing, lineSpacing);
+		return new SpriteFont(Id++, fullPath, spacing, lineSpacing, smoothing, charList);
 	}
 
 	/// <summary>

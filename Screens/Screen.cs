@@ -69,8 +69,8 @@ public class Screen
     public CoroutineManager CoroutineManager => CoroutineManager.Instance;
 
     public Texture LoadTexture(string filename, bool repeat = false, bool smooth = false) => AssetManager.LoadTexture(filename, repeat, smooth);
-    public SpriteFont LoadSpriteFont(string filename, float spacing = 0f, float lineSpacing = 0f) =>
-        AssetManager.LoadSpriteFont(filename, spacing, lineSpacing);
+    public SpriteFont LoadSpriteFont(string filename, float spacing = 0f, float lineSpacing = 0f, bool smoothing = false, string charList = null) =>
+        AssetManager.LoadSpriteFont(filename, spacing, lineSpacing, smoothing, charList);
     public LDTKProject LoadMap(string filename) => AssetManager.LoadMap(filename);
     public Spritesheet LoadSheet(string filename) => AssetManager.LoadSheet(filename);
     public Sound LoadSound(string filename, bool looped = false) => AssetManager.LoadSound(filename, looped);

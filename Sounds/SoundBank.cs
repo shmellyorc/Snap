@@ -164,6 +164,8 @@ public sealed class SoundBank
 
 	internal SoundInstance Add(Sound sound)
 	{
+		if(sound == null)
+			return null;
 		if (!_instances.TryGetValue(sound, out var instances))
 			_instances[sound] = instances = new();
 

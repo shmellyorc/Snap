@@ -230,7 +230,7 @@ public sealed class SpriteFont : Font
 			while (y0 >= y1)
 			{
 				bool columnAllBorder = true;
-				for (int xx = x0; xx < x1; xx++)
+				for (int xx = x0; xx <= x1; xx++)
 				{
 					var px = img.GetPixel((uint)xx, (uint)y0);
 					if (!(px.R == borderColor.R && px.G == borderColor.G && px.B == borderColor.B && px.A == borderColor.A))
@@ -246,7 +246,7 @@ public sealed class SpriteFont : Font
 			while (y1 >= y0)
 			{
 				bool columnAllBorder = true;
-				for (int xx = x0; xx < x1; xx++)
+				for (int xx = x0; xx <= x1; xx++)
 				{
 					var px = img.GetPixel((uint)xx, (uint)y1);
 					if (!(px.R == borderColor.R && px.G == borderColor.G && px.B == borderColor.B && px.A == borderColor.A))
