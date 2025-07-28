@@ -41,6 +41,10 @@ public sealed class CoroutineManager
 	/// </summary>
 	public int Count => _running.Count;
 
+	/// <summary>
+	/// Gets the global instance of the <see cref="CoroutineManager"/>.
+	/// This is typically initialized once and used to queue or update coroutines globally.
+	/// </summary>
 	public static CoroutineManager Instance { get; private set; }
 
 	internal CoroutineManager() => Instance ??= this;

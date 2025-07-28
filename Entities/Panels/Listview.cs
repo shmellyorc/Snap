@@ -1,13 +1,33 @@
 namespace Snap.Entities.Panels;
 
+/// <summary>
+/// Represents an individual selectable item in a <see cref="Listview"/>.
+/// </summary>
 public class ListviewItem : Entity
 {
 	private ColorRect _bar;
 	private bool _selected;
 
+	/// <summary>
+	/// Called when this item becomes selected in its parent listview.
+	/// Override to define selection behavior.
+	/// </summary>
+	/// <param name="listview">The parent listview.</param>
+	/// <param name="selectedIndex">The global index of the selected item.</param>
 	public virtual void OnSelected(Listview listview, int selectedIndex) { }
+
+	/// <summary>
+	/// Called when the selected state of this item changes.
+	/// Override to respond to selection toggling.
+	/// </summary>
+	/// <param name="listview">The parent listview.</param>
+	/// <param name="selectedIndex">The global index of the selected item.</param>
 	public virtual void OnSelectedChanged(Listview listview, int selectedIndex) { }
 
+	/// <summary>
+	/// Gets or sets whether this item is currently selected.
+	/// Triggers selection callbacks and toggles the visibility of the internal highlight bar.
+	/// </summary>
 	public bool Selected
 	{
 		get => _selected;
@@ -29,8 +49,15 @@ public class ListviewItem : Entity
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the highlight color used for selection indication.
+	/// </summary>
 	public Color Color { get; set; } = Color.Blue;
 
+	/// <summary>
+	/// Called when the item enters the scene tree.
+	/// Sets up the visual highlight bar.
+	/// </summary>
 	protected override void OnEnter()
 	{
 		if (Size.X <= 0 || Size.Y <= 0)
@@ -49,6 +76,10 @@ public class ListviewItem : Entity
 	}
 }
 
+/// <summary>
+/// A scrollable list container that manages a limited number of visible <see cref="ListviewItem"/>s,
+/// allowing selection, navigation, and layout in vertical or horizontal mode.
+/// </summary>
 public sealed class Listview : RenderTarget
 {
 	private Vect2 _avgSize;
@@ -60,11 +91,38 @@ public sealed class Listview : RenderTarget
 	private ListviewDirection _direction;
 	private float _spacing = 0f;
 
+	/// <summary>
+	/// Gets or sets the delay (in seconds) between selection input actions.
+	/// Prevents rapid input skipping.
+	/// </summary>
 	public float PerItemTimeout { get; set; } = 0.255f;
+
+	/// <summary>
+	/// Gets the currently selected <see cref="ListviewItem"/> instance, or null if none.
+	/// </summary>
 	public ListviewItem SelectedItem => ChildCount > 0 ? (ListviewItem)Children[SelectedIndex] : null;
+
+	/// <summary>
+	/// Casts the selected item to the specified type.
+	/// </summary>
+	/// <typeparam name="T">The type to cast the selected item to.</typeparam>
 	public T SelectedItemAs<T>() where T : ListviewItem => (T)SelectedItem;
+
+	/// <summary>
+	/// Returns true if the listview is scrolled to the top.
+	/// </summary>
 	public bool AtTop => _scrollIndex == 0;
 
+	/// <summary>
+	/// Returns true if the listview is scrolled to the bottom.
+	/// </summary>
+	public bool AtBottom => _scrollIndex == MaxScroll;
+
+	/// <summary>
+	/// Gets the item at the specified index.
+	/// </summary>
+	/// <param name="index">The global index of the item.</param>
+	/// <exception cref="ArgumentOutOfRangeException">If the index is out of bounds.</exception>
 	public ListviewItem this[int index]
 	{
 		get
@@ -75,6 +133,10 @@ public sealed class Listview : RenderTarget
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the globally selected index in the listview.
+	/// Automatically adjusts scroll position to keep selection in view.
+	/// </summary>
 	public int SelectedIndex
 	{
 		get => ChildCount > 0 ? _scrollIndex + _selectedIndex : 0;
@@ -108,8 +170,10 @@ public sealed class Listview : RenderTarget
 		}
 	}
 
-	public bool AtBottom => _scrollIndex == MaxScroll;
-
+	/// <summary>
+	/// Gets or sets the spacing (in pixels) between items.
+	/// Triggers a size/layout recalculation.
+	/// </summary>
 	public float Spacing
 	{
 		get => _spacing;
@@ -123,6 +187,9 @@ public sealed class Listview : RenderTarget
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the layout direction (Vertical or Horizontal).
+	/// </summary>
 	public ListviewDirection Direction
 	{
 		get => _direction;
@@ -136,8 +203,17 @@ public sealed class Listview : RenderTarget
 		}
 	}
 
+	/// <summary>
+	/// Event triggered when a new item becomes selected.
+	/// </summary>
 	public Action<Listview> OnItemSelected;
 
+	/// <summary>
+	/// Initializes a new <see cref="Listview"/> with a maximum number of visible items and direction.
+	/// </summary>
+	/// <param name="maxItems">The maximum number of items visible at one time.</param>
+	/// <param name="direction">The scroll direction (vertical or horizontal).</param>
+	/// <param name="items">The initial listview items to add.</param>
 	public Listview(uint maxItems, ListviewDirection direction, params ListviewItem[] items) : base(items)
 	{
 		ArgumentOutOfRangeException.ThrowIfZero(maxItems);
@@ -151,7 +227,6 @@ public sealed class Listview : RenderTarget
 		Size = _avgSize;
 		RecalculateSize();
 	}
-
 
 	private void RecalculateSize()
 	{
@@ -167,7 +242,12 @@ public sealed class Listview : RenderTarget
 		}
 	}
 
-
+	/// <summary>
+	/// Adds one or more <see cref="ListviewItem"/>s to the listview.
+	/// If non-<see cref="ListviewItem"/> entities are passed, they are ignored.
+	/// Automatically recalculates layout and adjusts scroll/selection indices.
+	/// </summary>
+	/// <param name="children">The entities to add. Only <see cref="ListviewItem"/>s are used.</param>
 	public new void AddChild(params Entity[] children)
 	{
 		if (children == null || children.Length == 0)
@@ -195,6 +275,9 @@ public sealed class Listview : RenderTarget
 		SetDirtyState(DirtyState.Sort | DirtyState.Update);
 	}
 
+	/// <summary>
+	/// Removes all children from the listview and resets selection and scroll position.
+	/// </summary>
 	public new void ClearChildren()
 	{
 		base.ClearChildren();
@@ -205,6 +288,11 @@ public sealed class Listview : RenderTarget
 		SetDirtyState(DirtyState.Sort | DirtyState.Update);
 	}
 
+	/// <summary>
+	/// Removes one or more children from the listview and adjusts internal state accordingly.
+	/// </summary>
+	/// <param name="children">The entities to remove.</param>
+	/// <returns>True if at least one entity was removed; otherwise, false.</returns>
 	public new bool RemoveChild(params Entity[] children)
 	{
 		var result = base.RemoveChild(children);
@@ -222,6 +310,9 @@ public sealed class Listview : RenderTarget
 		return result;
 	}
 
+	/// <summary>
+	/// Updates input and timing for selection throttling.
+	/// </summary>
 	protected override void OnUpdate()
 	{
 		if (_itemTimeout >= 0f)
@@ -230,6 +321,11 @@ public sealed class Listview : RenderTarget
 		base.OnUpdate();
 	}
 
+	/// <summary>
+	/// Recalculates the visual layout and selection status of all child items.
+	/// Called automatically when dirty state changes.
+	/// </summary>
+	/// <param name="state">The dirty state that triggered the update.</param>
 	protected override void OnDirty(DirtyState state)
 	{
 		float offset = 0f;
@@ -277,6 +373,9 @@ public sealed class Listview : RenderTarget
 		return new Vect2(maxW, maxH);
 	}
 
+	/// <summary>
+	/// Moves selection to the previous item, scrolling if necessary.
+	/// </summary>
 	public void PreviousItem()
 	{
 		if (ChildCount == 0 || _itemTimeout >= 0f)
@@ -302,6 +401,9 @@ public sealed class Listview : RenderTarget
 		SetDirtyState(DirtyState.Update);
 	}
 
+	/// <summary>
+	/// Moves selection to the next item, scrolling if necessary.
+	/// </summary>
 	public void NextItem()
 	{
 		if (ChildCount == 0 || _itemTimeout >= 0f)
@@ -327,6 +429,12 @@ public sealed class Listview : RenderTarget
 		SetDirtyState(DirtyState.Update);
 	}
 
+	/// <summary>
+	/// Casts the selected index to a corresponding enum value.
+	/// </summary>
+	/// <typeparam name="TEnum">An enum type to map the selected index to.</typeparam>
+	/// <returns>The enum value at the selected index.</returns>
+	/// <exception cref="InvalidOperationException">Thrown if the selected index is out of range.</exception>
 	public TEnum GetSelectedIndexAsEnum<TEnum>() where TEnum : struct, Enum
 	{
 		int idx = SelectedIndex;

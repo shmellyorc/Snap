@@ -1,5 +1,8 @@
 namespace Snap.Entities.Panels;
 
+/// <summary>
+/// A horizontal layout panel that arranges child entities side-by-side with optional spacing and alignment.
+/// </summary>
 public class HPanel : Panel
 {
 	private float _spacing;
@@ -7,6 +10,10 @@ public class HPanel : Panel
 	private HAlign _hAlign = HAlign.Left;
 	private VAlign _vAlign = VAlign.Top;
 
+	/// <summary>
+	/// Gets or sets the size of the panel.
+	/// Setting a custom size disables autosizing based on child content.
+	/// </summary>
 	public new Vect2 Size
 	{
 		get => base.Size;
@@ -20,6 +27,9 @@ public class HPanel : Panel
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the horizontal alignment of the child elements within the panel bounds.
+	/// </summary>
 	public HAlign HAlign
 	{
 		get => _hAlign;
@@ -32,6 +42,9 @@ public class HPanel : Panel
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the vertical alignment of the child elements within the panel bounds.
+	/// </summary>
 	public VAlign VAlign
 	{
 		get => _vAlign;
@@ -44,6 +57,9 @@ public class HPanel : Panel
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the spacing (in pixels) between child elements.
+	/// </summary>
 	public float Spacing
 	{
 		get => _spacing;
@@ -55,6 +71,11 @@ public class HPanel : Panel
 		}
 	}
 
+	/// <summary>
+	/// Initializes a new <see cref="HPanel"/> with a specified spacing and child entities.
+	/// </summary>
+	/// <param name="spacing">The spacing between each child element, in pixels.</param>
+	/// <param name="entities">Optional child entities to add to the panel.</param>
 	public HPanel(float spacing, params Entity[] entities) : base(entities)
 	{
 		_spacing = spacing;
@@ -62,8 +83,16 @@ public class HPanel : Panel
 		UpdateSize(entities);
 	}
 
+	/// <summary>
+	/// Initializes a new <see cref="HPanel"/> with a default spacing of 4 pixels.
+	/// </summary>
+	/// <param name="entities">Optional child entities to add to the panel.</param>
 	public HPanel(params Entity[] entities) : this(spacing: 4, entities) { }
 
+	/// <summary>
+	/// Recalculates the layout of child elements and updates parent panels and screen dirty states.
+	/// </summary>
+	/// <param name="state">The dirty state that triggered this update.</param>
 	protected override void OnDirty(DirtyState state)
 	{
 		var allKids = Children

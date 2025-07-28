@@ -82,7 +82,7 @@ public sealed class Ninepatch : Entity
 		_dirtyFlags = NinePatchDirtyFlags.Dest | NinePatchDirtyFlags.Source;
 	}
 
-	// <summary>
+	/// <summary>
 	/// Initializes a new instance of the <see cref="Ninepatch"/> class using a spritesheet and patch name.
 	/// </summary>
 	/// <param name="texture">The source texture.</param>

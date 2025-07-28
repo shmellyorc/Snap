@@ -1,18 +1,22 @@
 namespace Snap.Entities.Inputs;
 
-public enum BaseButtonPressedState
-{
-	None,
-	Pressed,
-	Released,
-}
-
+/// <summary>
+/// Represents a basic interactive button entity that responds to mouse input and can trigger actions when pressed.
+/// </summary>
 public class BaseButton : Entity
 {
 	private bool _disabled, _wasHovering, _wasPressed, _isDirty;
 
+	/// <summary>
+	/// Gets or sets the current pressed state logic for this button.
+	/// Determines when the <see cref="Pressed"/> callback is fired (on press or release).
+	/// </summary>
 	public BaseButtonPressedState ButtonState { get; set; } = BaseButtonPressedState.Released;
 
+	/// <summary>
+	/// Gets or sets whether the button is disabled.
+	/// When disabled, the button ignores input and triggers <see cref="OnButtonDisabled"/>.
+	/// </summary>
 	public bool Disabled
 	{
 		get => _disabled;
@@ -25,13 +29,40 @@ public class BaseButton : Entity
 		}
 	}
 
+	/// <summary>
+	/// An optional callback invoked when the button is successfully pressed.
+	/// Trigger timing depends on the <see cref="ButtonState"/>.
+	/// </summary>
 	public Action<BaseButton> Pressed { get; set; }
 
+	/// <summary>
+	/// Called when the mouse button is released and the cursor is over the button.
+	/// Override to handle visual or logical changes.
+	/// </summary>
 	protected virtual void OnButtonUp() { }
+
+	/// <summary>
+	/// Called when the mouse button is pressed while over the button.
+	/// Override to handle visual feedback or sound.
+	/// </summary>
 	protected virtual void OnButtonDown() { }
+
+	/// <summary>
+	/// Called when the cursor begins hovering over the button.
+	/// Override to handle hover state changes.
+	/// </summary>
 	protected virtual void OnButtonHover() { }
+
+	/// <summary>
+	/// Called when the button becomes disabled.
+	/// Override to provide custom disabled behavior.
+	/// </summary>
 	protected virtual void OnButtonDisabled() { }
 
+	/// <summary>
+	/// Updates the button state, checks for mouse interaction, and triggers the appropriate events.
+	/// Handles hover detection, click input, and disabled state transitions.
+	/// </summary>
 	protected override void OnUpdate()
 	{
 		if (_isDirty)

@@ -38,7 +38,7 @@ public sealed class Tween<T> : IEnumerator
 		_elapsed = 0f;
 	}
 
-	// <summary>
+	/// <summary>
 	/// Advances the tween by one frame.
 	/// </summary>
 	/// <returns>

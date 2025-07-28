@@ -197,13 +197,18 @@ public sealed class AssetManager
 	}
 
 	/// <summary>
-	/// Loads a sprite font from the specified file.
+	/// Loads a sprite font from the specified file path with optional spacing and rendering settings.
 	/// </summary>
-	/// <param name="filename">The image path associated with the sprite font.</param>
-	/// <param name="spacing">Optional spacing between characters.</param>
-	/// <param name="lineSpacing">Optional vertical spacing between lines.</param>
-	/// <returns>The loaded <see cref="SpriteFont"/>.</returns>
-	/// <exception cref="FileNotFoundException">Thrown if the file is missing.</exception>
+	/// <param name="filename">The path to the image file associated with the sprite font.</param>
+	/// <param name="spacing">Optional horizontal spacing added between characters. Default is 0.</param>
+	/// <param name="lineSpacing">Optional vertical spacing added between lines. Default is 0.</param>
+	/// <param name="smoothing">Whether smoothing/antialiasing should be applied to the font rendering.</param>
+	/// <param name="charList">
+	/// Optional list of characters to include. If null, the full default character set will be used.
+	/// This can be used to limit the font to specific characters to save memory or processing time.
+	/// </param>
+	/// <returns>The loaded <see cref="SpriteFont"/> instance.</returns>
+	/// <exception cref="FileNotFoundException">Thrown if the specified file could not be found.</exception>
 	public static SpriteFont LoadSpriteFont(string filename, float spacing = 0f, float lineSpacing = 0f,
 		bool smoothing = false, string charList = null)
 	{

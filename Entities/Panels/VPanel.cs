@@ -1,5 +1,8 @@
 namespace Snap.Entities.Panels;
 
+/// <summary>
+/// A vertical layout panel that stacks child entities top to bottom, with configurable spacing and alignment.
+/// </summary>
 public class VPanel : Panel
 {
 	private float _spacing;
@@ -8,6 +11,10 @@ public class VPanel : Panel
 	private VAlign _vAlign = VAlign.Top;
 	// private bool _isDirty = true;
 
+	/// <summary>
+	/// Gets or sets the size of the panel.
+	/// Setting this manually disables automatic sizing based on children.
+	/// </summary>
 	public new Vect2 Size
 	{
 		get => base.Size;
@@ -22,6 +29,9 @@ public class VPanel : Panel
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the horizontal alignment of the children within each row.
+	/// </summary>
 	public HAlign HAlign
 	{
 		get => _hAlign;
@@ -35,6 +45,9 @@ public class VPanel : Panel
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the vertical alignment of the entire group of children within the panel.
+	/// </summary>
 	public VAlign VAlign
 	{
 		get => _vAlign;
@@ -48,6 +61,9 @@ public class VPanel : Panel
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the spacing between each child element (in pixels).
+	/// </summary>
 	public float Spacing
 	{
 		get => _spacing;
@@ -59,6 +75,11 @@ public class VPanel : Panel
 		}
 	}
 
+	/// <summary>
+	/// Initializes a new <see cref="VPanel"/> with a specified spacing and child entities.
+	/// </summary>
+	/// <param name="spacing">The spacing between each child element.</param>
+	/// <param name="entities">The entities to add to the panel.</param>
 	public VPanel(float spacing, params Entity[] entities) : base(entities)
 	{
 		_spacing = spacing;
@@ -66,8 +87,17 @@ public class VPanel : Panel
 		UpdateSize(entities);
 	}
 
+	/// <summary>
+	/// Initializes a new <see cref="VPanel"/> with a default spacing of 4 pixels.
+	/// </summary>
+	/// <param name="entities">The entities to add to the panel.</param>
 	public VPanel(params Entity[] entities) : this(spacing: 4, entities) { }
 
+	/// <summary>
+	/// Called when the panel is marked as dirty.
+	/// Recalculates child layout, sizes, and alignment.
+	/// </summary>
+	/// <param name="state">The dirty state flags that triggered the update.</param>
 	protected override void OnDirty(DirtyState state)
 	{
 		var allKids = Children
