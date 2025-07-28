@@ -164,6 +164,50 @@ public struct Color : IEquatable<Color>
 	#endregion
 
 
+	#region Blend
+	public readonly Color Blend(in Color other, float t) => Blend(this, other, t);
+	public static Color Blend(in Color a, in Color b, float t)
+	{
+		t = Math.Clamp(t, 0f, 1f);
+
+		return new Color(
+			(byte)Math.Clamp(a.R + (b.R - a.R) * t, 0f, 255f),
+			(byte)Math.Clamp(a.G + (b.G - a.G) * t, 0f, 255f),
+			(byte)Math.Clamp(a.B + (b.B - a.B) * t, 0f, 255f),
+			(byte)Math.Clamp(a.A + (b.A - a.A) * t, 0f, 255f)
+		);
+	}
+	#endregion
+
+
+	#region Multiply
+	public readonly Color Multiply(in Color other) => Multiply(this, other);
+	public static Color Multiply(in Color a, in Color b)
+	{
+		return new Color(
+			(byte)((a.R / 255f) * (b.R / 255f) * 255f),
+			(byte)((a.G / 255f) * (b.G / 255f) * 255f),
+			(byte)((a.B / 255f) * (b.B / 255f) * 255f),
+			(byte)((a.A / 255f) * (b.A / 255f) * 255f)
+		);
+	}
+	#endregion
+
+
+	#region Average
+	public readonly Color Average(in Color other) => Average(this, other);
+	public static Color Average(in Color a, in Color b)
+	{
+		return new Color(
+			(byte)((a.R + b.R) / 2),
+			(byte)((a.G + b.G) / 2),
+			(byte)((a.B + b.B) / 2),
+			(byte)((a.A + b.A) / 2)
+		);
+	}
+	#endregion
+
+
 	#region implicit Operators
 	public static implicit operator SFColor(in Color a) => new(a.R, a.G, a.B, a.A);
 	#endregion

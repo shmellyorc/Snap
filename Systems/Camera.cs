@@ -34,7 +34,7 @@ public class Camera
 
 			CullBounds = Rect2.FromCenter(_position, _viewport);
 			_view.Center = _position;
-			_screen.UpdateDirtyState(DirtyState.Update);
+			_screen.SetDirtyState(DirtyState.Update);
 		}
 	}
 
@@ -99,7 +99,7 @@ public class Camera
 			Position = entity.Position;
 
 		_followTarget = entity;
-		_screen.UpdateDirtyState(DirtyState.Update);
+		_screen.SetDirtyState(DirtyState.Update);
 	}
 
 	private Vect2 _orginalOffset;
@@ -163,7 +163,7 @@ public class Camera
 			float offsetY = FastRandom.Instance.RangeFloat(-1, 1f) * currentMag;
 			desired += new Vect2(offsetX, offsetY);
 
-			if(_shakeTimeRemaining <= 0)
+			if (_shakeTimeRemaining <= 0)
 				desired = _orginalOffset;
 		}
 
@@ -172,7 +172,7 @@ public class Camera
 		const float pixelThreshold = 1.0f;
 		if ((desired - _lastDirtyPosition).Length() >= pixelThreshold)
 		{
-			_screen.UpdateDirtyState(DirtyState.Update);
+			_screen.SetDirtyState(DirtyState.Update);
 		}
 	}
 

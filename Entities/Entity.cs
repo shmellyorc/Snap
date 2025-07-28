@@ -7,7 +7,7 @@ public class Entity
 	internal Vect2 _position;
 
 	private bool _keepAlive, _visible = true;
-	private int _layer;
+	private int _layer = 0;
 	private Color _color = Color.White;
 	private readonly List<Entity> _children = new(64); // Used for referencing.
 
@@ -44,12 +44,12 @@ public class Entity
 
 			if (_screen == null)
 			{
-				CoroutineManager.Start(WaitForNullScreen(() => _screen.UpdateDirtyState(DirtyState.Sort)));
+				CoroutineManager.Start(WaitForNullScreen(() => _screen.SetDirtyState(DirtyState.Sort)));
 				// CoroutineManager.Start(CoroutineHelpers.WaitWhileThan(() => _screen == null,
 				// 	() => _screen.UpdateDirtyState(DirtyState.Update)));
 			}
 			else
-				_screen.UpdateDirtyState(DirtyState.Update);
+				_screen.SetDirtyState(DirtyState.Update);
 		}
 	}
 
@@ -71,8 +71,12 @@ public class Entity
 		get
 		{
 			if (IsChild)
-				// TODO: Fix, it must blend colors not multi
-				return _color;
+			{
+				if (_parent == null)
+					Logger.Log(LogLevel.Warning, $"Parent '{_parent.GetType().Name}' is null on Entity.Color, defaulting to zero");
+
+				return Color.Multiply(_parent.Color, _color);
+			}
 
 			return _color;
 		}
@@ -85,7 +89,12 @@ public class Entity
 		get
 		{
 			if (IsChild)
+			{
+				if (_parent == null)
+					Logger.Log(LogLevel.Warning, $"Parent '{_parent.GetType().Name}' is null on Entity.Layer, defaulting to zero");
+
 				return _parent.Layer + _layer;
+			}
 
 			return _layer;
 		}
@@ -98,10 +107,10 @@ public class Entity
 			if (_screen == null)
 			{
 				// CoroutineManager.Start(CoroutineHelpers.WaitWhileThan(() => _screen == null,
-				CoroutineManager.Start(WaitForNullScreen(() => _screen.UpdateDirtyState(DirtyState.Sort)));
+				CoroutineManager.Start(WaitForNullScreen(() => _screen.SetDirtyState(DirtyState.Sort)));
 			}
 			else
-				_screen.UpdateDirtyState(DirtyState.Sort);
+				_screen.SetDirtyState(DirtyState.Sort);
 		}
 	}
 
@@ -425,7 +434,7 @@ public class Entity
 
 	private IEnumerator WaitForNullScreen(Action onReady)
 	{
-		yield return new WaitWhile(() => Screen == null);
+		yield return new WaitWhile(() => _screen == null);
 
 		onReady?.Invoke();
 	}

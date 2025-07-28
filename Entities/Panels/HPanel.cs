@@ -6,7 +6,6 @@ public class HPanel : Panel
 	private bool _isAutoSize = true;
 	private HAlign _hAlign = HAlign.Left;
 	private VAlign _vAlign = VAlign.Top;
-	private bool _isDirty = true;
 
 	public new Vect2 Size
 	{
@@ -17,7 +16,7 @@ public class HPanel : Panel
 				return;
 			base.Size = value;
 			_isAutoSize = false;
-			_isDirty = true;
+			SetDirtyState(DirtyState.Sort | DirtyState.Update);
 		}
 	}
 
@@ -29,7 +28,7 @@ public class HPanel : Panel
 			if (_hAlign == value)
 				return;
 			_hAlign = value;
-			_isDirty = true;
+			SetDirtyState(DirtyState.Sort | DirtyState.Update);
 		}
 	}
 
@@ -41,7 +40,7 @@ public class HPanel : Panel
 			if (_vAlign == value)
 				return;
 			_vAlign = value;
-			_isDirty = true;
+			SetDirtyState(DirtyState.Sort | DirtyState.Update);
 		}
 	}
 
@@ -99,22 +98,29 @@ public class HPanel : Panel
 
 		UpdateSize(allKids);
 
+		foreach (var e in this.GetAncestorsOfType<Panel>())
+			e.SetDirtyState(DirtyState.Update | DirtyState.Sort);
+
+		if (IsTopmostScreen || Parent == null)
+			Screen?.SetDirtyState(DirtyState.Sort | DirtyState.Update);
+
 		base.OnDirty(state);
 	}
 
-	protected override void OnUpdate()
-	{
-		if (_isDirty)
-		{
-			foreach (var e in this.GetAncestorsOfType<Panel>())
-				e.SetDirtyState(DirtyState.Update | DirtyState.Sort);
-			// SetDirtyState(DirtyState.Update | DirtyState.Sort); //<-- Dont add
+	// protected override void OnUpdate()
+	// {
+	// 	if (_isDirty)
+	// 	{
 
-			_isDirty = false;
-		}
+	// 		foreach (var e in this.GetAncestorsOfType<Panel>())
+	// 			e.SetDirtyState(DirtyState.Update | DirtyState.Sort);
+	// 		// SetDirtyState(DirtyState.Update | DirtyState.Sort); //<-- Dont add
 
-		base.OnUpdate();
-	}
+	// 		_isDirty = false;
+	// 	}
+
+	// 	base.OnUpdate();
+	// }
 
 	private void UpdateSize(IEnumerable<Entity> children)
 	{
@@ -147,7 +153,7 @@ public class HPanel : Panel
 
 		var newSize = new Vect2(totalWidth, height);
 
-		if (Size != newSize)
+		if (base.Size != newSize)
 			base.Size = newSize;
 	}
 }

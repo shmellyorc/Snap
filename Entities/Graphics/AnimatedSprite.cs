@@ -351,7 +351,8 @@ public sealed class AnimatedSprite : Entity
 			}
 		}
 
-		Size = anim.Frames[0].Size;
+		if(Size.Length() < anim.Frames[0].Size.Length())
+			Size = anim.Frames[0].Size;
 
 		Current = anim;
 		_currentHash = hash;
@@ -446,6 +447,10 @@ public sealed class AnimatedSprite : Entity
 			_rt.Draw(Current.Texture, final, frame, Color, Origin, Scale, Rotation, Effects, Layer);
 		}
 		else
-			Renderer.Draw(Current.Texture, Position, frame, Color, Origin, Scale, Rotation, Effects, Layer);
+		{
+			var final = new Vect2(Position.X + offsetX, Position.Y + offsetY);
+
+			Renderer.Draw(Current.Texture, final, frame, Color, Origin, Scale, Rotation, Effects, Layer);
+		}
 	}
 }
