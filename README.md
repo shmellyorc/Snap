@@ -1,3 +1,8 @@
+
+<p align="center">
+  <img width="480" height="1536" alt="Github" src="https://github.com/user-attachments/assets/39024e44-5e02-4454-b84d-aa356e02c554" />
+</p>
+
 # SnapEngine
 
 SnapEngine is a modular C# game engine built on top of [SFML.Net](https://www.sfml-dev.org/download/sfml.net/), designed for fast prototyping and embedded resource handling. It is ideal for hobbyist and experimental game developers who want full control over the engine architecture with minimal boilerplate.
