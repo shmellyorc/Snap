@@ -51,6 +51,9 @@ public static class HashHelpers
 	public static uint Hash32(string text) =>
 		Hash32(Encoding.UTF8.GetBytes(text));
 
+	public static uint Hash32(Enum text) =>
+		Hash32(Encoding.UTF8.GetBytes(text.ToEnumString()));
+
 	/// <summary>
 	/// Computes the 64‑bit FNV‑1a hash of the given string, using UTF‑8 encoding.
 	/// </summary>
@@ -58,4 +61,7 @@ public static class HashHelpers
 	/// <returns>The 64‑bit FNV‑1a hash value of the UTF‑8 bytes of <paramref name="text"/>.</returns>
 	public static ulong Hash64(string text) =>
 		Hash64(Encoding.UTF8.GetBytes(text));
+
+	public static ulong Hash64(Enum text) =>
+		Hash64(Encoding.UTF8.GetBytes(text.ToEnumString()));
 }

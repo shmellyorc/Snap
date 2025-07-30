@@ -31,6 +31,16 @@ public class Entity
 	public IReadOnlyList<Entity> Children => _children;
 
 	/// <summary>
+	/// Returns a list of child entities that are of the specified type <typeparamref name="T"/>.
+	/// </summary>
+	/// <typeparam name="T">The type of entities to filter from the children.</typeparam>
+	/// <returns>
+	/// A list containing all child entities that are of type <typeparamref name="T"/>.
+	/// </returns>
+	public IReadOnlyList<T> ChildrenAs<T>() where T : Entity =>
+		Children.OfType<T>().ToList();
+
+	/// <summary>
 	/// The number of child entities attached to this one.
 	/// </summary>
 	public int ChildCount => Children.Count;
@@ -247,6 +257,13 @@ public class Entity
 
 
 	#region Helpers
+	/// <summary>
+	/// Gets the safe region margin defined in the engine settings.
+	/// </summary>
+	/// <remarks>
+	/// This value typically represents the padding or boundary buffer used
+	/// to determine a 'safe' area within the screen or layout system.
+	/// </remarks>
 	public float SafeRegion => EngineSettings.Instance.SafeRegion;
 
 	/// <summary>

@@ -304,6 +304,8 @@ public sealed class LDTKProject : IAsset
 		if (_layerCache.Count == 0)
 			throw new Exception("You don't have any map levels to search");
 
+		if (string.IsNullOrWhiteSpace(id))
+			return null;
 		if (!_levelCache.TryGetValue(HashHelpers.Hash32(id), out var level))
 			return null;
 

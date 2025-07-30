@@ -58,6 +58,15 @@ public sealed class MapLevel
 	public Vect2 BgPivot { get; }
 
 	/// <summary>
+	/// Gets the neighboring map level references for this level.
+	/// </summary>
+	/// <remarks>
+	/// This provides access to the IDs of adjacent levels in each compass direction (N, NE, E, etc.).
+	/// Use this to determine map transitions or connectivity.
+	/// </remarks>
+	public MapNeighbour Neighbours { get; }
+
+	/// <summary>
 	/// A collection of all layers contained within the level.
 	/// Layers include tilemaps, entities, and int grids.
 	/// </summary>
@@ -71,7 +80,7 @@ public sealed class MapLevel
 
 	internal MapLevel(string name, string id, Vect2 coords, int worthDepth, Vect2 size,
 		Vect2 gridSize, Color color, string bgPath, Vect2 bgPosition, Vect2 bgPivot,
-		List<MapLayer> layers, Dictionary<uint, MapSetting> settings)
+		MapNeighbour neighbours, List<MapLayer> layers, Dictionary<uint, MapSetting> settings)
 	{
 		Name = name;
 		Id = id;
@@ -83,6 +92,7 @@ public sealed class MapLevel
 		BgPath = bgPath;
 		BgPosition = bgPosition;
 		BgPivot = bgPivot;
+		Neighbours = neighbours;
 		Layers = layers;
 		Settings = settings;
 	}
@@ -101,7 +111,6 @@ public sealed class MapLevel
 			var worldDepth = t.GetPropertyOrDefault<int>("worldDepth");
 			var pxX = t.GetPropertyOrDefault<int>("pxWid");
 			var pxY = t.GetPropertyOrDefault<int>("pxHei");
-			// var color = t.GetPropertyOrDefault("bgColor", "#ffffff");
 			var bgRelPath = t.GetPropertyOrDefault("bgRelPath", string.Empty);
 			var bgPivotX = t.GetPropertyOrDefault<float>("bgPivotX");
 			var bgPivotY = t.GetPropertyOrDefault<float>("bgPivotY");
@@ -121,13 +130,13 @@ public sealed class MapLevel
 				pxBgPos = new Vect2(bgElem.First().GetInt32(), bgElem.Last().GetInt32());
 			}
 
+			var neighbours = MapNeighbour.Process(t.GetProperty("__neighbours"));
 			var settings = JsonHelpers.GetSettings(t.GetProperty("fieldInstances"));
-
 			var layers = MapLayer.Process(t.GetProperty("layerInstances"));
 
 			result.Add(
 				new MapLevel(name, id, new(worldX, worldY), worldDepth, size, gridSize,
-				color, bgRelPath, pxBgPos, new(bgPivotX, bgPivotY), layers, settings)
+				color, bgRelPath, pxBgPos, new(bgPivotX, bgPivotY), neighbours, layers, settings)
 			);
 		}
 
