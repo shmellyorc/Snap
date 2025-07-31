@@ -128,8 +128,8 @@ public class Camera
 		}
 
 		Vect2 targetPos = _followTarget != null
-			? _followTarget.Position
-			: Position;
+			? _followTarget.Position + Offset
+			: Position + Offset;
 
 		float tau = 0.3f; // ~0.3s time constant
 		float rawT = 1f - MathF.Exp(-dt / tau);

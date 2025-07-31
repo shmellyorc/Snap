@@ -218,6 +218,8 @@ public class Entity
 	/// </summary>
 	private Vect2 _size = Vect2.One; // <-- Leave as one not zero, will cause the engine to skip these entities
 
+	public Vect2 Center => Size / 2f;
+
 	/// <summary>
 	/// The size of this entity. Affects layout, bounds, and rendering.
 	/// </summary>

@@ -95,7 +95,7 @@ public sealed class EngineSettings
 		return this;
 	}
 
-	public bool VSync { get; private set; }
+	public bool VSync { get; internal set; }
 	public EngineSettings WithVSync(bool value)
 	{
 		VSync = value;
@@ -103,6 +103,35 @@ public sealed class EngineSettings
 		return this;
 	}
 
+
+
+	public bool FullScreen { get; internal set; }
+	public EngineSettings WithFullScreen(bool value)
+	{
+		FullScreen = value;
+
+		return this;
+	}
+
+
+
+	public int Antialiasing { get; internal set; }
+	public EngineSettings WithAntialiasing(uint value)
+	{
+		Antialiasing = (int)value;
+
+		return this;
+	}
+
+
+
+	public bool WindowResize { get; private set; }
+	public EngineSettings WithWindowResize(bool value)
+	{
+		WindowResize = value;
+
+		return this;
+	}
 
 	public int DrawCallCache { get; private set; }
 	public EngineSettings WithDrawCallCache(uint value)
@@ -214,7 +243,7 @@ public sealed class EngineSettings
 		return this;
 	}
 
-	public Vect2 Window { get; private set; }
+	public Vect2 Window { get; internal set; }
 	public EngineSettings WithWindow(uint width, uint height)
 	{
 		if (width == 0)
