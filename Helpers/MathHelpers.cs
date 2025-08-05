@@ -95,13 +95,11 @@ public static class MathHelpers
 	public static int Wrap(int value, int min, int max)
 	{
 		int range = max - min;
-
 		if (range <= 0)
 			throw new ArgumentException("max must be greater than min");
 
 		int mod = (value - min) % range;
-
-		if (min < 0)
+		if (mod < 0)
 			mod += range;
 
 		return mod + min;

@@ -141,6 +141,29 @@ public sealed class Spritesheet : IAsset
 		return result.Bounds;
 	}
 
+
+	public bool Contains(string name) =>
+		_spritesheets.TryGetValue(HashHelpers.Hash32(name), out _);
+
+
+	public bool TryGetBounds(string name, out Rect2 value)
+	{
+		value = Rect2.Zero;
+
+		if (name.IsEmpty())
+			return false;
+		if (!_spritesheets.TryGetValue(HashHelpers.Hash32(name), out var result))
+			return false;
+		if (result.Bounds.IsZero)
+			return false;
+
+		value = result.Bounds;
+
+		return true;
+	}
+
+
+
 	/// <summary>
 	/// Retrieves the 9-slice patch rectangle (center region) of a sprite by name.
 	/// </summary>
@@ -161,6 +184,25 @@ public sealed class Spritesheet : IAsset
 		return result.Patch;
 	}
 
+
+	public bool TryGetPatch(string name, out Rect2 value)
+	{
+		value = Rect2.Zero;
+
+		if (name.IsEmpty())
+			return false;
+		if (!_spritesheets.TryGetValue(HashHelpers.Hash32(name), out var result))
+			return false;
+		if (result.Patch.IsZero)
+			return false;
+
+		value = result.Patch;
+
+		return true;
+	}
+
+
+
 	/// <summary>
 	/// Retrieves the pivot point of the sprite for alignment or transformation.
 	/// </summary>
@@ -179,5 +221,23 @@ public sealed class Spritesheet : IAsset
 			throw new Exception($"Pivot point for '{name}' has not been set.");
 
 		return result.Pivot;
+	}
+
+
+
+	public bool TryGetPivot(string name, out Vect2 value)
+	{
+		value = Vect2.Zero;
+
+		if (name.IsEmpty())
+			return false;
+		if (!_spritesheets.TryGetValue(HashHelpers.Hash32(name), out var result))
+			return false;
+		if (result.Pivot.IsZero)
+			return false;
+
+		value = result.Pivot;
+
+		return true;
 	}
 }

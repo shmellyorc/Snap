@@ -48,5 +48,26 @@ public static class StringExtensions
 	/// </returns>
 	public static string TrimToLength(this string v, int maxLength) =>
 		v.Length > maxLength ? v.Substring(0, maxLength) : v;
+
+	/// <summary>
+	/// Counts how many times a specific character appears in the string.
+	/// </summary>
+	/// <param name="input">The input string to search.</param>
+	/// <param name="target">The character to count.</param>
+	/// <returns>The number of times the character appears in the string.</returns>
+	public static int CountChar(this string input, char target)
+	{
+		if (string.IsNullOrEmpty(input))
+			return 0;
+
+		int count = 0;
+		foreach (char c in input)
+		{
+			if (c == target)
+				count++;
+		}
+
+		return count;
+	}
 }
 

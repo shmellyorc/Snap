@@ -1,5 +1,19 @@
 namespace Snap.Helpers;
 
+/// <summary>
+/// Provides reflection-based utility methods for working with types marked with the <see cref="DiscoverableAttribute"/>.
+/// This static helper is used by the Snap engine to locate and process classes tagged as <c>[Discoverable]</c>
+/// across loaded assemblies, including engine modules, scripts, and mod/plugin DLLs.
+/// <para/>
+/// Typical usage includes:
+/// <list type="bullet">
+///   <item><description>Scanning assemblies for discoverable types</description></item>
+///   <item><description>Registering mod/plugin-defined systems or tools</description></item>
+///   <item><description>Populating debug panels or editor listings dynamically</description></item>
+/// </list>
+/// <para/>
+/// This class is engine-internal and not intended for direct use by external mods (unless exposed explicitly).
+/// </summary>
 public static class DiscoverableHelper
 {
     private static readonly WeakReference<List<Type>> _allTypesRef = new(null);
@@ -143,8 +157,23 @@ public static class DiscoverableHelper
 
 
 
+
+
 /// <summary>
-/// Marks a class or member as discoverable by reflection-based search or registration systems.
+/// Marks a class as discoverable by the Snap engine's reflection-based systems.
+/// This attribute is used to identify types that should be automatically found and exposed
+/// for editor tools, debug UIs, runtime registration, scripting, and mod/plugin support.
+/// <para/>
+/// <b>Typical use cases include:</b>
+/// <list type="bullet">
+///   <item><description>Auto-discovery of engine components or subsystems</description></item>
+///   <item><description>Debug inspection panels</description></item>
+///   <item><description>Developer console commands or tools</description></item>
+///   <item><description>Scripting or hot-reloading systems</description></item>
+///   <item><description>Mod/plugin auto-registration (e.g., user-defined classes in loaded assemblies)</description></item>
+/// </list>
+/// <para/>
+/// Only applies to classes. Inheritance is not supported, and multiple applications are not allowed.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 public sealed class DiscoverableAttribute : Attribute

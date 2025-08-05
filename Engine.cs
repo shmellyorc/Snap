@@ -210,7 +210,7 @@ public class Engine : IDisposable
 		_log.Log(LogLevel.Info, $"Initializing video mode: {Settings.Window.X}x{Settings.Window.Y}");
 		_videoMode = new SFVideoMode((uint)Settings.Window.X, (uint)Settings.Window.Y);
 
-		_context = new SFContext { MinorVersion = 3, MajorVersion = 3, AntialiasingLevel = (uint)Settings.Antialiasing };
+		_context = new SFContext { MajorVersion = 4, MinorVersion = 0, AntialiasingLevel = (uint)Settings.Antialiasing };
 		_log.Log(LogLevel.Info, $"Creating OpenGL context: Version {_context.MajorVersion}.{_context.MinorVersion}, Antialiasing: {_context.AntialiasingLevel}");
 
 		try

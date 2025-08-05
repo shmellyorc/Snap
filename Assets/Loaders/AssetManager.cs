@@ -241,7 +241,7 @@ public sealed class AssetManager
 	public static Spritesheet LoadSheet(string filename)
 	{
 		if (!TryFindFullPath(filename, SpritesheetExtentions, out var fullPath))
-			throw new FileNotFoundException($"Spritesheet font file '{filename}' could not be found.");
+			throw new FileNotFoundException($"Spritesheet file '{filename}' could not be found.");
 
 		return new Spritesheet(Id++, fullPath);
 	}

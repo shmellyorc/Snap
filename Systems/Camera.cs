@@ -78,13 +78,14 @@ public class Camera
 			_isFlying = false;
 			return;
 		}
-
-		_isFlying = true;
+		
 		_flyStart = Position;
 		_flyTarget = target;
 		_flyDuration = duration;
 		_flyElapsed = 0f;
 		_flyEase = ease;
+
+		_isFlying = true;
 	}
 
 	public void Follow(Entity entity, bool teleport)
