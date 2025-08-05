@@ -1,24 +1,56 @@
 namespace Snap.Screens;
 
+/// <summary>
+/// Represents flags used to indicate what aspects of the screen or entity state are considered "dirty"
+/// and require an update or refresh during the next frame.
+/// </summary>
 [Flags]
 public enum DirtyState : uint // Used for Entity and ScreenManager
 {
+	/// <summary>
+	/// No changes are pending.
+	/// </summary>
 	None,
-	Sort = 1 << 0, // Layer
-	Update = 1 << 1, // Add or Remove
+
+	/// <summary>
+	/// Indicates that the sorting order (e.g., by layer) needs to be updated.
+	/// </summary>
+	Sort = 1 << 0,
+
+	/// <summary>
+	/// Indicates that entities were added or removed and the collection needs to be updated.
+	/// </summary>
+	Update = 1 << 1,
 }
 
+/// <summary>
+/// Manages all active <see cref="Screen"/> instances, including their ordering, transitions,
+/// lifecycle events, and global dirty state tracking.
+/// </summary>
 public sealed class ScreenManager
 {
 	private static uint _id;
 
-	private List<Screen> _screens = new();
-	private Dictionary<uint, Screen> _screensById = new();
-	private List<Screen> _updateScreens = new();
+	private readonly List<Screen> _screens = [];
+	private readonly Dictionary<uint, Screen> _screensById = [];
+	private readonly List<Screen> _updateScreens = [];
 	private DirtyState _dirtyState;
 
+	/// <summary>
+	/// Gets the global singleton instance of the <see cref="ScreenManager"/>.
+	/// </summary>
 	public static ScreenManager Instance { get; private set; }
+
+	/// <summary>
+	/// Gets the total number of active screens currently managed.
+	/// </summary>
 	public int Count => _screens.Count;
+
+
+	/// <summary>
+	/// Gets a read-only list of all active <see cref="Screen"/> instances.
+	/// The first screen is rendered behind the others; the last screen is on top.
+	/// </summary>
 	public IReadOnlyList<Screen> Screens => _screens;
 
 	internal ScreenManager() => Instance ??= this;
@@ -76,7 +108,10 @@ public sealed class ScreenManager
 
 
 
-
+	/// <summary>
+	/// Adds one or more <see cref="Screen"/> instances to the screen stack.
+	/// </summary>
+	/// <param name="screens">An array of screens to add. Screens are added in the order provided, with the last screen rendered on top.</param>
 	public void Add(params Screen[] screens)
 	{
 		if (screens?.Length == 0)
@@ -98,6 +133,10 @@ public sealed class ScreenManager
 		_dirtyState = DirtyState.Update | DirtyState.Sort;
 	}
 
+	/// <summary>
+	/// Removes one or more <see cref="Screen"/> instances from the screen stack.
+	/// </summary>
+	/// <param name="screens">An array of screens to remove. Any screens not currently in the stack are ignored.</param>
 	public void Remove(params Screen[] screens)
 	{
 		if (screens?.Length == 0)
@@ -122,12 +161,33 @@ public sealed class ScreenManager
 			_dirtyState = DirtyState.Update | DirtyState.Sort;
 	}
 
-
+	/// <summary>
+	/// Retrieves the first screen in the stack that matches the specified type.
+	/// </summary>
+	/// <typeparam name="T">The type of screen to search for.</typeparam>
+	/// <returns>The first matching screen of type <typeparamref name="T"/>, or <c>null</c> if not found.</returns>
 	public T Get<T>() where T : Screen => (T)_screens.FirstOrDefault(x => x is T);
 
+	/// <summary>
+	/// Retrieves the instance of a screen from the stack by its reference.
+	/// </summary>
+	/// <param name="screen">The screen instance to search for.</param>
+	/// <returns>The matching <see cref="Screen"/> if found; otherwise, <c>null</c>.</returns>
 	public Screen Get(Screen screen) => _screensById.TryGetValue(screen.Id, out var s) ? s : null;
+
+	/// <summary>
+	/// Retrieves a screen from the stack by its unique identifier.
+	/// </summary>
+	/// <param name="id">The unique screen ID.</param>
+	/// <returns>The <see cref="Screen"/> with the specified ID if found; otherwise, <c>null</c>.</returns>
 	public Screen GetById(uint id) => _screensById.TryGetValue(id, out var s) ? s : null;
 
+	/// <summary>
+	/// Attempts to retrieve the first screen in the stack that matches the specified type.
+	/// </summary>
+	/// <typeparam name="T">The type of screen to search for.</typeparam>
+	/// <param name="screen">When this method returns, contains the screen if found; otherwise, <c>null</c>.</param>
+	/// <returns><c>true</c> if a screen of the specified type was found; otherwise, <c>false</c>.</returns>
 	public bool TryGet<T>(out T screen) where T : Screen
 	{
 		screen = Get<T>();
@@ -135,6 +195,13 @@ public sealed class ScreenManager
 		return screen != null;
 	}
 
+	/// <summary>
+	/// Clears all screens from the screen stack and marks the manager as needing an update.
+	/// </summary>
+	/// <remarks>
+	/// This method removes all currently active screens using the <see cref="Remove"/> method
+	/// and sets the <see cref="_dirtyState"/> flag to <see cref="DirtyState.Update"/>.
+	/// </remarks>
 	public void Clear()
 	{
 		if (_screens.Count == 0)
