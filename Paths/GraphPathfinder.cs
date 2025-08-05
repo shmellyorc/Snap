@@ -1,5 +1,10 @@
 namespace Snap.Paths;
 
+/// <summary>
+/// Provides graph pathfinding functionality using algorithms such as Dijkstra or A*.
+/// Operates on graph nodes and edges to compute the shortest or optimal path between points,
+/// using customizable cost and heuristic functions.
+/// </summary>
 public sealed class GraphPathfinder
 {
 	/// <summary>
@@ -51,7 +56,16 @@ public sealed class GraphPathfinder
 	private int[] _flowNext;
 	private readonly List<Vect2> _posBuffer = new List<Vect2>();
 
-	/// <summary>Adds a node with its world-space position.</summary>
+	/// <summary>
+	/// Adds a new node to the pathfinding graph with a unique ID and world-space position.
+	/// </summary>
+	/// <param name="id">A unique integer ID representing the node. Duplicate IDs are ignored.</param>
+	/// <param name="position">The world-space position of the node, used for distance and heuristic calculations.</param>
+	/// <remarks>
+	/// If the node ID already exists in the graph, the call is ignored silently.
+	/// Internally, this method initializes adjacency lists, position tracking, and score buffers
+	/// needed for pathfinding algorithms.
+	/// </remarks>
 	public void AddNode(int id, Vect2 position)
 	{
 		if (_idToIndex.ContainsKey(id))
@@ -69,7 +83,21 @@ public sealed class GraphPathfinder
 		Array.Resize(ref _gVisit, idx + 1);
 	}
 
-	/// <summary>Connects two nodes bidirectionally by default.</summary>
+	/// <summary>
+	/// Creates a connection (edge) between two nodes in the graph, optionally bidirectional.
+	/// </summary>
+	/// <param name="fromId">The ID of the source node.</param>
+	/// <param name="toId">The ID of the destination node.</param>
+	/// <param name="cost">The traversal cost associated with the edge. Defaults to <c>1.0</c>.</param>
+	/// <param name="bidirectional">
+	/// If <c>true</c> (default), a reverse connection from <paramref name="toId"/> to <paramref name="fromId"/> is also created.
+	/// </param>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown if either node has not been added to the graph using <see cref="AddNode"/>.
+	/// </exception>
+	/// <remarks>
+	/// Duplicate edges between the same two nodes are ignored.
+	/// </remarks>
 	public void ConnectNode(int fromId, int toId, float cost = 1f, bool bidirectional = true)
 	{
 		if (!_idToIndex.TryGetValue(fromId, out var from) ||
@@ -88,7 +116,18 @@ public sealed class GraphPathfinder
 		}
 	}
 
-	/// <summary>Checks direct connectivity between two nodes.</summary>
+	/// <summary>
+	/// Determines whether a direct edge exists from one node to another.
+	/// </summary>
+	/// <param name="fromId">The ID of the source node.</param>
+	/// <param name="toId">The ID of the destination node.</param>
+	/// <returns>
+	/// <c>true</c> if a direct connection (edge) exists from <paramref name="fromId"/> to <paramref name="toId"/>; otherwise, <c>false</c>.
+	/// </returns>
+	/// <remarks>
+	/// This only checks one-way connectivity. If the edge is bidirectional, both directions must be checked separately.
+	/// Returns <c>false</c> if either node ID is not present in the graph.
+	/// </remarks>
 	public bool IsNodeConnected(int fromId, int toId)
 	{
 		if (!_idToIndex.TryGetValue(fromId, out var from) ||
@@ -101,18 +140,53 @@ public sealed class GraphPathfinder
 		return false;
 	}
 
-	/// <summary>Disables or enables a node for flow/search.</summary>
+	/// <summary>
+	/// Marks a node as disabled, excluding it from pathfinding and search operations.
+	/// </summary>
+	/// <param name="id">The ID of the node to disable.</param>
+	/// <remarks>
+	/// Disabled nodes are treated as unreachable during graph traversal.
+	/// </remarks>
 	public void DisableNode(int id) => SetDisabled(id, true);
+
+	/// <summary>
+	/// Re-enables a previously disabled node, allowing it to be included in pathfinding and search.
+	/// </summary>
+	/// <param name="id">The ID of the node to enable.</param>
 	public void EnableNode(int id) => SetDisabled(id, false);
+
+	/// <summary>
+	/// Checks whether the specified node is currently disabled.
+	/// </summary>
+	/// <param name="id">The ID of the node to check.</param>
+	/// <returns><c>true</c> if the node is disabled; otherwise, <c>false</c>.</returns>
 	public bool IsNodeDisabled(int id) => _idToIndex.TryGetValue(id, out var i) && _disabled[i];
+
+	/// <summary>
+	/// Internal helper to mark a node as enabled or disabled.
+	/// </summary>
+	/// <param name="id">The ID of the node.</param>
+	/// <param name="value"><c>true</c> to disable the node; <c>false</c> to enable it.</param>
 	private void SetDisabled(int id, bool value)
 	{
 		if (_idToIndex.TryGetValue(id, out var idx))
 			_disabled[idx] = value;
 	}
 
-	/// <summary>Builds a reverse-Dijkstra flow from a goal node.</summary>
-	/// <remarks>Populates _flowNext so each node points to the best neighbor toward goal.</remarks>
+	/// <summary>
+	/// Computes a reverse Dijkstra-based flow field from the specified goal node.
+	/// </summary>
+	/// <param name="goalId">The ID of the goal node to build the flow field from.</param>
+	/// <remarks>
+	/// This method builds a flow field by computing the shortest distance from all nodes
+	/// to the goal using Dijkstra’s algorithm in reverse (traversing edges backward).
+	/// <para/>
+	/// The result is stored in <c>_flowNext</c>, where each node maps to the neighbor
+	/// that brings it closest to the goal along the shortest path.
+	/// <para/>
+	/// Disabled nodes are ignored during path calculation. Nodes unreachable from the goal
+	/// will have <c>_flowNext[n] = -1</c>.
+	/// </remarks>
 	public void ComputeFlowField(int goalId)
 	{
 		if (!_idToIndex.TryGetValue(goalId, out var goalIdx))
@@ -191,7 +265,20 @@ public sealed class GraphPathfinder
 		}
 	}
 
-	/// <summary>Gets the next node ID along the computed flow.</summary>
+	/// <summary>
+	/// Retrieves the next node ID to move toward the goal from the specified current node,
+	/// based on the most recently computed flow field.
+	/// </summary>
+	/// <param name="currentId">The ID of the current node.</param>
+	/// <returns>
+	/// The ID of the next node along the shortest path to the goal.  
+	/// If the flow field has not been computed or no valid next step exists,
+	/// returns <paramref name="currentId"/>.
+	/// </returns>
+	/// <remarks>
+	/// This method uses the <c>_flowNext</c> array populated by <see cref="ComputeFlowField"/>.
+	/// If the current node is unreachable or not part of the graph, no movement occurs.
+	/// </remarks>
 	public int GetNextNode(int currentId)
 	{
 		if (!_idToIndex.TryGetValue(currentId, out var idx) || _flowNext == null)
@@ -201,7 +288,19 @@ public sealed class GraphPathfinder
 		return (nextIdx >= 0 ? _indexToId[nextIdx] : currentId);
 	}
 
-	/// <summary>Gets a normalized direction vector along the flow.</summary>
+	/// <summary>
+	/// Computes a normalized direction vector pointing from the current node
+	/// toward the next node in the flow field.
+	/// </summary>
+	/// <param name="currentId">The ID of the current node.</param>
+	/// <returns>
+	/// A unit-length <see cref="Vect2"/> direction vector pointing toward the goal.
+	/// Returns <see cref="Vect2.Zero"/> if the current node has no valid flow direction
+	/// or is the goal itself.
+	/// </returns>
+	/// <remarks>
+	/// This method uses world-space positions and the flow field generated by <see cref="ComputeFlowField"/>.
+	/// </remarks>
 	public Vect2 GetFlowDirection(int currentId)
 	{
 		int nextId = GetNextNode(currentId);
@@ -212,8 +311,19 @@ public sealed class GraphPathfinder
 	}
 
 	/// <summary>
-	/// Samples the flow-field from start to goal, returning positions along the way.
+	/// Computes a path from the start node to the goal node by following the flow field,
+	/// and returns a list of world-space positions along that path.
 	/// </summary>
+	/// <param name="startId">The ID of the starting node.</param>
+	/// <param name="goalId">The ID of the goal node.</param>
+	/// <returns>
+	/// A list of <see cref="Vect2"/> positions representing the sampled path through the graph.
+	/// If no path exists, the list will contain only the start position or be empty.
+	/// </returns>
+	/// <remarks>
+	/// This method computes the flow field from the goal, then walks forward from the start node
+	/// using <see cref="GetNextNode"/> to follow the path. Each node’s position is recorded along the way.
+	/// </remarks>
 	public List<Vect2> FindPathPositions(int startId, int goalId)
 	{
 		if (!_idToIndex.TryGetValue(startId, out _) ||

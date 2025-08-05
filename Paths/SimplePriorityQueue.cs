@@ -1,5 +1,22 @@
 namespace Snap.Paths;
 
+/// <summary>
+/// A priority queue optimized for graph pathfinding algorithms such as Dijkstra or A*.
+/// Stores items associated with priority values, allowing fast insertion and retrieval
+/// of the item with the lowest priority cost.
+/// </summary>
+/// <typeparam name="TItem">
+/// The type of the item being stored — typically a node, coordinate, or vertex in a graph.
+/// </typeparam>
+/// <typeparam name="TPriority">
+/// The type used for priority comparison — usually <see cref="float"/> or <see cref="int"/>.
+/// Lower values indicate higher priority. Must support comparison.
+/// </typeparam>
+/// <remarks>
+/// This queue is intended for use in shortest-path algorithms, where nodes are enqueued
+/// based on their estimated total cost or distance. Internal implementation may vary (e.g., heap),
+/// but the focus is on minimizing retrieval time for the lowest-cost node.
+/// </remarks>
 public sealed class GraphPriorityQueue<TItem, TPriority>
 	where TItem : notnull
 	where TPriority : IComparable<TPriority>
@@ -15,10 +32,22 @@ public sealed class GraphPriorityQueue<TItem, TPriority>
 		}
 	}
 
-	private readonly List<Node> _heap = new();
-	private readonly Dictionary<TItem, int> _indices = new();
+	private readonly List<Node> _heap = [];
+	private readonly Dictionary<TItem, int> _indices = [];
+
+	/// <summary>
+	/// Gets the number of items currently stored in the priority queue.
+	/// </summary>
 	public int Count => _heap.Count;
 
+	/// <summary>
+	/// Adds the specified item to the priority queue with the given priority.
+	/// </summary>
+	/// <param name="item">The item to enqueue. Must not already exist in the queue.</param>
+	/// <param name="priority">The priority associated with the item. Lower values indicate higher priority.</param>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown if the item is already present in the queue.
+	/// </exception>
 	public void Enqueue(TItem item, TPriority priority)
 	{
 		if (_indices.ContainsKey(item))
@@ -31,6 +60,13 @@ public sealed class GraphPriorityQueue<TItem, TPriority>
 		BubbleUp(i);
 	}
 
+	/// <summary>
+	/// Removes and returns the item with the lowest priority from the queue.
+	/// </summary>
+	/// <returns>The item with the lowest priority.</returns>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown if the queue is empty.
+	/// </exception>
 	public TItem Dequeue()
 	{
 		if (_heap.Count == 0)
@@ -51,8 +87,21 @@ public sealed class GraphPriorityQueue<TItem, TPriority>
 		return root;
 	}
 
+	/// <summary>
+	/// Determines whether the specified item is currently in the priority queue.
+	/// </summary>
+	/// <param name="item">The item to check for existence.</param>
+	/// <returns><c>true</c> if the item is in the queue; otherwise, <c>false</c>.</returns>
 	public bool Contains(TItem item) => _indices.ContainsKey(item);
 
+	/// <summary>
+	/// Updates the priority of an existing item in the queue.
+	/// </summary>
+	/// <param name="item">The item whose priority should be updated. Must already exist in the queue.</param>
+	/// <param name="newPriority">The new priority value to assign. Lower values indicate higher priority.</param>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown if the specified item is not found in the queue.
+	/// </exception>
 	public void UpdatePriority(TItem item, TPriority newPriority)
 	{
 		if (!_indices.TryGetValue(item, out int i))
@@ -71,6 +120,9 @@ public sealed class GraphPriorityQueue<TItem, TPriority>
 			BubbleDown(i);
 	}
 
+	/// <summary>
+	/// Removes all items from the queue, resetting it to an empty state.
+	/// </summary>
 	public void Clear()
 	{
 		_heap.Clear();

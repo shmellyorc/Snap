@@ -1,15 +1,29 @@
 namespace Snap.Logs;
 
+/// <summary>
+/// Represents the severity level of a log message.
+/// </summary>
 public enum LogLevel
 {
-    Info,
-    Warning,
-    Error,
+	/// <summary>General informational messages.</summary>
+	Info,
+
+	/// <summary>Messages indicating potential issues or unusual behavior.</summary>
+	Warning,
+
+	/// <summary>Messages representing errors or failures that require attention.</summary>
+	Error,
 }
 
 /// <summary>
-/// Central logger that fans out entries to multiple sinks and provides utility methods.
+/// Central logging system for the engine. Supports writing log messages to multiple output targets (sinks),
+/// such as console, file, or in-game debug UI. Inherits from <see cref="TextWriter"/> for compatibility
+/// with standard stream APIs.
 /// </summary>
+/// <remarks>
+/// Provides structured logging with severity levels and optional prefix formatting.  
+/// All log messages are automatically dispatched to all registered sinks.
+/// </remarks>
 public sealed class Logger : TextWriter, IDisposable
 {
     private readonly List<ILogSink> _sinks = new List<ILogSink>();
@@ -18,11 +32,37 @@ public sealed class Logger : TextWriter, IDisposable
     private readonly object _syncLock = new object();
     private bool _disposed;
 
-    public static Logger Instance { get; private set; }
-    public override Encoding Encoding => Encoding.Default;
-    public LogLevel Level { get; set; }
+	/// <summary>
+	/// Singleton instance of the global <see cref="Logger"/> used throughout the engine.
+	/// </summary>
+	public static Logger Instance { get; private set; }
 
-    public Logger(LogLevel minLevel = LogLevel.Info,
+	/// <summary>
+	/// Gets the character encoding used by the logger when writing text output.
+	/// </summary>
+	public override Encoding Encoding => Encoding.Default;
+
+	/// <summary>
+	/// Gets or sets the minimum log level. Messages below this level will be ignored.
+	/// </summary>
+	/// <remarks>
+	/// For example, setting this to <see cref="LogLevel.Warning"/> will suppress all <see cref="LogLevel.Info"/> logs.
+	/// </remarks>
+	public LogLevel Level { get; set; }
+
+	/// <summary>
+	/// Initializes the global <see cref="Logger"/> instance with a minimum log level and optional recent-entry tracking.
+	/// </summary>
+	/// <param name="minLevel">
+	/// The minimum <see cref="LogLevel"/> required for a message to be logged. Defaults to <see cref="LogLevel.Info"/>.
+	/// </param>
+	/// <param name="maxRecentEntries">
+	/// The maximum number of recent log entries to retain in memory. Defaults to <c>100</c>.
+	/// </param>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown if the logger has already been initialized. Only one instance is allowed.
+	/// </exception>
+	public Logger(LogLevel minLevel = LogLevel.Info,
                   int maxRecentEntries = 100)
     {
         if (Instance != null)
@@ -33,14 +73,31 @@ public sealed class Logger : TextWriter, IDisposable
         _recentEntries = new Queue<string>(maxRecentEntries);
     }
 
-    /// <summary>Adds a log sink (e.g. console, file).</summary>
-    public void AddSink(ILogSink sink)
+	/// <summary>
+	/// Adds a new log sink to the logger, such as a console output, file writer, or custom destination.
+	/// </summary>
+	/// <param name="sink">The <see cref="ILogSink"/> instance to receive log output.</param>
+	/// <exception cref="ObjectDisposedException">
+	/// Thrown if the logger has already been disposed.
+	/// </exception>
+	/// <remarks>
+	/// Sinks are written to in the order they are added. Thread-safe.
+	/// </remarks>
+	public void AddSink(ILogSink sink)
     {
         if (_disposed) throw new ObjectDisposedException(nameof(Logger));
         lock (_syncLock) { _sinks.Add(sink); }
     }
 
-    public override void Write(char value)
+	/// <summary>
+	/// Writes a single character to all registered log sinks.
+	/// </summary>
+	/// <param name="value">The character to write.</param>
+	/// <remarks>
+	/// Automatically rotates each sink if needed before writing.  
+	/// If the logger has been disposed, this call has no effect.
+	/// </remarks>
+	public override void Write(char value)
     {
         if (_disposed) return;
         lock (_syncLock)
@@ -49,7 +106,16 @@ public sealed class Logger : TextWriter, IDisposable
         }
     }
 
-    public override void Write(string value)
+	/// <summary>
+	/// Writes a string directly to all registered log sinks without appending a newline.
+	/// </summary>
+	/// <param name="value">The string to write.</param>
+	/// <remarks>
+	/// Each sink is checked for rotation before writing.  
+	/// If the logger has been disposed, this method does nothing.  
+	/// Thread-safe.
+	/// </remarks>
+	public override void Write(string value)
     {
         if (_disposed) return;
         var bytes = Encoding.Default.GetByteCount(value);
@@ -59,7 +125,17 @@ public sealed class Logger : TextWriter, IDisposable
         }
     }
 
-    public override void WriteLine(string value)
+	/// <summary>
+	/// Writes a string to all registered log sinks and appends a newline.
+	/// The entry is also added to the recent log buffer for in-memory access.
+	/// </summary>
+	/// <param name="value">The line to write.</param>
+	/// <remarks>
+	/// Each sink is checked for rotation before writing.  
+	/// Retains up to the configured maximum number of recent entries in memory.  
+	/// Thread-safe. No action is taken if the logger is disposed.
+	/// </remarks>
+	public override void WriteLine(string value)
     {
         if (_disposed) return;
         var line = value;
@@ -72,14 +148,30 @@ public sealed class Logger : TextWriter, IDisposable
         }
     }
 
-    public override void Flush()
+	/// <summary>
+	/// Flushes all registered log sinks, ensuring that any buffered output is written immediately.
+	/// </summary>
+	/// <remarks>
+	/// Thread-safe. If the logger is disposed, this method does nothing.
+	/// </remarks>
+	public override void Flush()
     {
         if (_disposed) return;
         lock (_syncLock)
         { foreach (var s in _sinks) s.Flush(); }
     }
 
-    public void Log(LogLevel level, string message)
+	/// <summary>
+	/// Logs a formatted message at the specified log level.
+	/// The message is timestamped and prefixed based on severity, then written to all sinks and the debug output.
+	/// </summary>
+	/// <param name="level">The severity level of the log message.</param>
+	/// <param name="message">The message to log.</param>
+	/// <remarks>
+	/// Messages below the current <see cref="Level"/> setting are ignored.  
+	/// The output is written using <see cref="WriteLine"/> and also forwarded to <see cref="System.Diagnostics.Debug.WriteLine"/>.
+	/// </remarks>
+	public void Log(LogLevel level, string message)
     {
         if (_disposed || level < Level) return;
         string prefix = level switch { LogLevel.Warning => "[⚠️ WARNING]", LogLevel.Error => "[❌ ERROR]", _ => "[INFO]" };
@@ -88,7 +180,19 @@ public sealed class Logger : TextWriter, IDisposable
         Debug.WriteLine(entry);
     }
 
-    public void LogException(Exception ex, LogLevel level = LogLevel.Error)
+	/// <summary>
+	/// Logs an exception and its inner exceptions recursively at the specified log level.
+	/// Includes both the exception message and stack trace, if available.
+	/// </summary>
+	/// <param name="ex">The exception to log.</param>
+	/// <param name="level">
+	/// The severity level for the log entries. Defaults to <see cref="LogLevel.Error"/>.
+	/// </param>
+	/// <remarks>
+	/// Prevents duplicate logging of circular exception chains using a visited set.  
+	/// Skips logging if the logger is disposed or if the level is below the current <see cref="Level"/>.
+	/// </remarks>
+	public void LogException(Exception ex, LogLevel level = LogLevel.Error)
     {
         if (_disposed || level < Level) return;
         var seen = new HashSet<Exception>();
@@ -102,7 +206,19 @@ public sealed class Logger : TextWriter, IDisposable
         }
     }
 
-    public void LogFields(LogLevel level, params (string Key, object Value)[] fields)
+	/// <summary>
+	/// Logs a series of key-value pairs on a single line at the specified log level.
+	/// Useful for structured or contextual logging.
+	/// </summary>
+	/// <param name="level">The severity level of the log entry.</param>
+	/// <param name="fields">
+	/// A collection of fields to log, each consisting of a string key and an associated value.
+	/// </param>
+	/// <remarks>
+	/// Fields are output as <c>Key=Value</c> pairs, separated by spaces.  
+	/// Skips logging if the logger is disposed or the level is below the current <see cref="Level"/>.
+	/// </remarks>
+	public void LogFields(LogLevel level, params (string Key, object Value)[] fields)
     {
         if (_disposed || level < Level) return;
         var sb = new StringBuilder();
@@ -114,12 +230,30 @@ public sealed class Logger : TextWriter, IDisposable
         Log(level, sb.ToString());
     }
 
-    public string[] GetRecentEntries()
+	/// <summary>
+	/// Returns a snapshot of the most recent log entries retained in memory.
+	/// </summary>
+	/// <returns>
+	/// An array of recent log entry strings, ordered from oldest to newest.
+	/// </returns>
+	/// <remarks>
+	/// Thread-safe. The number of retained entries is limited by the value provided at logger initialization.
+	/// </remarks>
+	public string[] GetRecentEntries()
     {
         lock (_syncLock) { return _recentEntries.ToArray(); }
     }
 
-    protected override void Dispose(bool disposing)
+	/// <summary>
+	/// Releases resources used by the logger and disposes all registered sinks that implement <see cref="IDisposable"/>.
+	/// </summary>
+	/// <param name="disposing">
+	/// <c>true</c> to dispose managed resources; otherwise, <c>false</c>.
+	/// </param>
+	/// <remarks>
+	/// This method is automatically called by <see cref="Dispose"/> and should not be called directly.
+	/// </remarks>
+	protected override void Dispose(bool disposing)
     {
         if (disposing && !_disposed)
         {
@@ -129,5 +263,8 @@ public sealed class Logger : TextWriter, IDisposable
         base.Dispose(disposing);
     }
 
-    public void Dispose() => Dispose(true);
+	/// <summary>
+	/// Disposes the logger and all its sinks. After disposal, logging operations are ignored.
+	/// </summary>
+	public void Dispose() => Dispose(true);
 }
