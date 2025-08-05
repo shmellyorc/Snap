@@ -169,7 +169,7 @@ public sealed class Logger : TextWriter, IDisposable
 	/// <param name="message">The message to log.</param>
 	/// <remarks>
 	/// Messages below the current <see cref="Level"/> setting are ignored.  
-	/// The output is written using <see cref="WriteLine"/> and also forwarded to <see cref="System.Diagnostics.Debug.WriteLine"/>.
+	/// The output is written using <see cref="WriteLine"/> and also forwarded to <see cref="WriteLine"/>.
 	/// </remarks>
 	public void Log(LogLevel level, string message)
     {
@@ -266,5 +266,5 @@ public sealed class Logger : TextWriter, IDisposable
 	/// <summary>
 	/// Disposes the logger and all its sinks. After disposal, logging operations are ignored.
 	/// </summary>
-	public void Dispose() => Dispose(true);
+	public new void Dispose() => Dispose(true);
 }

@@ -1,11 +1,26 @@
 namespace Snap.Inputs;
 
+/// <summary>
+/// Represents the current active input device type.
+/// Used for resolving input priority and adapting UI prompts (e.g., showing gamepad vs keyboard icons).
+/// </summary>
 public enum ActiveInput
 {
+	/// <summary>Indicates that keyboard or mouse input is currently active.</summary>
 	Keyboard,
+
+	/// <summary>Indicates that gamepad input is currently active.</summary>
 	Gamepad
 }
 
+/// <summary>
+/// Represents a mapping between high-level input actions and their bound keyboard, mouse, and gamepad inputs.
+/// Used to track input state, query actions, and manage device-specific bindings.
+/// </summary>
+/// <remarks>
+/// Input maps define how raw device input (e.g., buttons or keys) is associated with gameplay actions.
+/// Developers can create custom maps or use <see cref="DefaultInputMap"/> as a fallback.
+/// </remarks>
 public class InputMap
 {
 	private readonly uint _joyCount;
@@ -15,11 +30,34 @@ public class InputMap
 	private readonly List<SdlControllerEntry> _allEntries = [];
 	private readonly Dictionary<uint, Dictionary<char, int>> _controllerMaps = [];
 
+	/// <summary>
+	/// Gets the currently active input device type (keyboard/mouse or gamepad).
+	/// </summary>
+	/// <remarks>
+	/// This value is automatically updated based on the last input event detected,
+	/// allowing the engine to adapt UI or control schemes accordingly.
+	/// </remarks>
 	public ActiveInput Current { get; private set; }
+
+	/// <summary>
+	/// Gets the current mouse position relative to the game window or rendering surface.
+	/// </summary>
 	public Vect2 MousePosition => SFMouse.GetPosition(Engine.Instance.ToRenderer);
+
+	/// <summary>
+	/// Gets the current mouse position in global screen coordinates.
+	/// </summary>
 	public Vect2 GlobalMousePosition => SFMouse.GetPosition();
 
 	#region Constructor
+	/// <summary>
+	/// Initializes a new <see cref="InputMap"/> and detects connected input devices.
+	/// </summary>
+	/// <remarks>
+	/// This constructor queries the system for connected gamepads using <see cref="SFJoystick"/> and
+	/// loads controller mapping data via <c>SdlControllerDbParser</c>.  
+	/// It prepares the internal input state tracking for all supported devices.
+	/// </remarks>
 	public InputMap()
 	{
 		SFJoystick.Update();
@@ -38,6 +76,15 @@ public class InputMap
 
 
 	#region Keyboard
+	/// <summary>
+	/// Checks if the specified keyboard key is currently being held down.
+	/// </summary>
+	/// <param name="button">The keyboard key to check.</param>
+	/// <returns><c>true</c> if the key is pressed; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// Will return <c>false</c> if the game window is not focused.  
+	/// If a key is pressed, the active input mode is switched to <see cref="ActiveInput.Keyboard"/>.
+	/// </remarks>
 	public bool IsKeyPressed(KeyboardButton button)
 	{
 		if (!Engine.Instance.IsActive)
@@ -50,7 +97,23 @@ public class InputMap
 
 		return result;
 	}
+
+	/// <summary>
+	/// Checks if the specified keyboard key is currently released (not held down).
+	/// </summary>
+	/// <param name="button">The keyboard key to check.</param>
+	/// <returns><c>true</c> if the key is not pressed; otherwise, <c>false</c>.</returns>
 	public bool IsKeyReleased(KeyboardButton button) => !IsKeyPressed(button);
+
+	/// <summary>
+	/// Checks if the specified keyboard key was just pressed once (debounced).
+	/// </summary>
+	/// <param name="button">The keyboard key to check.</param>
+	/// <returns><c>true</c> if the key was just pressed and hasn't been acknowledged yet; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// This is a one-time trigger per press cycle, meant to avoid multiple detections
+	/// in a single frame or input loop. Internally resets after detection.
+	/// </remarks>
 	public bool IsKeyJustPressed(KeyboardButton button)
 	{
 		if (_keyJustPressed)
@@ -70,6 +133,14 @@ public class InputMap
 
 
 	#region Mouse
+	/// <summary>
+	/// Checks if the specified mouse button is currently being held down.
+	/// </summary>
+	/// <param name="button">The mouse button to check.</param>
+	/// <returns><c>true</c> if the button is pressed; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// Returns <c>false</c> if the game window is not currently active.
+	/// </remarks>
 	public bool IsMousePressed(MouseButton button)
 	{
 		if (!Engine.Instance.IsActive)
@@ -77,7 +148,23 @@ public class InputMap
 
 		return SFMouse.IsButtonPressed((SFMouseButton)button);
 	}
+
+	/// <summary>
+	/// Checks if the specified mouse button is currently released (not held down).
+	/// </summary>
+	/// <param name="button">The mouse button to check.</param>
+	/// <returns><c>true</c> if the button is not pressed; otherwise, <c>false</c>.</returns>
 	public bool IsMouseReleased(MouseButton button) => !IsMousePressed(button);
+
+	/// <summary>
+	/// Checks if the specified mouse button was just pressed once (debounced).
+	/// </summary>
+	/// <param name="button">The mouse button to check.</param>
+	/// <returns><c>true</c> if the button was just pressed and not yet acknowledged; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// This is a one-time detection meant to prevent multiple triggers during a single click.  
+	/// Internally resets after the first detection until released.
+	/// </remarks>
 	public bool IsMouseJustPressed(MouseButton button)
 	{
 
@@ -97,6 +184,14 @@ public class InputMap
 
 
 	#region Gamepad
+	/// <summary>
+	/// Checks if the specified gamepad button is currently released (not pressed).
+	/// </summary>
+	/// <param name="button">The gamepad button to check.</param>
+	/// <returns><c>true</c> if the button is not pressed; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// Returns <c>false</c> if the game window is not currently active.
+	/// </remarks>
 	public bool IsGamepadReleased(GamepadButton button)
 	{
 		if (!Engine.Instance.IsActive)
@@ -104,6 +199,16 @@ public class InputMap
 
 		return !IsGamepadPressed(button);
 	}
+
+	/// <summary>
+	/// Checks if the specified gamepad button was just pressed once (debounced).
+	/// </summary>
+	/// <param name="button">The gamepad button to check.</param>
+	/// <returns><c>true</c> if the button was just pressed and not yet acknowledged; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// This is a one-time trigger meant to prevent multiple detections during a single press cycle.  
+	/// Returns <c>false</c> if the game window is not active or if the press has already been registered.
+	/// </remarks>
 	public bool IsGamepadJustPressed(GamepadButton button)
 	{
 		if (!Engine.Instance.IsActive)
@@ -120,6 +225,28 @@ public class InputMap
 		return false;
 	}
 
+	/// <summary>
+	/// Retrieves the analog force or press intensity for a given gamepad button.
+	/// </summary>
+	/// <param name="button">The gamepad button or analog direction to query.</param>
+	/// <returns>
+	/// A float between <c>0</c> and <c>1</c> representing how strongly the button is pressed or the axis is engaged.  
+	/// Returns <c>1</c> for digital buttons, or a normalized value for analog triggers and sticks.  
+	/// Returns <c>0</c> if the input is inactive or no device is connected.
+	/// </returns>
+	/// <remarks>
+	/// <list type="bullet">
+	///   <item>
+	///     <description>For digital buttons (e.g., A, B, DPad), the value is <c>1.0</c> if pressed, otherwise <c>0.0</c>.</description>
+	///   </item>
+	///   <item>
+	///     <description>For analog inputs (e.g., triggers, sticks), the returned value reflects the raw axis magnitude, normalized and clamped.</description>
+	///   </item>
+	///   <item>
+	///     <description>The method automatically detects connected joysticks, updates internal state, and sets <see cref="Current"/> to <see cref="ActiveInput.Gamepad"/> if any input is active.</description>
+	///   </item>
+	/// </list>
+	/// </remarks>
 	public float GetGamepadForce(GamepadButton button)
 	{
 		if (!Engine.Instance.IsActive) return 0f;
@@ -192,6 +319,26 @@ public class InputMap
 		return 0f;
 	}
 
+	/// <summary>
+	/// Checks if the specified gamepad button is currently pressed on any connected joystick.
+	/// </summary>
+	/// <param name="button">The gamepad button or axis-based virtual button to check.</param>
+	/// <returns><c>true</c> if the button is actively pressed; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// This method supports both digital and analog inputs, including stick directions and triggers.
+	/// It will also automatically update <see cref="Current"/> to <see cref="ActiveInput.Gamepad"/> if input is detected.
+	/// <para/>
+	/// Input is resolved in two stages:
+	/// <list type="bullet">
+	///   <item>
+	///     <description>First, SDL-mapped button indices are checked using <c>TryGetSdlIndex</c>.</description>
+	///   </item>
+	///   <item>
+	///     <description>If no SDL mapping is found, a fallback mapping is used based on the raw button or axis layout.</description>
+	///   </item>
+	/// </list>
+	/// The gamepad must be connected and the application window must be active for this to return <c>true</c>.
+	/// </remarks>
 	public bool IsGamepadPressed(GamepadButton button)
 	{
 		if (!Engine.Instance.IsActive) return false;
@@ -257,12 +404,28 @@ public class InputMap
 
 
 	#region Transform
+	/// <summary>
+	/// Transforms a screen-space position (e.g., mouse or cursor) into world-space coordinates using the specified camera.
+	/// </summary>
+	/// <param name="position">The screen-space position in pixels.</param>
+	/// <param name="camera">The camera used to perform the coordinate transformation.</param>
+	/// <returns>The corresponding world-space <see cref="Vect2"/> position.</returns>
+	/// <remarks>
+	/// Useful for detecting where input occurred within the game world, accounting for camera zoom and offset.
+	/// </remarks>
 	public Vect2 Transform(Vect2 position, Camera camera)
 	{
 		var w = Engine.Instance.ToRenderer;
 
 		return w.MapPixelToCoords(position, camera.ToEngine);
 	}
+
+	/// <summary>
+	/// Transforms a screen-space position into world-space coordinates using the active camera on the given screen.
+	/// </summary>
+	/// <param name="position">The screen-space position in pixels.</param>
+	/// <param name="screen">The screen instance whose camera will be used for transformation.</param>
+	/// <returns>The corresponding world-space <see cref="Vect2"/> position.</returns>
 	public Vect2 Transform(Vect2 position, Screen screen) =>
 		Transform(position, screen.Camera);
 	#endregion
@@ -357,7 +520,25 @@ public class InputMap
 
 
 	#region Actions
+	/// <summary>
+	/// Checks whether the input action associated with the given enum is currently being pressed.
+	/// </summary>
+	/// <param name="name">An enum value representing the action name.</param>
+	/// <returns><c>true</c> if any input bound to the action is currently pressed; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// This overload converts the enum to a string internally using <c>ToEnumString()</c> and passes it to the string-based version.
+	/// </remarks>
 	public bool IsActionPressed(Enum name) => IsActionPressed(name.ToEnumString());
+
+	/// <summary>
+	/// Checks whether the input action associated with the given name is currently being pressed.
+	/// </summary>
+	/// <param name="name">The name of the input action (case-sensitive).</param>
+	/// <returns><c>true</c> if any associated keyboard, mouse, or gamepad binding is currently pressed; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// The input action is looked up by name (hashed internally), and all bound input states are checked.  
+	/// Returns <c>true</c> if any of the associated inputs are actively pressed at the time of the call.
+	/// </remarks>
 	public bool IsActionPressed(string name)
 	{
 		var hash = HashHelpers.Hash32(name);
@@ -395,15 +576,63 @@ public class InputMap
 		return false;
 	}
 
+	/// <summary>
+	/// Attempts to get the force or analog value associated with the specified input action (by enum).
+	/// </summary>
+	/// <param name="name">The enum representing the input action.</param>
+	/// <param name="output">
+	/// When this method returns, contains the analog force value of the action, if active; otherwise, <c>0</c>.
+	/// </param>
+	/// <returns><c>true</c> if the action is currently active with a force greater than zero; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// This overload converts the enum to a string using <c>ToEnumString()</c> before lookup.
+	/// </remarks>
 	public bool TryGetActionForce(Enum name, out float output) =>
 		TryGetActionForce(name.ToEnumString(), out output);
+
+	/// <summary>
+	/// Attempts to get the force or analog value associated with the specified input action name.
+	/// </summary>
+	/// <param name="name">The name of the input action.</param>
+	/// <param name="output">
+	/// When this method returns, contains the analog force value of the action, if active; otherwise, <c>0</c>.
+	/// </param>
+	/// <returns><c>true</c> if the action is currently active with a force greater than zero; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// This method supports both digital (returns 1.0 if pressed) and analog inputs (e.g., triggers, sticks).
+	/// </remarks>
 	public bool TryGetActionForce(string name, out float output)
 	{
 		output = GetActionForce(name);
 		return output > 0f;
 	}
 
+	/// <summary>
+	/// Gets the force or analog value associated with the specified input action (by enum).
+	/// </summary>
+	/// <param name="name">The enum representing the input action.</param>
+	/// <returns>
+	/// A float representing the current activation level of the action:
+	/// <c>1.0</c> for digital inputs if pressed, or the analog magnitude for gamepad axes (e.g., triggers, sticks);
+	/// otherwise, <c>0.0</c>.
+	/// </returns>
+	/// <remarks>
+	/// This overload converts the enum to a string using <c>ToEnumString()</c> before resolving the action.
+	/// </remarks>
 	public float GetActionForce(Enum name) => GetActionForce(name.ToEnumString());
+
+	/// <summary>
+	/// Gets the force or analog value associated with the specified input action name.
+	/// </summary>
+	/// <param name="name">The name of the input action.</param>
+	/// <returns>
+	/// A float representing the current activation level of the action:
+	/// <c>1.0</c> for digital inputs if pressed, or the analog magnitude for gamepad axes (e.g., triggers, sticks);
+	/// otherwise, <c>0.0</c>.
+	/// </returns>
+	/// <remarks>
+	/// Supports keyboard, mouse, and gamepad inputs. Only the first matching active input source will return a non-zero value.
+	/// </remarks>
 	public float GetActionForce(string name)
 	{
 		var hash = HashHelpers.Hash32(name);
@@ -442,7 +671,26 @@ public class InputMap
 	}
 
 
+	/// <summary>
+	/// Returns whether the specified input action (by enum) was just pressed this frame.
+	/// </summary>
+	/// <param name="name">The enum representing the input action.</param>
+	/// <returns><c>true</c> if the action was just pressed; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// This checks for a rising edge—meaning the input was not active in the previous frame but is active now.
+	/// Internally calls <see cref="IsActionJustPressed(string)"/> by converting the enum to a string.
+	/// </remarks>
 	public bool IsActionJustPressed(Enum name) => IsActionJustPressed(name.ToEnumString());
+
+	/// <summary>
+	/// Returns whether the specified input action name was just pressed this frame.
+	/// </summary>
+	/// <param name="name">The name of the input action.</param>
+	/// <returns><c>true</c> if the action was just pressed; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// This performs a per-device check (keyboard, mouse, or gamepad) for a "just pressed" input,
+	/// meaning it transitioned from unpressed to pressed in the current frame.
+	/// </remarks>
 	public bool IsActionJustPressed(string name)
 	{
 		var hash = HashHelpers.Hash32(name);
@@ -480,7 +728,26 @@ public class InputMap
 		return false;
 	}
 
+
+	/// <summary>
+	/// Returns whether the specified input action (by enum) is currently released (not pressed).
+	/// </summary>
+	/// <param name="name">The enum representing the input action.</param>
+	/// <returns><c>true</c> if the action is released; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// This is a convenience wrapper that calls <see cref="IsActionReleased(string)"/> using the enum's name.
+	/// </remarks>
 	public bool IsActionReleased(Enum name) => IsActionReleased(name.ToEnumString());
+
+	/// <summary>
+	/// Returns whether the specified input action name is currently released (not pressed).
+	/// </summary>
+	/// <param name="name">The name of the input action.</param>
+	/// <returns><c>true</c> if the action is released; otherwise, <c>false</c>.</returns>
+	/// <remarks>
+	/// This checks the release state across all input types bound to the action: keyboard, mouse, and gamepad.
+	/// If any bound input is still pressed, the action is considered active.
+	/// </remarks>
 	public bool IsActionReleased(string name)
 	{
 		var hash = HashHelpers.Hash32(name);
@@ -518,7 +785,25 @@ public class InputMap
 		return false;
 	}
 
+	/// <summary>
+	/// Adds an input action using an enum name as the identifier.
+	/// </summary>
+	/// <param name="name">The enum representing the action name.</param>
+	/// <param name="inputs">One or more input bindings (e.g., <see cref="KeyboardButton"/>, <see cref="MouseButton"/>, or <see cref="GamepadButton"/>).</param>
+	/// <remarks>
+	/// This is a convenience method that converts the enum to a string and calls <see cref="AddAction(string, object[])"/>.
+	/// </remarks>
 	public void AddAction(Enum name, params object[] inputs) => AddAction(name.ToEnumString(), inputs);
+
+	/// <summary>
+	/// Adds or updates an input action with the specified name and input bindings.
+	/// </summary>
+	/// <param name="name">The name of the action to bind inputs to.</param>
+	/// <param name="inputs">An array of input sources, such as <see cref="KeyboardButton"/>, <see cref="MouseButton"/>, or <see cref="GamepadButton"/>.</param>
+	/// <remarks>
+	/// If the action does not already exist, it is created and assigned the given inputs.
+	/// If it already exists, the new inputs are appended to the existing ones.
+	/// </remarks>
 	public void AddAction(string name, params object[] inputs)
 	{
 		var hash = HashHelpers.Hash32(name);

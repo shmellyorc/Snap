@@ -1,6 +1,6 @@
 namespace Snap.Inputs;
 
-public class SdlControllerEntry
+internal class SdlControllerEntry
 {
     public string Guid { get; }
     public string Name { get; }
