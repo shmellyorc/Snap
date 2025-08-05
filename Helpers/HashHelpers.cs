@@ -51,6 +51,11 @@ public static class HashHelpers
 	public static uint Hash32(string text) =>
 		Hash32(Encoding.UTF8.GetBytes(text));
 
+	/// <summary>
+	/// Computes the 32‑bit FNV‑1a hash of the given enum value, using its string representation.
+	/// </summary>
+	/// <param name="text">The enum value to hash. It will be converted to a string using <c>ToEnumString()</c>, then UTF‑8 encoded.</param>
+	/// <returns>The 32‑bit FNV‑1a hash value of the enum's name.</returns>
 	public static uint Hash32(Enum text) =>
 		Hash32(Encoding.UTF8.GetBytes(text.ToEnumString()));
 
@@ -62,6 +67,11 @@ public static class HashHelpers
 	public static ulong Hash64(string text) =>
 		Hash64(Encoding.UTF8.GetBytes(text));
 
+	/// <summary>
+	/// Computes the 64‑bit FNV‑1a hash of the given enum value, using its string representation.
+	/// </summary>
+	/// <param name="text">The enum value to hash. It will be converted to a string using <c>ToEnumString()</c>, then UTF‑8 encoded.</param>
+	/// <returns>The 64‑bit FNV‑1a hash value of the enum's name.</returns>
 	public static ulong Hash64(Enum text) =>
 		Hash64(Encoding.UTF8.GetBytes(text.ToEnumString()));
 }
