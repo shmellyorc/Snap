@@ -113,7 +113,22 @@ public static class DiscoverableHelper
             .Select(x => x.Type)
             .ToList();
 
-    public static IReadOnlyList<Type> FindManyByName<T>(Enum name) =>
+	/// <summary>
+	/// Searches for all <typeparamref name="T"/> types marked with <c>[Discoverable]</c>
+	/// that match the specified enum-based name.
+	/// </summary>
+	/// <typeparam name="T">
+	/// The base type or interface to filter results by. Only types assignable to <typeparamref name="T"/>
+	/// will be included in the result.
+	/// </typeparam>
+	/// <param name="name">
+	/// An <see cref="Enum"/> value whose name will be converted (via <c>ToEnumString()</c>)
+	/// and matched against discoverable type identifiers (typically by name or metadata).
+	/// </param>
+	/// <returns>
+	/// A read-only list of types assignable to <typeparamref name="T"/> that match the specified name.
+	/// </returns>
+	public static IReadOnlyList<Type> FindManyByName<T>(Enum name) =>
         FindManyByName<T>(name.ToEnumString());
 
     /// <summary>
