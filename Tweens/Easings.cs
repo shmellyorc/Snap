@@ -1,7 +1,7 @@
 namespace Snap.Tweens;
 
 /// <summary>
-/// All supported easing types, combining “family” (Quad, Cubic, etc.) with direction (In, Out, InOut).
+/// All supported easing types, combining “family” (Quad, Cubic, etc.) with direction (In, Out, InOut, and OutIn).
 /// </summary>
 public enum EaseType
 {
@@ -12,51 +12,61 @@ public enum EaseType
 	QuadIn,
 	QuadOut,
 	QuadInOut,
+	QuadOutIn,
 
 	// Cubic
 	CubicIn,
 	CubicOut,
 	CubicInOut,
+	CubicOutIn,
 
 	// Quartic
 	QuartIn,
 	QuartOut,
 	QuartInOut,
+	QuartOutIn,
 
 	// Quintic
 	QuintIn,
 	QuintOut,
 	QuintInOut,
+	QuintOutIn,
 
 	// Sine
 	SineIn,
 	SineOut,
 	SineInOut,
+	SineOutIn,
 
 	// Exponential
 	ExpoIn,
 	ExpoOut,
 	ExpoInOut,
+	ExpoOutIn,
 
 	// Circular
 	CircIn,
 	CircOut,
 	CircInOut,
+	CircOutIn,
 
 	// Back (overshoot)
 	BackIn,
 	BackOut,
 	BackInOut,
+	BackOutIn,
 
 	// Elastic (oscillatory)
 	ElasticIn,
 	ElasticOut,
 	ElasticInOut,
+	ElasticOutIn,
 
 	// Bounce (discrete bounces)
 	BounceIn,
 	BounceOut,
-	BounceInOut
+	BounceInOut,
+	BounceOutIn,
 }
 
 /// <summary>
@@ -83,46 +93,64 @@ public static class Easing
 			case EaseType.QuadIn: return QuadIn(t);
 			case EaseType.QuadOut: return QuadOut(t);
 			case EaseType.QuadInOut: return QuadInOut(t);
+			case EaseType.QuadOutIn: return OutIn(QuadOut, QuadIn, t);
 
 			case EaseType.CubicIn: return CubicIn(t);
 			case EaseType.CubicOut: return CubicOut(t);
 			case EaseType.CubicInOut: return CubicInOut(t);
+			case EaseType.CubicOutIn: return OutIn(CubicOut, CubicIn, t);
 
 			case EaseType.QuartIn: return QuartIn(t);
 			case EaseType.QuartOut: return QuartOut(t);
 			case EaseType.QuartInOut: return QuartInOut(t);
+			case EaseType.QuartOutIn: return OutIn(QuartOut, QuartIn, t);
 
 			case EaseType.QuintIn: return QuintIn(t);
 			case EaseType.QuintOut: return QuintOut(t);
 			case EaseType.QuintInOut: return QuintInOut(t);
+			case EaseType.QuintOutIn: return OutIn(QuintOut, QuintIn, t);
 
 			case EaseType.SineIn: return SineIn(t);
 			case EaseType.SineOut: return SineOut(t);
 			case EaseType.SineInOut: return SineInOut(t);
+			case EaseType.SineOutIn: return OutIn(SineOut, SineIn, t);
 
 			case EaseType.ExpoIn: return ExpoIn(t);
 			case EaseType.ExpoOut: return ExpoOut(t);
 			case EaseType.ExpoInOut: return ExpoInOut(t);
+			case EaseType.ExpoOutIn: return OutIn(ExpoOut, ExpoIn, t);
 
 			case EaseType.CircIn: return CircIn(t);
 			case EaseType.CircOut: return CircOut(t);
 			case EaseType.CircInOut: return CircInOut(t);
+			case EaseType.CircOutIn: return OutIn(CircOut, CircIn, t);
 
 			case EaseType.BackIn: return BackIn(t);
 			case EaseType.BackOut: return BackOut(t);
 			case EaseType.BackInOut: return BackInOut(t);
+			case EaseType.BackOutIn: return OutIn(BackOut, BackIn, t);
 
 			case EaseType.ElasticIn: return ElasticIn(t);
 			case EaseType.ElasticOut: return ElasticOut(t);
 			case EaseType.ElasticInOut: return ElasticInOut(t);
+			case EaseType.ElasticOutIn: return OutIn(ElasticOut, ElasticIn, t);
 
 			case EaseType.BounceIn: return BounceIn(t);
 			case EaseType.BounceOut: return BounceOut(t);
 			case EaseType.BounceInOut: return BounceInOut(t);
+			case EaseType.BounceOutIn: return OutIn(BounceOut, BounceIn, t);
 
 			default:
 				return t; // fallback to linear
 		}
+	}
+
+	private static float OutIn(Func<float, float> easeOut, Func<float, float> easeIn, float t)
+	{
+		if (t < 0.5f)
+			return 0.5f * easeOut(t * 2f);
+		else
+			return 0.5f * easeIn((t - 0.5f) * 2f) + 0.5f;
 	}
 
 	#region Linear

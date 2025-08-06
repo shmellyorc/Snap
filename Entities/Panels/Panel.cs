@@ -40,8 +40,8 @@ public class Panel : Entity
 	{
 		if (_entityAdd != null)
 		{
-			for (int i = _entityAdd.Count - 1; i >= 0 ; i--)
-				_entityAdd[i].Position = Position;
+			// for (int i = _entityAdd.Count - 1; i >= 0 ; i--)
+			// 	_entityAdd[i].Position = Position;
 
 			base.AddChild([.. _entityAdd]);
 			_entityAdd.Clear();
