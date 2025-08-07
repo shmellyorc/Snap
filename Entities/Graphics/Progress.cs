@@ -20,6 +20,7 @@ public class Progress : Entity
 	public float Min { get; set; } = 0f;
 	public float Max { get; set; } = 1f;
 	public float Value { get; set; } = 0f;
+	public bool Rounded = false;
 
 	protected override void OnEnter()
 	{
@@ -51,20 +52,28 @@ public class Progress : Entity
 		switch (Direction)
 		{
 			case ProgressDirection.LeftToRight:
-				fillSize = new Vect2(Size.X * percent, Size.Y);
+				fillSize = Rounded
+					? new Vect2(MathF.Round(Size.X * percent), Size.Y)
+					: new Vect2(Size.X * percent, Size.Y);
 				break;
 
 			case ProgressDirection.RightToLeft:
-				fillSize = new Vect2(Size.X * percent, Size.Y);
+				fillSize = Rounded
+					? new Vect2(MathF.Round(Size.X * percent), Size.Y)
+					: new Vect2(Size.X * percent, Size.Y);
 				fgPos.X += Size.X - fillSize.X;
 				break;
 
 			case ProgressDirection.TopToBottom:
-				fillSize = new Vect2(Size.X, Size.Y * percent);
+				fillSize = Rounded
+					? new Vect2(Size.X, MathF.Round(Size.Y * percent))
+					: new Vect2(Size.X, Size.Y * percent);
 				break;
 
 			case ProgressDirection.BottomToTop:
-				fillSize = new Vect2(Size.X, Size.Y * percent);
+				fillSize = Rounded
+					? new Vect2(Size.X, MathF.Round(Size.Y * percent))
+					: new Vect2(Size.X, Size.Y * percent);
 				fgPos.Y += Size.Y - fillSize.Y;
 				break;
 
