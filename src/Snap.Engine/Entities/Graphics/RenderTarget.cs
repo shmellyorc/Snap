@@ -155,7 +155,7 @@ public class RenderTarget : Panel
 		// double the size until big enough:
 		int newSize = _vertexBufferSize;
 		while (newSize < neededSize)
-			newSize *= 2;
+			newSize += EngineSettings.Instance.BatchIncreasment;
 
 		Logger.Instance.Log(LogLevel.Info, $"Resizing Render Target Vertex buffer to {newSize}");
 

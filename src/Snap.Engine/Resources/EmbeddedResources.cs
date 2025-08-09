@@ -2,8 +2,8 @@ namespace Snap.Engine.Resources;
 
 internal static class EmbeddedResources
 {
-	private static readonly Assembly _assembly = typeof(EmbeddedResources).Assembly;
-	private const string _rootNamespace = "Snap.Engine.Resources.Files";
+	private static readonly Assembly Assembly = typeof(EmbeddedResources).Assembly;
+	private const string RootNamespace = "Snap.Engine.Resources.Files";
 
 	public static byte[] GetSdlDatabase() => ReadBytes("SdlDatabase.db");
 
@@ -13,12 +13,12 @@ internal static class EmbeddedResources
 
 	private static byte[] ReadBytes(string relativePath)
 	{
-		var resourceName = $"{_rootNamespace}.{relativePath.Replace('\\', '.').Replace('/', '.')}";
+		string resourceName = $"{RootNamespace}.{relativePath.Replace('\\', '.').Replace('/', '.')}";
 
-		using Stream stream = _assembly.GetManifestResourceStream(resourceName)
-					?? throw new FileNotFoundException($"Embedded resource not found: {resourceName}");
-
+		using Stream stream = Assembly.GetManifestResourceStream(resourceName)
+			?? throw new FileNotFoundException($"Embedded resource not found: {resourceName}");
 		using var ms = new MemoryStream();
+
 		stream.CopyTo(ms);
 
 		return ms.ToArray();

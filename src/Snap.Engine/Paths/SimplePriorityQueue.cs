@@ -148,7 +148,7 @@ public sealed class GraphPriorityQueue<TItem, TPriority>
 		int n = _heap.Count;
 		while (true)
 		{
-			int left = 2 * i + 1, right = left + 1, smallest = i;
+			int left = (2 * i) + 1, right = left + 1, smallest = i;
 
 			if (left < n && _heap[left].Priority.CompareTo(_heap[smallest].Priority) < 0)
 				smallest = left;
@@ -165,9 +165,7 @@ public sealed class GraphPriorityQueue<TItem, TPriority>
 
 	private void Swap(int i, int j)
 	{
-		var tmp = _heap[i];
-		_heap[i] = _heap[j];
-		_heap[j] = tmp;
+		(_heap[j], _heap[i]) = (_heap[i], _heap[j]);
 
 		_indices[_heap[i].Item] = i;
 		_indices[_heap[j].Item] = j;

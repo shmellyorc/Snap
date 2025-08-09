@@ -13,7 +13,7 @@ public class WindowCreationException : Exception
 
 public class Game : IDisposable
 {
-	private const int TotalFpsQueueSamples = 64;
+	private const int TotalFpsQueueSamples = 16;
 
 	private SFRenderWindow _window;
 	private SFStyles _styles;
@@ -22,7 +22,7 @@ public class Game : IDisposable
 	private bool _isDisposed, _initialized;
 	private readonly Queue<float> _fpsQueue = new();
 	private float _titleTimeout;
-	private SFImage _icon;
+	private readonly SFImage _icon;
 	private bool _canApplyChanges;
 
 	public static Game Instance { get; private set; }
@@ -39,7 +39,10 @@ public class Game : IDisposable
 	public void ApplyFullScreenChange(bool value)
 	{
 		if (Settings.FullScreen == value)
+		{
+			_canApplyChanges = false;
 			return;
+		}
 
 		Settings.FullScreen = value;
 		_canApplyChanges = true;
@@ -48,11 +51,20 @@ public class Game : IDisposable
 	public void ApplyWindowSizeChange(uint width, uint height)
 	{
 		if (width <= 0)
+		{
+			_canApplyChanges = false;
 			return;
+		}
 		if (height <= 0)
+		{
+			_canApplyChanges = false;
 			return;
+		}
 		if (Settings.Window.X == width && Settings.Window.Y == height)
+		{
+			_canApplyChanges = false;
 			return;
+		}
 
 		Settings.Window = new Vect2(width, height);
 		_canApplyChanges = true;
@@ -61,7 +73,10 @@ public class Game : IDisposable
 	public void ApplyVSyncChange(bool value)
 	{
 		if (Settings.VSync == value)
+		{
+			_canApplyChanges = false;
 			return;
+		}
 
 		Settings.VSync = value;
 		_canApplyChanges = true;
@@ -70,7 +85,10 @@ public class Game : IDisposable
 	public void ApplyAntialiasingChange(uint value)
 	{
 		if (Settings.Antialiasing == value)
+		{
+			_canApplyChanges = false;
 			return;
+		}
 
 		Settings.Antialiasing = (int)value;
 		_canApplyChanges = true;
@@ -81,7 +99,7 @@ public class Game : IDisposable
 		if (!_canApplyChanges)
 			return;
 
-		if (_window != null && _window.IsInvalid)
+		if (_window?.IsInvalid == true)
 		{
 			Input.Unload();
 
@@ -139,6 +157,8 @@ public class Game : IDisposable
 
 			throw new WindowCreationException("Unexpected error while creating SNAP window.", ex);
 		}
+
+		_canApplyChanges = false;
 	}
 
 	private void OnLostFocus(object sender, EventArgs e) => IsActive = false;
@@ -168,8 +188,8 @@ public class Game : IDisposable
 
 	public Game(EngineSettings settings)
 	{
-		if (settings is null)
-			throw new ArgumentNullException(nameof(settings));
+		ArgumentNullException.ThrowIfNull(settings);
+
 		if (!settings.Initialized)
 		{
 			throw new InvalidOperationException(
@@ -259,10 +279,7 @@ public class Game : IDisposable
 		};
 
 		// Only triggers if app doesnt crash:
-		AppDomain.CurrentDomain.ProcessExit += (sender, args) =>
-		{
-			_log.Log(LogLevel.Info, "SNAP Stopped\n");
-		};
+		AppDomain.CurrentDomain.ProcessExit += (sender, args) => _log.Log(LogLevel.Info, "SNAP Stopped\n");
 
 		_log.Log(LogLevel.Info, $"Vsync been set to: {settings.VSync}.");
 		_window.SetVerticalSyncEnabled(settings.VSync);
@@ -270,12 +287,12 @@ public class Game : IDisposable
 		_log.Log(LogLevel.Info, $"Mouse visbility been set to: {settings.Mouse}.");
 		_window.SetMouseCursorVisible(settings.Mouse);
 
-		_log.Log(LogLevel.Info, $"Initializing SNAP core services...");
+		_log.Log(LogLevel.Info, "Initializing SNAP core services...");
 
-		_log.Log(LogLevel.Info, $"Initializing input mappings...");
+		_log.Log(LogLevel.Info, "Initializing input mappings...");
 		Input = settings.InputMap;
 
-		_log.Log(LogLevel.Info, $"Initializing Clock...");
+		_log.Log(LogLevel.Info, "Initializing Clock...");
 		_clock = new Clock();
 
 		_log.Log(LogLevel.Info, "Initializing Beacon Manager...");
@@ -306,14 +323,14 @@ public class Game : IDisposable
 		_coroutineManager = new CoroutineManager();
 
 		_log.Log(LogLevel.Info, $"Initializing Texture Atlas manager. Page size: {Settings.AtlasPageSize} with max {Settings.MaxAtlasPages} pages");
-		_textureAtlasManager = new TextureAtlasManager(512, 3);
+		_textureAtlasManager = new TextureAtlasManager(Settings.AtlasPageSize, Settings.MaxAtlasPages);
 	}
 	~Game() => Dispose(disposing: false);
 
 
 	public void Quit()
 	{
-		if (_window == null || !_window.IsOpen)
+		if (_window?.IsOpen != true)
 			return;
 
 		_window.Close();
@@ -344,23 +361,23 @@ public class Game : IDisposable
 		// init
 		if (!_initialized)
 		{
-			if (Settings.Services != null && Settings.Services.Length > 0)
+			_initialized = true;
+
+			// Setup defualt Asset Manager Provider
+			AssetBootstrap.InitDefault();
+
+			if (Settings.Services?.Length > 0)
 			{
 				_log.Log(LogLevel.Info, $"Adding {Settings.Services.Length} service{(Settings.Services.Length > 1 ? "s" : string.Empty)}.");
 				for (int i = 0; i < Settings.Services.Length; i++)
 					_serviceManager.RegisterService(Settings.Services[i]);
 			}
 
-			if (Settings.Screens != null && Settings.Screens.Length > 0)
+			if (Settings.Screens?.Length > 0)
 			{
 				_log.Log(LogLevel.Info, $"Adding {Settings.Screens.Length} screen{(Settings.Screens.Length > 1 ? "s" : string.Empty)}.");
 				_screenManager.Add(Settings.Screens);
 			}
-
-			// Setup defualt Asset Manager Provider
-			AssetBootstrap.InitDefault();
-
-			_initialized = true;
 		}
 
 		while (_window.IsOpen)
@@ -404,7 +421,9 @@ public class Game : IDisposable
 		_fpsQueue.Enqueue(1f / _clock.DeltaTime);
 
 		if (_titleTimeout >= 0.000001f)
+		{
 			_titleTimeout -= _clock.DeltaTime;
+		}
 		else
 		{
 			var sb = new StringBuilder(1024);
@@ -446,10 +465,41 @@ public class Game : IDisposable
 	}
 
 
+	/// <summary>
+	/// Gets the primary (desktop) monitor's resolution.
+	/// </summary>
+	/// <remarks>
+	/// To retrieve the current monitor dimensions.
+	/// </remarks>
+	public Monitor CurrentMonitor
+	{
+		get
+		{
+			var m = SFVideoMode.DesktopMode;
 
-	public SFVideoMode CurrentMonitor => SFVideoMode.DesktopMode;
+			return new Monitor((int)m.Width, (int)m.Height);
+		}
+	}
 
-	public List<SFVideoMode> GetSupportedMonitors(int wRatio, int hRatio, float tolerance = 0.01f)
+	/// <summary>
+	/// Retrieves a list of supported monitor resolutions that match a specified aspect ratio.
+	/// </summary>
+	/// <param name="wRatio">
+	/// The width portion of the target aspect ratio (e.g., 16 for a 16:9 ratio).
+	/// </param>
+	/// <param name="hRatio">
+	/// The height portion of the target aspect ratio (e.g., 9 for a 16:9 ratio).
+	/// </param>
+	/// <param name="tolerance">
+	/// The allowed margin of error when comparing aspect ratios. Defaults to 0.01f.
+	/// </param>
+	/// <returns>
+	/// A list of <see cref="Monitor"/> objects representing supported resolutions matching the given ratio.
+	/// </returns>
+	/// <remarks>
+	/// This method checks and filters out modes whose aspect ratios do not match the target within the given tolerance.
+	/// </remarks>
+	public List<Monitor> GetSupportedMonitors(int wRatio, int hRatio, float tolerance = 0.01f)
 	{
 		float ratio = (float)wRatio / hRatio;
 
@@ -459,6 +509,7 @@ public class Game : IDisposable
 				float actualRatio = (float)mode.Width / mode.Height;
 				return Math.Abs(actualRatio - ratio) < tolerance;
 			})
+			.Select(x => new Monitor((int)x.Width, (int)x.Height))
 			.ToList();
 	}
 

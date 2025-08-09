@@ -390,7 +390,7 @@ public sealed class Renderer
 		// double the size until big enough:
 		int newSize = _vertexBufferSize;
 		while (newSize < neededSize)
-			newSize *= 2;
+			newSize += EngineSettings.Instance.BatchIncreasment;
 
 		Logger.Instance.Log(LogLevel.Info, $"[Renderer]: Resizing vertex buffer array to {newSize}");
 
@@ -409,6 +409,7 @@ public sealed class Renderer
 
 		// ZERO OUT any leftover verts so they don't draw
 		var totalVerts = vertices.Length;
+
 		if (vertexCount < totalVerts)
 			Array.Clear(vertices, vertexCount, totalVerts - vertexCount);
 

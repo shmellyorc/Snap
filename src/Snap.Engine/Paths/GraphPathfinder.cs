@@ -40,21 +40,21 @@ public sealed class GraphPathfinder
 	}
 
 	// --- Core graph storage ---
-	private readonly List<List<Edge>> _adj = new();
-	private readonly List<int> _indexToId = new();
-	private readonly Dictionary<int, int> _idToIndex = new();
-	private readonly List<Vect2> _positions = new();
-	private readonly List<bool> _disabled = new();
+	private readonly List<List<Edge>> _adj = [];
+	private readonly List<int> _indexToId = [];
+	private readonly Dictionary<int, int> _idToIndex = [];
+	private readonly List<Vect2> _positions = [];
+	private readonly List<bool> _disabled = [];
 
 	// --- Timestamped gScore for flow/Dijkstra ---
-	private float[] _gScore = Array.Empty<float>();
-	private int[] _gVisit = Array.Empty<int>();
+	private float[] _gScore = [];
+	private int[] _gVisit = [];
 	private int _visitMark;
 	private readonly GraphPriorityQueue<int, float> _openSet = new();
 
 	// --- Flow-field output & reusable buffers ---
 	private int[] _flowNext;
-	private readonly List<Vect2> _posBuffer = new List<Vect2>();
+	private readonly List<Vect2> _posBuffer = [];
 
 	/// <summary>
 	/// Adds a new node to the pathfinding graph with a unique ID and world-space position.
@@ -73,9 +73,10 @@ public sealed class GraphPathfinder
 		// throw new InvalidOperationException($"Node {id} already exists.");
 
 		int idx = _indexToId.Count;
+
 		_idToIndex[id] = idx;
 		_indexToId.Add(id);
-		_adj.Add(new List<Edge>());
+		_adj.Add([]);
 		_positions.Add(position);
 		_disabled.Add(false);
 
@@ -100,9 +101,10 @@ public sealed class GraphPathfinder
 	/// </remarks>
 	public void ConnectNode(int fromId, int toId, float cost = 1f, bool bidirectional = true)
 	{
-		if (!_idToIndex.TryGetValue(fromId, out var from) ||
-			!_idToIndex.TryGetValue(toId, out var to))
+		if (!_idToIndex.TryGetValue(fromId, out var from) || !_idToIndex.TryGetValue(toId, out var to))
+		{
 			throw new InvalidOperationException("Both nodes must be added first.");
+		}
 
 		var edgesFrom = _adj[from];
 		if (!edgesFrom.Exists(e => e.To == to))
@@ -130,9 +132,10 @@ public sealed class GraphPathfinder
 	/// </remarks>
 	public bool IsNodeConnected(int fromId, int toId)
 	{
-		if (!_idToIndex.TryGetValue(fromId, out var from) ||
-			!_idToIndex.TryGetValue(toId, out var to))
+		if (!_idToIndex.TryGetValue(fromId, out var from) || !_idToIndex.TryGetValue(toId, out var to))
+		{
 			return false;
+		}
 
 		foreach (var e in _adj[from])
 			if (e.To == to) return true;
@@ -197,15 +200,23 @@ public sealed class GraphPathfinder
 
 		// Build reverse adjacency
 		var revAdj = new List<List<Edge>>(n);
-		for (int i = 0; i < n; i++) revAdj.Add(new List<Edge>());
+
+		for (int i = 0; i < n; i++)
+			revAdj.Add([]);
+
 		for (int u = 0; u < n; u++)
+		{
 			foreach (var e in _adj[u])
 				revAdj[e.To].Add(new Edge(u, e.Cost));
+		}
 
 		// Timestamped Dijkstra from goal
 		_visitMark++;
+
 		_openSet.Clear();
+
 		SetG(goalIdx, 0f);
+
 		_openSet.Enqueue(goalIdx, 0f);
 
 		while (_openSet.Count > 0)
@@ -271,7 +282,7 @@ public sealed class GraphPathfinder
 	/// </summary>
 	/// <param name="currentId">The ID of the current node.</param>
 	/// <returns>
-	/// The ID of the next node along the shortest path to the goal.  
+	/// The ID of the next node along the shortest path to the goal.
 	/// If the flow field has not been computed or no valid next step exists,
 	/// returns <paramref name="currentId"/>.
 	/// </returns>
@@ -285,6 +296,7 @@ public sealed class GraphPathfinder
 			return currentId;
 
 		int nextIdx = _flowNext[idx];
+
 		return nextIdx >= 0 ? _indexToId[nextIdx] : currentId;
 	}
 
@@ -304,9 +316,13 @@ public sealed class GraphPathfinder
 	public Vect2 GetFlowDirection(int currentId)
 	{
 		int nextId = GetNextNode(currentId);
-		if (nextId == currentId) return Vect2.Zero;
-		var a = _positions[_idToIndex[currentId]];
-		var b = _positions[_idToIndex[nextId]];
+
+		if (nextId == currentId)
+			return Vect2.Zero;
+
+		Vect2 a = _positions[_idToIndex[currentId]];
+		Vect2 b = _positions[_idToIndex[nextId]];
+
 		return (b - a).Normalize();
 	}
 
@@ -326,15 +342,15 @@ public sealed class GraphPathfinder
 	/// </remarks>
 	public List<Vect2> FindPathPositions(int startId, int goalId)
 	{
-		if (!_idToIndex.TryGetValue(startId, out _) ||
-			!_idToIndex.TryGetValue(goalId, out _))
+		if (!_idToIndex.TryGetValue(startId, out _) || !_idToIndex.TryGetValue(goalId, out _))
 		{
-			return new List<Vect2>();
+			return [];
 		}
 
 		ComputeFlowField(goalId);
 
 		_posBuffer.Clear();
+
 		int current = startId;
 		int goalIdx = _idToIndex[goalId];
 
@@ -356,8 +372,8 @@ public sealed class GraphPathfinder
 	}
 
 	// --- Timestamped gScore helpers ---
-	private float GetG(int idx)
-		=> _gVisit[idx] == _visitMark ? _gScore[idx] : float.PositiveInfinity;
+	private float GetG(int idx) =>
+		_gVisit[idx] == _visitMark ? _gScore[idx] : float.PositiveInfinity;
 
 	private void SetG(int idx, float val)
 	{

@@ -22,15 +22,14 @@ public sealed class ContentTypeWriterReaderMetadata
 
 	public static string CompueteChecksumHex(byte[] data)
 	{
-		using var md5 = MD5.Create();
-		byte[] hash = md5.ComputeHash(data);
-		return $"0x{BitConverter.ToString(hash).Replace("-", "").ToUpper()}";
+		byte[] hash = MD5.HashData(data);
+		return $"0x{Convert.ToHexString(hash).ToUpper()}";
 	}
 }
 
 public abstract class ContentTypeWriterReader<T>
 {
-	private readonly byte[] _magicHaeder = { 0x53, 0x4E, 0x41, 0x50 }; // SNAP
+	private readonly byte[] _magicHaeder = [0x53, 0x4E, 0x41, 0x50]; // SNAP
 	private readonly string _encryptionKey;
 
 	public ContentTypeWriterReaderMetadata Metadata { get; internal set; }
@@ -45,8 +44,8 @@ public abstract class ContentTypeWriterReader<T>
 
 	public void Save(string filename, T saveFile)
 	{
-		using var ms = new MemoryStream();
-		using var writer = new ContentTypeWriter(ms);
+		using MemoryStream ms = new();
+		using ContentTypeWriter writer = new(ms);
 
 		// Serialize all data:
 		Write(saveFile, writer);
@@ -63,8 +62,9 @@ public abstract class ContentTypeWriterReader<T>
 		ContentTypeWriterReaderMetadata metadata =
 			ContentTypeWriterReaderMetadata.Create(finalData, useCompression, version: 1);
 
-		using var headerStream = new MemoryStream();
-		using var headerWriter = new BinaryWriter(headerStream);
+		using MemoryStream headerStream = new();
+		using BinaryWriter headerWriter = new(headerStream);
+
 		headerWriter.Write(_magicHaeder);
 		headerWriter.Write(metadata.Checksum);
 		headerWriter.Write(metadata.IsCompressed);
@@ -110,8 +110,8 @@ public abstract class ContentTypeWriterReader<T>
 	{
 		byte[] fileData = File.ReadAllBytes(CreateFinalPath(filename));
 
-		using var memoryStream = new MemoryStream(fileData);
-		using var reader = new BinaryReader(memoryStream);
+		using MemoryStream memoryStream = new(fileData);
+		using BinaryReader reader = new(memoryStream);
 
 		byte[] magic = reader.ReadBytes(4);
 		if (!magic.SequenceEqual(_magicHaeder))
@@ -125,7 +125,8 @@ public abstract class ContentTypeWriterReader<T>
 
 		// Verify Intergity
 		string computedChecksum = ContentTypeWriterReaderMetadata.CompueteChecksumHex(rawData);
-		if (checksum != computedChecksum) throw new Exception("Save file corrupted!");
+		if (checksum != computedChecksum)
+			throw new Exception("Save file corrupted!");
 
 		// Compress if necessary
 		byte[] finalData = isCompressed ? DecompressData(rawData) : rawData;
@@ -133,8 +134,8 @@ public abstract class ContentTypeWriterReader<T>
 		// decrypt:
 		byte[] decryptedData = DecryptData(finalData);
 
-		using var ms = new MemoryStream(decryptedData);
-		using var readerContent = new ContentTypeReader(ms);
+		using MemoryStream ms = new(decryptedData);
+		using ContentTypeReader readerContent = new(ms);
 
 		Metadata = new ContentTypeWriterReaderMetadata
 		{
@@ -149,16 +150,21 @@ public abstract class ContentTypeWriterReader<T>
 
 	private byte[] EncryptData(byte[] rawData)
 	{
-		if (string.IsNullOrEmpty(_encryptionKey)) return rawData;
+		if (string.IsNullOrEmpty(_encryptionKey))
+			return rawData;
 
-		using var aes = Aes.Create();
+		using Aes aes = Aes.Create();
+
 		aes.Key = GenerateKey(_encryptionKey);
 		aes.GenerateIV();
 
-		using var encryptor = aes.CreateEncryptor();
-		using var ms = new MemoryStream();
+		using ICryptoTransform encryptor = aes.CreateEncryptor();
+		using MemoryStream ms = new();
+
 		ms.Write(aes.IV, 0, aes.IV.Length);
+
 		using var cryptoStream = new CryptoStream(ms, encryptor, CryptoStreamMode.Write);
+
 		cryptoStream.Write(rawData, 0, rawData.Length);
 		cryptoStream.FlushFinalBlock();
 
@@ -169,16 +175,20 @@ public abstract class ContentTypeWriterReader<T>
 	{
 		if (string.IsNullOrEmpty(_encryptionKey)) return encyptedData;
 
-		using var aes = Aes.Create();
-		using var ms = new MemoryStream(encyptedData);
+		using Aes aes = Aes.Create();
+		using MemoryStream ms = new(encyptedData);
+
 		byte[] iv = new byte[16];
+
 		ms.Read(iv, 0, iv.Length);
+
 		aes.Key = GenerateKey(_encryptionKey);
 		aes.IV = iv;
 
-		using var decryptor = aes.CreateDecryptor();
-		using var cryptoStream = new CryptoStream(ms, decryptor, CryptoStreamMode.Read);
-		using var outputStream = new MemoryStream();
+		using ICryptoTransform decryptor = aes.CreateDecryptor();
+		using CryptoStream cryptoStream = new(ms, decryptor, CryptoStreamMode.Read);
+		using MemoryStream outputStream = new();
+
 		cryptoStream.CopyTo(outputStream);
 
 		return outputStream.ToArray();
@@ -186,25 +196,26 @@ public abstract class ContentTypeWriterReader<T>
 
 	private byte[] CompressData(byte[] data)
 	{
-		using var output = new MemoryStream();
-		using var compressionStream = new DeflateStream(output, CompressionLevel.Optimal);
+		using MemoryStream output = new();
+		using DeflateStream compressionStream = new(output, CompressionLevel.Optimal);
+
 		compressionStream.Write(data, 0, data.Length);
 		compressionStream.Flush();
+
 		return output.ToArray();
 	}
 
 	private byte[] DecompressData(byte[] data)
 	{
-		using var input = new MemoryStream(data);
-		using var output = new MemoryStream();
-		using var decompressStream = new DeflateStream(input, CompressionMode.Decompress);
+		using MemoryStream input = new(data);
+		using MemoryStream output = new();
+		using DeflateStream decompressStream = new(input, CompressionMode.Decompress);
+
 		decompressStream.CopyTo(output);
+
 		return output.ToArray();
 	}
 
-	private static byte[] GenerateKey(string passPhrase)
-	{
-		using var sha256 = SHA256.Create();
-		return sha256.ComputeHash(Encoding.UTF8.GetBytes(passPhrase));
-	}
+	private static byte[] GenerateKey(string passPhrase) =>
+		SHA256.HashData(Encoding.UTF8.GetBytes(passPhrase));
 }

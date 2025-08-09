@@ -2,11 +2,31 @@ namespace Snap.Engine;
 
 public sealed class EngineSettings
 {
+	private const uint MinimumAtlasPageSize = 512;
+	private const uint MinPages = 3;
+	private const uint MaxPages = 8;
+	private const int MinBatchIncrease = 32, MaxBatchIncrease = 1024;
+
+
+
 	public static EngineSettings Instance { get; private set; }
 	public bool Initialized { get; private set; }
 
 	public EngineSettings() => Instance ??= this;
 
+
+
+
+	public int BatchIncreasment { get; private set; }
+	public EngineSettings WithBatchIncreasment(uint value)
+	{
+		if (value < MinBatchIncrease || value > MaxBatchIncrease)
+			throw new Exception();
+
+		BatchIncreasment = (int)value;
+
+		return this;
+	}
 
 
 
@@ -139,8 +159,10 @@ public sealed class EngineSettings
 		const uint minimumDrawllCallCacheSize = 512;
 
 		if (value < minimumDrawllCallCacheSize)
+		{
 			throw new ArgumentOutOfRangeException(nameof(value),
 				$"Draw call cache size must be at least {minimumDrawllCallCacheSize}.");
+		}
 
 		DrawCallCache = (int)value;
 
@@ -151,11 +173,11 @@ public sealed class EngineSettings
 	public int AtlasPageSize { get; private set; }
 	public EngineSettings WithAtlasPageSize(uint value)
 	{
-		const uint minimumAtlasPageSize = 512;
-
-		if (value < minimumAtlasPageSize)
+		if (value < MinimumAtlasPageSize)
+		{
 			throw new ArgumentOutOfRangeException(nameof(value),
-				$"Atlas page size must be at least {minimumAtlasPageSize}.");
+				$"Atlas page size must be at least {MinimumAtlasPageSize}.");
+		}
 
 		AtlasPageSize = (int)value;
 
@@ -165,12 +187,11 @@ public sealed class EngineSettings
 	public int MaxAtlasPages { get; private set; }
 	public EngineSettings WithMaxAtlasPages(uint value)
 	{
-		const uint MinPages = 3;
-		const uint MaxPages = 8;
-
 		if (value < MinPages || value > MaxPages)
+		{
 			throw new ArgumentOutOfRangeException(nameof(value),
 				$"Max atlas pages must be between {MinPages} and {MaxPages} inclusive.");
+		}
 
 		MaxAtlasPages = (int)value;
 
@@ -184,8 +205,10 @@ public sealed class EngineSettings
 	public EngineSettings WithDeadZone(float value)
 	{
 		if (value < 0 || value > 1.0f)
+		{
 			throw new ArgumentOutOfRangeException(nameof(value),
 				"Dead zone must be between 0.0 and 1.0 inclusive.");
+		}
 
 		DeadZone = (int)value;
 
@@ -322,8 +345,10 @@ public sealed class EngineSettings
 		const uint BytesPerMB = 1_048_576;
 
 		if (value == 0 || value > MaxLogFileSizeBytes)
+		{
 			throw new ArgumentOutOfRangeException(nameof(value),
 				$"Log file size must be between 1 and {MaxLogFileSizeBytes} megabytes.");
+		}
 
 		LogFileSizeCap = (int)(value * BytesPerMB);
 
@@ -337,8 +362,10 @@ public sealed class EngineSettings
 		const uint MaxEntries = 99;
 
 		if (value == 0 || value > MaxEntries)
+		{
 			throw new ArgumentOutOfRangeException(nameof(value),
 				$"Log max recent entries must be between 1 and {MaxEntries} inclusive.");
+		}
 
 		LogMaxRecentEntries = (int)value;
 
@@ -357,11 +384,16 @@ public sealed class EngineSettings
 
 		// Company & AppName
 		if (string.IsNullOrWhiteSpace(AppCompany))
+		{
 			throw new ArgumentException(
 				"Company must be provided and cannot be empty or whitespace.", nameof(AppCompany));
+		}
+
 		if (string.IsNullOrWhiteSpace(AppName))
+		{
 			throw new ArgumentException(
 				"AppName must be provided and cannot be empty or whitespace.", nameof(AppName));
+		}
 
 		// AppTitle
 		AppTitle = string.IsNullOrWhiteSpace(AppTitle)
@@ -375,12 +407,18 @@ public sealed class EngineSettings
 		if (string.IsNullOrWhiteSpace(AppContentRoot))
 		{
 			if (Directory.Exists("Content"))
+			{
 				AppContentRoot = "Content";
+			}
 			else if (Directory.Exists("Assets"))
+			{
 				AppContentRoot = "Assets";
+			}
 			else
+			{
 				throw new DirectoryNotFoundException(
 					"No content directory found. Expected to find either a 'Content' or 'Assets' folder.");
+			}
 		}
 
 		// Window & Viewport defaults
@@ -408,7 +446,10 @@ public sealed class EngineSettings
 
 		SafeRegion = SafeRegion > 0 ? SafeRegion : 8;
 
+		BatchIncreasment = BatchIncreasment > 0 ? BatchIncreasment : MinBatchIncrease;
+
 		Initialized = true;
+
 		return this;
 	}
 }
