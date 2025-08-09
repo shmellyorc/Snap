@@ -19,6 +19,10 @@
 # Mono auto generated files
 mono_crash.*
 
+# Ignore snap pack content
+*.spack
+/Content/game.spack
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

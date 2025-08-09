@@ -31,6 +31,8 @@ SnapEngine is a modular C# game engine built on top of [SFML.Net](https://www.sf
 
 - **Advanced Logging** — Flexible logging system with sinks for customized output and diagnostics.
 
+- **Integrated Packer (Snap.Pack)** — Build, compress, and encrypt asset bundles (`.spack files`) for fast loading and secure distribution. Supports Brotli/Deflate compression, AES-GCM encryption with AAD, size verification, and CLI tools for building, listing, and verifying packs.
+
 ---
 
 ## 📦 Installation
