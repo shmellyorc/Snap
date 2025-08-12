@@ -11,8 +11,7 @@ public static class IEnumerableExtensions
 	/// <typeparam name="T">The element type of the sequence.</typeparam>
 	/// <param name="v">The sequence to test.</param>
 	/// <returns><c>true</c> if <paramref name="v"/> is <c>null</c> or empty; otherwise, <c>false</c>.</returns>
-	public static bool IsEmpty<T>(this IEnumerable<T> v) =>
-		v == null || !v.Any();
+	public static bool IsEmpty<T>(this IEnumerable<T> v) => v == null || !v.Any();
 
 	/// <summary>
 	/// Determines whether the sequence contains one or more elements.
@@ -20,8 +19,7 @@ public static class IEnumerableExtensions
 	/// <typeparam name="T">The element type of the sequence.</typeparam>
 	/// <param name="v">The sequence to test.</param>
 	/// <returns><c>true</c> if <paramref name="v"/> is not <c>null</c> and contains at least one element; otherwise, <c>false</c>.</returns>
-	public static bool IsNotEmpty<T>(this IEnumerable<T> v) =>
-		!IsEmpty(v);
+	public static bool IsNotEmpty<T>(this IEnumerable<T> v) => !IsEmpty(v);
 
 	/// <summary>
 	/// Performs the specified <paramref name="action"/> on each element of the sequence.
@@ -60,7 +58,7 @@ public static class IEnumerableExtensions
 	/// </returns>
 	public static int IndexOf<T>(this IEnumerable<T> source, T item) =>
 		source.Select((value, index) => (value, index))
-			  .FirstOrDefault(x => EqualityComparer<T>.Default.Equals(x.value, item)).index;
+			.FirstOrDefault(x => EqualityComparer<T>.Default.Equals(x.value, item)).index;
 
 	/// <summary>
 	/// Splits the sequence into two subsequences based on the given <paramref name="predicate"/>.
@@ -77,8 +75,8 @@ public static class IEnumerableExtensions
 	/// </returns>
 	public static (IEnumerable<T> matches, IEnumerable<T> nonMatches) Partition<T>(this IEnumerable<T> source, Func<T, bool> predicate)
 	{
-		var matches = source.Where(predicate);
-		var nonMatches = source.Where(x => !predicate(x));
+		IEnumerable<T> matches = source.Where(predicate);
+		IEnumerable<T> nonMatches = source.Where(x => !predicate(x));
 
 		return (matches, nonMatches);
 	}

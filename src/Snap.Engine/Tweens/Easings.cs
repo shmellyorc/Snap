@@ -1,75 +1,6 @@
 namespace Snap.Engine.Tweens;
 
 /// <summary>
-/// All supported easing types, combining “family” (Quad, Cubic, etc.) with direction (In, Out, InOut, and OutIn).
-/// </summary>
-public enum EaseType
-{
-	// Simple linear (no easing)
-	Linear,
-
-	// Quadratic
-	QuadIn,
-	QuadOut,
-	QuadInOut,
-	QuadOutIn,
-
-	// Cubic
-	CubicIn,
-	CubicOut,
-	CubicInOut,
-	CubicOutIn,
-
-	// Quartic
-	QuartIn,
-	QuartOut,
-	QuartInOut,
-	QuartOutIn,
-
-	// Quintic
-	QuintIn,
-	QuintOut,
-	QuintInOut,
-	QuintOutIn,
-
-	// Sine
-	SineIn,
-	SineOut,
-	SineInOut,
-	SineOutIn,
-
-	// Exponential
-	ExpoIn,
-	ExpoOut,
-	ExpoInOut,
-	ExpoOutIn,
-
-	// Circular
-	CircIn,
-	CircOut,
-	CircInOut,
-	CircOutIn,
-
-	// Back (overshoot)
-	BackIn,
-	BackOut,
-	BackInOut,
-	BackOutIn,
-
-	// Elastic (oscillatory)
-	ElasticIn,
-	ElasticOut,
-	ElasticInOut,
-	ElasticOutIn,
-
-	// Bounce (discrete bounces)
-	BounceIn,
-	BounceOut,
-	BounceInOut,
-	BounceOutIn,
-}
-
-/// <summary>
 /// Static class providing a single Ease(...) method that evaluates any of the above easing curves.
 /// Input t must be in [0,1]. Output is also in [0,1].
 /// </summary>
@@ -86,63 +17,51 @@ public static class Easing
 		// Clamp t to [0,1]
 		t = Math.Clamp(t, 0f, 1f);
 
-		switch (type)
+		return type switch
 		{
-			case EaseType.Linear: return Linear(t);
-
-			case EaseType.QuadIn: return QuadIn(t);
-			case EaseType.QuadOut: return QuadOut(t);
-			case EaseType.QuadInOut: return QuadInOut(t);
-			case EaseType.QuadOutIn: return OutIn(QuadOut, QuadIn, t);
-
-			case EaseType.CubicIn: return CubicIn(t);
-			case EaseType.CubicOut: return CubicOut(t);
-			case EaseType.CubicInOut: return CubicInOut(t);
-			case EaseType.CubicOutIn: return OutIn(CubicOut, CubicIn, t);
-
-			case EaseType.QuartIn: return QuartIn(t);
-			case EaseType.QuartOut: return QuartOut(t);
-			case EaseType.QuartInOut: return QuartInOut(t);
-			case EaseType.QuartOutIn: return OutIn(QuartOut, QuartIn, t);
-
-			case EaseType.QuintIn: return QuintIn(t);
-			case EaseType.QuintOut: return QuintOut(t);
-			case EaseType.QuintInOut: return QuintInOut(t);
-			case EaseType.QuintOutIn: return OutIn(QuintOut, QuintIn, t);
-
-			case EaseType.SineIn: return SineIn(t);
-			case EaseType.SineOut: return SineOut(t);
-			case EaseType.SineInOut: return SineInOut(t);
-			case EaseType.SineOutIn: return OutIn(SineOut, SineIn, t);
-
-			case EaseType.ExpoIn: return ExpoIn(t);
-			case EaseType.ExpoOut: return ExpoOut(t);
-			case EaseType.ExpoInOut: return ExpoInOut(t);
-			case EaseType.ExpoOutIn: return OutIn(ExpoOut, ExpoIn, t);
-
-			case EaseType.CircIn: return CircIn(t);
-			case EaseType.CircOut: return CircOut(t);
-			case EaseType.CircInOut: return CircInOut(t);
-			case EaseType.CircOutIn: return OutIn(CircOut, CircIn, t);
-
-			case EaseType.BackIn: return BackIn(t);
-			case EaseType.BackOut: return BackOut(t);
-			case EaseType.BackInOut: return BackInOut(t);
-			case EaseType.BackOutIn: return OutIn(BackOut, BackIn, t);
-
-			case EaseType.ElasticIn: return ElasticIn(t);
-			case EaseType.ElasticOut: return ElasticOut(t);
-			case EaseType.ElasticInOut: return ElasticInOut(t);
-			case EaseType.ElasticOutIn: return OutIn(ElasticOut, ElasticIn, t);
-
-			case EaseType.BounceIn: return BounceIn(t);
-			case EaseType.BounceOut: return BounceOut(t);
-			case EaseType.BounceInOut: return BounceInOut(t);
-			case EaseType.BounceOutIn: return OutIn(BounceOut, BounceIn, t);
-
-			default:
-				return t; // fallback to linear
-		}
+			EaseType.Linear => Linear(t),
+			EaseType.QuadIn => QuadIn(t),
+			EaseType.QuadOut => QuadOut(t),
+			EaseType.QuadInOut => QuadInOut(t),
+			EaseType.QuadOutIn => OutIn(QuadOut, QuadIn, t),
+			EaseType.CubicIn => CubicIn(t),
+			EaseType.CubicOut => CubicOut(t),
+			EaseType.CubicInOut => CubicInOut(t),
+			EaseType.CubicOutIn => OutIn(CubicOut, CubicIn, t),
+			EaseType.QuartIn => QuartIn(t),
+			EaseType.QuartOut => QuartOut(t),
+			EaseType.QuartInOut => QuartInOut(t),
+			EaseType.QuartOutIn => OutIn(QuartOut, QuartIn, t),
+			EaseType.QuintIn => QuintIn(t),
+			EaseType.QuintOut => QuintOut(t),
+			EaseType.QuintInOut => QuintInOut(t),
+			EaseType.QuintOutIn => OutIn(QuintOut, QuintIn, t),
+			EaseType.SineIn => SineIn(t),
+			EaseType.SineOut => SineOut(t),
+			EaseType.SineInOut => SineInOut(t),
+			EaseType.SineOutIn => OutIn(SineOut, SineIn, t),
+			EaseType.ExpoIn => ExpoIn(t),
+			EaseType.ExpoOut => ExpoOut(t),
+			EaseType.ExpoInOut => ExpoInOut(t),
+			EaseType.ExpoOutIn => OutIn(ExpoOut, ExpoIn, t),
+			EaseType.CircIn => CircIn(t),
+			EaseType.CircOut => CircOut(t),
+			EaseType.CircInOut => CircInOut(t),
+			EaseType.CircOutIn => OutIn(CircOut, CircIn, t),
+			EaseType.BackIn => BackIn(t),
+			EaseType.BackOut => BackOut(t),
+			EaseType.BackInOut => BackInOut(t),
+			EaseType.BackOutIn => OutIn(BackOut, BackIn, t),
+			EaseType.ElasticIn => ElasticIn(t),
+			EaseType.ElasticOut => ElasticOut(t),
+			EaseType.ElasticInOut => ElasticInOut(t),
+			EaseType.ElasticOutIn => OutIn(ElasticOut, ElasticIn, t),
+			EaseType.BounceIn => BounceIn(t),
+			EaseType.BounceOut => BounceOut(t),
+			EaseType.BounceInOut => BounceInOut(t),
+			EaseType.BounceOutIn => OutIn(BounceOut, BounceIn, t),
+			_ => t,// fallback to linear
+		};
 	}
 
 	private static float OutIn(Func<float, float> easeOut, Func<float, float> easeIn, float t)
@@ -197,7 +116,9 @@ public static class Easing
 	private static float CubicInOut(float t)
 	{
 		if (t < 0.5f)
+		{
 			return 4f * t * t * t;
+		}
 		else
 		{
 			float p = 2f * t - 2f;
@@ -222,7 +143,9 @@ public static class Easing
 	private static float QuartInOut(float t)
 	{
 		if (t < 0.5f)
+		{
 			return 8f * t * t * t * t;
+		}
 		else
 		{
 			float p = t - 1f;
@@ -247,7 +170,9 @@ public static class Easing
 	private static float QuintInOut(float t)
 	{
 		if (t < 0.5f)
+		{
 			return 16f * t * t * t * t * t;
+		}
 		else
 		{
 			float p = 2f * t - 2f;
@@ -364,20 +289,30 @@ public static class Easing
 
 	private static float ElasticOut(float t)
 	{
-		if (t == 0f) return 0f;
-		if (t == 1f) return 1f;
+		if (t == 0f)
+			return 0f;
+		if (t == 1f)
+			return 1f;
+
 		const float p = 0.3f;
+
 		float s = p / 4f;
+
 		return MathF.Pow(2f, -10f * t) * MathF.Sin((t - s) * (2f * MathF.PI) / p) + 1f;
 	}
 
 	private static float ElasticInOut(float t)
 	{
-		if (t == 0f) return 0f;
-		if (t == 1f) return 1f;
+		if (t == 0f)
+			return 0f;
+		if (t == 1f)
+			return 1f;
+
 		const float p = 0.45f; // slightly longer period for InOut
+
 		float s = p / 4f;
 		float invT = 2f * t - 1f;
+
 		if (invT < 0f)
 		{
 			return -0.5f * MathF.Pow(2f, 10f * invT) * MathF.Sin((invT - s) * (2f * MathF.PI) / p);

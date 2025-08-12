@@ -2,15 +2,27 @@ using Snap.Content.Abstractions;
 
 namespace Snap.Engine.Assets;
 
+/// <summary>
+/// Provides utility methods for initializing and managing the content/asset system.
+/// </summary>
 public static class AssetBootstrap
 {
 	/// <summary>
-	/// Initialize the content system with a default FileSystem provider so things "just work".
+	/// Initializes the content system with a default <see cref="FileSystemContentProvider"/>.
+	/// This ensures that asset loading "just works" out of the box.
 	/// </summary>
 	/// <param name="contentRoot">
-	/// Content folder relative to the app base. If null, uses EngineSettings.Instance.AppContentRoot.
+	/// The root directory for content, relative to the application base.
+	/// If <c>null</c>, uses <see cref="EngineSettings.Instance.AppContentRoot"/>.
 	/// </param>
-	/// <param name="warnIfEmpty">Log a warning if no files are found.</param>
+	/// <param name="warnIfEmpty">
+	/// If <c>true</c>, logs a warning if no files are found in the content root.
+	/// </param>
+	/// <remarks>
+	/// This method sets up a <see cref="CompositeContentProvider"/> with a filesystem provider
+	/// and registers it with the <see cref="AssetManager"/>. If the content root is empty,
+	/// a warning is logged to guide first-time users.
+	/// </remarks>
 	public static void InitDefault(string? contentRoot = null, bool warnIfEmpty = true)
 	{
 		contentRoot ??= EngineSettings.Instance.AppContentRoot;
@@ -39,8 +51,17 @@ public static class AssetBootstrap
 	}
 
 	/// <summary>
-	/// Swap to a different content root at runtime (still filesystem-based).
+	/// Switches the content root to a new directory at runtime.
+	/// The new provider is still filesystem-based.
 	/// </summary>
+	/// <param name="newContentRoot">
+	/// The new root directory for content, relative to the application base.
+	/// </param>
+	/// <remarks>
+	/// This method creates a new <see cref="CompositeContentProvider"/> with a filesystem provider
+	/// for the specified directory and registers it with the <see cref="AssetManager"/>,
+	/// disposing of the old provider and clearing caches.
+	/// </remarks>
 	public static void SwitchContentRoot(string newContentRoot)
 	{
 		var composite = new CompositeContentProvider(

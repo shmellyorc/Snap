@@ -360,8 +360,9 @@ public sealed class Renderer
 				index = 0;
 
 				if (willOverflow)
-					// EnsureVertexBufferCapacity(Math.Max(_vertexBufferSize * 2, cmd.Vertex.Length));
+				{
 					EnsureVertexBufferCapacity(_vertexBufferSize + cmd.Vertex.Length);
+				}
 			}
 
 			// copy verts into the cache

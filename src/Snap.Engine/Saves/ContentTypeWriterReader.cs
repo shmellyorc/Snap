@@ -1,14 +1,39 @@
 namespace Snap.Engine.Saves;
 
+/// <summary>
+/// Contains metadata for serialized content, including checksum, compression status, timestamp, and version.
+/// </summary>
 public sealed class ContentTypeWriterReaderMetadata
 {
+	/// <summary>
+	/// Gets the hexadecimal checksum of the serialized data.
+	/// </summary>
 	public string Checksum { get; internal set; }
+
+	/// <summary>
+	/// Gets a value indicating whether the serialized data is compressed.
+	/// </summary>
 	public bool IsCompressed { get; internal set; }
+
+	/// <summary>
+	/// Gets the UTC timestamp when the data was serialized.
+	/// </summary>
 	public DateTime Timestamp { get; internal set; }
+
+	/// <summary>
+	/// Gets the version of the serialized data format.
+	/// </summary>
 	public int Version { get; internal set; }
 
 	internal ContentTypeWriterReaderMetadata() { }
 
+	/// <summary>
+	/// Creates a new instance of <see cref="ContentTypeWriterReaderMetadata"/> for the given data.
+	/// </summary>
+	/// <param name="data">The data to generate metadata for.</param>
+	/// <param name="isCompressed">Whether the data is compressed.</param>
+	/// <param name="version">The version of the serialized data format. Defaults to 1.</param>
+	/// <returns>A new <see cref="ContentTypeWriterReaderMetadata"/> instance.</returns>
 	public static ContentTypeWriterReaderMetadata Create(byte[] data, bool isCompressed, int version = 1)
 	{
 		return new ContentTypeWriterReaderMetadata
@@ -20,6 +45,11 @@ public sealed class ContentTypeWriterReaderMetadata
 		};
 	}
 
+	/// <summary>
+	/// Computes a hexadecimal MD5 checksum for the given data.
+	/// </summary>
+	/// <param name="data">The data to compute the checksum for.</param>
+	/// <returns>The checksum as a hexadecimal string, prefixed with "0x".</returns>
 	public static string CompueteChecksumHex(byte[] data)
 	{
 		byte[] hash = MD5.HashData(data);
@@ -27,21 +57,49 @@ public sealed class ContentTypeWriterReaderMetadata
 	}
 }
 
+/// <summary>
+/// Provides abstract base functionality for reading and writing content of type <typeparamref name="T"/>.
+/// </summary>
+/// <typeparam name="T">The type of content to serialize/deserialize.</typeparam>
 public abstract class ContentTypeWriterReader<T>
 {
 	private readonly byte[] _magicHaeder = [0x53, 0x4E, 0x41, 0x50]; // SNAP
 	private readonly string _encryptionKey;
 
+	/// <summary>
+	/// Gets the metadata associated with the last save/load operation.
+	/// </summary>
 	public ContentTypeWriterReaderMetadata Metadata { get; internal set; }
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="ContentTypeWriterReader{T}"/> class.
+	/// </summary>
+	/// <param name="encryptionKey">Optional encryption key. If <see langword="null"/>, data will not be encrypted.</param>
 	protected ContentTypeWriterReader(string encryptionKey = null)
 	{
 		_encryptionKey = encryptionKey;
 	}
 
+	/// <summary>
+	/// When implemented in a derived class, writes the specified value to the provided writer.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	/// <param name="writer">The writer to use for serialization.</param>
 	public abstract void Write(T value, ContentTypeWriter writer);
+
+	/// <summary>
+	/// When implemented in a derived class, reads a value of type <typeparamref name="T"/> from the provided reader.
+	/// </summary>
+	/// <param name="reader">The reader to use for deserialization.</param>
+	/// <returns>The deserialized value.</returns>
 	public abstract T Read(ContentTypeReader reader);
 
+	/// <summary>
+	/// Saves the specified value to a file.
+	/// </summary>
+	/// <param name="filename">The relative filename to save to. Must not be rooted or contain path traversal characters.</param>
+	/// <param name="saveFile">The value to save.</param>
+	/// <exception cref="UnauthorizedAccessException">Thrown if the filename is rooted or attempts to escape the save directory.</exception>
 	public void Save(string filename, T saveFile)
 	{
 		using MemoryStream ms = new();
@@ -106,6 +164,14 @@ public abstract class ContentTypeWriterReader<T>
 		return fullPath;
 	}
 
+	/// <summary>
+	/// Loads a value of type <typeparamref name="T"/> from the specified file.
+	/// </summary>
+	/// <param name="filename">The relative filename to load from. Must not be rooted or contain path traversal characters.</param>
+	/// <returns>The deserialized value.</returns>
+	/// <exception cref="Exception">
+	/// Thrown if the file is not a valid save file, the checksum is invalid, or the file is corrupted.
+	/// </exception>
 	public T Load(string filename)
 	{
 		byte[] fileData = File.ReadAllBytes(CreateFinalPath(filename));

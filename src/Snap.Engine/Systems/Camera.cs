@@ -1,5 +1,9 @@
 namespace Snap.Engine.Systems;
 
+/// <summary>
+/// Represents a 2D camera that controls the view of the game world.
+/// Supports smooth following, shaking, and clamping to a specified area.
+/// </summary>
 public class Camera
 {
 
@@ -12,6 +16,7 @@ public class Camera
 	private float _shakeDuration;         // total seconds of shake
 	private float _shakeTimeRemaining;    // seconds left to shake
 	private float _shakeMagnitude;        // initial magnitude (in world‐units)
+	private Vect2 _orginalOffset;
 
 	// Camera‐fly tween state:
 	private bool _isFlying;
@@ -22,7 +27,17 @@ public class Camera
 	private EaseType _flyEase;
 	private Entity _followTarget;
 
+	/// <summary>
+	/// Gets or sets the camera's offset from its target position.
+	/// </summary>
 	public Vect2 Offset { get; set; }
+
+	/// <summary>
+	/// Gets or sets the camera's position in world coordinates.
+	/// </summary>
+	/// <remarks>
+	/// Setting this value updates the view and culling bounds.
+	/// </remarks>
 	public Vect2 Position
 	{
 		get => _position;
@@ -38,9 +53,21 @@ public class Camera
 		}
 	}
 
+	/// <summary>
+	/// Gets the camera's culling bounds, used for visibility checks.
+	/// </summary>
 	public Rect2 CullBounds { get; private set; }
+
+	/// <summary>
+	/// Gets or sets the camera's clamping rectangle.
+	/// The camera will not move outside these bounds.
+	/// </summary>
 	public Rect2 Clamp { get; set; }
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Camera"/> class.
+	/// </summary>
+	/// <param name="screen">The screen associated with this camera.</param>
 	public Camera(Screen screen)
 	{
 		_isFlying = false;
@@ -65,8 +92,20 @@ public class Camera
 		_lastDirtyPosition = Position;
 	}
 
+	/// <summary>
+	/// Stops following any entity or target.
+	/// </summary>
 	public void StopFollow() => _followTarget = null;
 
+	/// <summary>
+	/// Smoothly moves the camera to the specified target position over a duration.
+	/// </summary>
+	/// <param name="target">The target position to move to.</param>
+	/// <param name="duration">The time, in seconds, to complete the movement.</param>
+	/// <param name="ease">The easing function to use for the movement.</param>
+	/// <remarks>
+	/// If <paramref name="duration"/> is less than or equal to zero, the camera snaps instantly to the target.
+	/// </remarks>
 	public void Follow(Vect2 target, float duration, EaseType ease)
 	{
 		_followTarget = null;
@@ -88,6 +127,14 @@ public class Camera
 		_isFlying = true;
 	}
 
+	/// <summary>
+	/// Makes the camera follow the specified entity.
+	/// </summary>
+	/// <param name="entity">The entity to follow. If <see langword="null"/>, the camera stops following.</param>
+	/// <param name="teleport">
+	/// If <see langword="true"/>, the camera instantly snaps to the entity's position.
+	/// If <see langword="false"/>, the camera smoothly follows the entity.
+	/// </param>
 	public void Follow(Entity entity, bool teleport)
 	{
 		if (entity == null)
@@ -103,8 +150,15 @@ public class Camera
 		_screen.SetDirtyState(DirtyState.Update);
 	}
 
-	private Vect2 _orginalOffset;
-
+	/// <summary>
+	/// Starts a camera shake effect.
+	/// </summary>
+	/// <param name="duration">The duration of the shake effect, in seconds.</param>
+	/// <param name="magnitude">The maximum offset of the shake effect, in world units.</param>
+	/// <remarks>
+	/// If either <paramref name="duration"/> or <paramref name="magnitude"/> is less than or equal to zero,
+	/// the shake effect is not applied.
+	/// </remarks>
 	public void StartShake(float duration, float magnitude)
 	{
 		if (duration <= 0f || magnitude <= 0f)

@@ -27,7 +27,7 @@ public sealed class Spritesheet : IAsset
 	}
 
 	/// <summary>
-	/// Destructor that ensures the asset is disposed if not already unloaded.
+	/// Finalizer to ensure resources are released if <see cref="Dispose"/> was not called.
 	/// </summary>
 	~Spritesheet() => Dispose();
 
@@ -36,9 +36,8 @@ public sealed class Spritesheet : IAsset
 	/// Parses pivot, bounds, and 9-slice information into internal lookup structures.
 	/// </summary>
 	/// <returns>The number of bytes read from disk.</returns>
-	/// <exception cref="FileNotFoundException">
-	/// Thrown if the metadata file does not exist.
-	/// </exception>
+	/// <exception cref="FileNotFoundException">Thrown if the metadata file does not exist.</exception>
+	/// <exception cref="JsonException">Thrown if the JSON is malformed or required properties are missing.</exception>
 	public ulong Load()
 	{
 		if (IsValid)
@@ -52,7 +51,7 @@ public sealed class Spritesheet : IAsset
 			s.CopyTo(ms);
 			bytes = ms.ToArray();
 		}
-		
+
 		var doc = JsonDocument.Parse(bytes);
 		var root = doc.RootElement;
 		var meta = root.GetProperty("meta");
@@ -131,9 +130,15 @@ public sealed class Spritesheet : IAsset
 	/// </summary>
 	/// <param name="name">The name of the sprite.</param>
 	/// <returns>The <see cref="Rect2"/> representing the sprite’s bounds within the sheet.</returns>
-	/// <exception cref="ArgumentNullException">Thrown if <paramref name="name"/> is null or empty.</exception>
-	/// <exception cref="KeyNotFoundException">Thrown if no sprite is found with the given name.</exception>
-	/// <exception cref="InvalidOperationException">Thrown if the bounds are not defined.</exception>
+	/// <exception cref="ArgumentNullException">
+	/// Thrown if <paramref name="name"/> is <see langword="null"/> or empty.
+	/// </exception>
+	/// <exception cref="KeyNotFoundException">
+	/// Thrown if no sprite is found with the given name.
+	/// </exception>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown if the bounds are not defined for the specified sprite.
+	/// </exception>
 	public Rect2 GetBounds(string name)
 	{
 		if (name.IsEmpty())
@@ -146,11 +151,24 @@ public sealed class Spritesheet : IAsset
 		return result.Bounds;
 	}
 
-
+	/// <summary>
+	/// Checks if a sprite with the specified name exists in this spritesheet.
+	/// </summary>
+	/// <param name="name">The name of the sprite to check.</param>
+	/// <returns>
+	/// <see langword="true"/> if the sprite exists; otherwise, <see langword="false"/>.
+	/// </returns>
 	public bool Contains(string name) =>
 		_spritesheets.TryGetValue(HashHelpers.Hash32(name), out _);
 
-
+	/// <summary>
+	/// Attempts to retrieve the bounding rectangle of a sprite by name.
+	/// </summary>
+	/// <param name="name">The name of the sprite.</param>
+	/// <param name="value">When this method returns, contains the sprite bounds if found; otherwise, <see cref="Rect2.Zero"/>.</param>
+	/// <returns>
+	/// <see langword="true"/> if the sprite and its bounds were found; otherwise, <see langword="false"/>.
+	/// </returns>
 	public bool TryGetBounds(string name, out Rect2 value)
 	{
 		value = Rect2.Zero;
@@ -167,16 +185,20 @@ public sealed class Spritesheet : IAsset
 		return true;
 	}
 
-
-
 	/// <summary>
 	/// Retrieves the 9-slice patch rectangle (center region) of a sprite by name.
 	/// </summary>
 	/// <param name="name">The sprite’s name in the metadata file.</param>
 	/// <returns>The center patch region as a <see cref="Rect2"/>.</returns>
-	/// <exception cref="ArgumentNullException">Thrown if <paramref name="name"/> is null or empty.</exception>
-	/// <exception cref="KeyNotFoundException">Thrown if no entry is found for the specified name.</exception>
-	/// <exception cref="Exception">Thrown if the patch region is not defined for that sprite.</exception>
+	/// <exception cref="ArgumentNullException">
+	/// Thrown if <paramref name="name"/> is <see langword="null"/> or empty.
+	/// </exception>
+	/// <exception cref="KeyNotFoundException">
+	/// Thrown if no entry is found for the specified name.
+	/// </exception>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown if the patch region is not defined for the specified sprite.
+	/// </exception>
 	public Rect2 GetPatch(string name)
 	{
 		if (name.IsEmpty())
@@ -189,7 +211,14 @@ public sealed class Spritesheet : IAsset
 		return result.Patch;
 	}
 
-
+	/// <summary>
+	/// Attempts to retrieve the 9-slice patch rectangle of a sprite by name.
+	/// </summary>
+	/// <param name="name">The sprite’s name in the metadata file.</param>
+	/// <param name="value">When this method returns, contains the patch region if found; otherwise, <see cref="Rect2.Zero"/>.</param>
+	/// <returns>
+	/// <see langword="true"/> if the sprite and its patch region were found; otherwise, <see langword="false"/>.
+	/// </returns>
 	public bool TryGetPatch(string name, out Rect2 value)
 	{
 		value = Rect2.Zero;
@@ -206,16 +235,20 @@ public sealed class Spritesheet : IAsset
 		return true;
 	}
 
-
-
 	/// <summary>
 	/// Retrieves the pivot point of the sprite for alignment or transformation.
 	/// </summary>
 	/// <param name="name">The name of the sprite within the sheet.</param>
 	/// <returns>The pivot position as a <see cref="Vect2"/>.</returns>
-	/// <exception cref="ArgumentNullException">Thrown if <paramref name="name"/> is null or empty.</exception>
-	/// <exception cref="KeyNotFoundException">Thrown if no entry is found for the name provided.</exception>
-	/// <exception cref="Exception">Thrown if the pivot is unset.</exception>
+	/// <exception cref="ArgumentNullException">
+	/// Thrown if <paramref name="name"/> is <see langword="null"/> or empty.
+	/// </exception>
+	/// <exception cref="KeyNotFoundException">
+	/// Thrown if no entry is found for the name provided.
+	/// </exception>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown if the pivot is unset for the specified sprite.
+	/// </exception>
 	public Vect2 GetPivot(string name)
 	{
 		if (name.IsEmpty())
@@ -228,8 +261,14 @@ public sealed class Spritesheet : IAsset
 		return result.Pivot;
 	}
 
-
-
+	/// <summary>
+	/// Attempts to retrieve the pivot point of a sprite by name.
+	/// </summary>
+	/// <param name="name">The name of the sprite within the sheet.</param>
+	/// <param name="value">When this method returns, contains the pivot point if found; otherwise, <see cref="Vect2.Zero"/>.</param>
+	/// <returns>
+	/// <see langword="true"/> if the sprite and its pivot were found; otherwise, <see langword="false"/>.
+	/// </returns>
 	public bool TryGetPivot(string name, out Vect2 value)
 	{
 		value = Vect2.Zero;

@@ -1,15 +1,25 @@
 namespace Snap.Engine.Systems;
 
 /// <summary>
-/// A high-performance, seeded random number generator or Xorohiro128+.
-/// Supports generating bool, int, float, double, long values with optinal ranges.
+/// A high-performance, seeded random number generator using the Xoroshiro128+ algorithm.
+/// Supports generating boolean, integer, floating-point, and long values with optional ranges.
 /// </summary>
+/// <remarks>
+/// This class is thread-safe for single-threaded use. For multi-threaded scenarios,
+/// create separate instances with different seeds.
+/// </remarks>
 public sealed class FastRandom
 {
 	private ulong _state0, _state1;
 
+	/// <summary>
+	/// Gets the singleton instance of the <see cref="FastRandom"/> class.
+	/// </summary>
 	public static FastRandom Instance { get; private set; }
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="FastRandom"/> class with a seed based on the current UTC time.
+	/// </summary>
 	public FastRandom()
 	{
 		Instance ??= this;
@@ -18,6 +28,10 @@ public sealed class FastRandom
 		SetSeed(seed);
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="FastRandom"/> class with the specified seed.
+	/// </summary>
+	/// <param name="seed">The seed value for the random number generator.</param>
 	public FastRandom(ulong seed)
 	{
 		Instance ??= this;
@@ -25,23 +39,55 @@ public sealed class FastRandom
 		SetSeed(seed);
 	}
 
+	/// <summary>
+	/// Sets the seed for the random number generator.
+	/// </summary>
+	/// <param name="seed">The seed value.</param>
 	public void SetSeed(ulong seed)
 	{
 		ulong sm = seed;
+
 		_state0 = SplitMix64(ref sm);
 		_state1 = SplitMix64(ref sm);
 	}
 
+	/// <summary>
+	/// Generates a random boolean value.
+	/// </summary>
+	/// <returns><see langword="true"/> or <see langword="false"/> with equal probability.</returns>
 	public bool NextBool() => (NextUlong() & 1UL) == 1UL;
 
 	#region NextInt
+	/// <summary>
+	/// Generates a random 32-bit signed integer.
+	/// </summary>
+	/// <returns>A random integer.</returns>
 	public int NextInt() => (int)(NextUlong() >> 33);
+
+	/// <summary>
+	/// Generates a random integer in the range [0, <paramref name="max"/>).
+	/// </summary>
+	/// <param name="max">The exclusive upper bound of the random number.</param>
+	/// <returns>A random integer in the range [0, <paramref name="max"/>).</returns>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Thrown if <paramref name="max"/> is less than or equal to zero.
+	/// </exception>
 	public int NextInt(int max)
 	{
 		if (max <= 0)
 			throw new ArgumentOutOfRangeException(nameof(max), "max must be positive.");
 		return (int)NextInRange(0, (ulong)max);
 	}
+
+	/// <summary>
+	/// Generates a random integer in the range [<paramref name="min"/>, <paramref name="max"/>).
+	/// </summary>
+	/// <param name="min">The inclusive lower bound of the random number.</param>
+	/// <param name="max">The exclusive upper bound of the random number.</param>
+	/// <returns>A random integer in the range [<paramref name="min"/>, <paramref name="max"/>).</returns>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Thrown if <paramref name="min"/> is greater than or equal to <paramref name="max"/>.
+	/// </exception>
 	public int NextInt(int min, int max)
 	{
 		if (min >= max)
@@ -55,6 +101,10 @@ public sealed class FastRandom
 
 
 	#region NextFloat
+	/// <summary>
+	/// Generates a random floating-point number in the range [0.0f, 1.0f).
+	/// </summary>
+	/// <returns>A random float in the range [0.0f, 1.0f).</returns>
 	public float NextFloat()
 	{
 		// Generates 24-bit mantissa for float:
@@ -62,6 +112,14 @@ public sealed class FastRandom
 		return bits / (float)(1u << 24);
 	}
 
+	/// <summary>
+	/// Generates a random floating-point number in the range [0.0f, <paramref name="max"/>).
+	/// </summary>
+	/// <param name="max">The exclusive upper bound of the random number.</param>
+	/// <returns>A random float in the range [0.0f, <paramref name="max"/>).</returns>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Thrown if <paramref name="max"/> is less than or equal to zero.
+	/// </exception>
 	public float NextFloat(float max)
 	{
 		if (max <= 0f)
@@ -69,6 +127,15 @@ public sealed class FastRandom
 		return NextFloat() * max;
 	}
 
+	/// <summary>
+	/// Generates a random floating-point number in the range [<paramref name="min"/>, <paramref name="max"/>).
+	/// </summary>
+	/// <param name="min">The inclusive lower bound of the random number.</param>
+	/// <param name="max">The exclusive upper bound of the random number.</param>
+	/// <returns>A random float in the range [<paramref name="min"/>, <paramref name="max"/>).</returns>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Thrown if <paramref name="min"/> is greater than or equal to <paramref name="max"/>.
+	/// </exception>
 	public float NextFloat(float min, float max)
 	{
 		if (min >= max)
@@ -79,6 +146,10 @@ public sealed class FastRandom
 
 
 	#region NextDouble
+	/// <summary>
+	/// Generates a random double-precision floating-point number in the range [0.0, 1.0).
+	/// </summary>
+	/// <returns>A random double in the range [0.0, 1.0).</returns>
 	public double NextDouble()
 	{
 		// Generate 53-bit mantissa for double:
@@ -86,6 +157,14 @@ public sealed class FastRandom
 		return bits * (1.0 / (1UL << 53));
 	}
 
+	/// <summary>
+	/// Generates a random double-precision floating-point number in the range [0.0, <paramref name="max"/>).
+	/// </summary>
+	/// <param name="max">The exclusive upper bound of the random number.</param>
+	/// <returns>A random double in the range [0.0, <paramref name="max"/>).</returns>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Thrown if <paramref name="max"/> is less than or equal to zero.
+	/// </exception>
 	public double NextDouble(double max)
 	{
 		if (max <= 0.0)
@@ -93,6 +172,15 @@ public sealed class FastRandom
 		return NextDouble() * max;
 	}
 
+	/// <summary>
+	/// Generates a random double-precision floating-point number in the range [<paramref name="min"/>, <paramref name="max"/>).
+	/// </summary>
+	/// <param name="min">The inclusive lower bound of the random number.</param>
+	/// <param name="max">The exclusive upper bound of the random number.</param>
+	/// <returns>A random double in the range [<paramref name="min"/>, <paramref name="max"/>).</returns>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Thrown if <paramref name="min"/> is greater than or equal to <paramref name="max"/>.
+	/// </exception>
 	public double NextDouble(double min, double max)
 	{
 		if (min >= max)
@@ -103,12 +191,24 @@ public sealed class FastRandom
 
 
 	#region NextLong
+	/// <summary>
+	/// Generates a random 64-bit signed integer.
+	/// </summary>
+	/// <returns>A random long value.</returns>
 	public long NextLong()
 	{
 		// use upper 63 bits to ensure non-nagitive:
 		return (long)(NextUlong() >> 1);
 	}
 
+	/// <summary>
+	/// Generates a random long in the range [0, <paramref name="max"/>).
+	/// </summary>
+	/// <param name="max">The exclusive upper bound of the random number.</param>
+	/// <returns>A random long in the range [0, <paramref name="max"/>).</returns>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Thrown if <paramref name="max"/> is less than or equal to zero.
+	/// </exception>
 	public long NextLong(long max)
 	{
 		if (max <= 0L)
@@ -116,6 +216,15 @@ public sealed class FastRandom
 		return (long)NextInRange(0UL, (ulong)max);
 	}
 
+	/// <summary>
+	/// Generates a random long in the range [<paramref name="min"/>, <paramref name="max"/>).
+	/// </summary>
+	/// <param name="min">The inclusive lower bound of the random number.</param>
+	/// <param name="max">The exclusive upper bound of the random number.</param>
+	/// <returns>A random long in the range [<paramref name="min"/>, <paramref name="max"/>).</returns>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Thrown if <paramref name="min"/> is greater than or equal to <paramref name="max"/>.
+	/// </exception>
 	public long NextLong(long min, long max)
 	{
 		if (min >= max)
@@ -130,8 +239,14 @@ public sealed class FastRandom
 
 	#region Range
 	/// <summary>
-	/// Returns a random int in [min, max] inclusive
+	/// Returns a random integer in the range [<paramref name="min"/>, <paramref name="max"/>] inclusive.
 	/// </summary>
+	/// <param name="min">The inclusive lower bound of the random number.</param>
+	/// <param name="max">The inclusive upper bound of the random number.</param>
+	/// <returns>A random integer in the range [<paramref name="min"/>, <paramref name="max"/>].</returns>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Thrown if <paramref name="min"/> is greater than <paramref name="max"/>.
+	/// </exception>
 	public int RangeInt(int min, int max)
 	{
 		if (min > max)
@@ -143,8 +258,14 @@ public sealed class FastRandom
 	}
 
 	/// <summary>
-	/// Returns a random float in [min, max] inclusive
+	/// Returns a random float in the range [<paramref name="min"/>, <paramref name="max"/>] inclusive.
 	/// </summary>
+	/// <param name="min">The inclusive lower bound of the random number.</param>
+	/// <param name="max">The inclusive upper bound of the random number.</param>
+	/// <returns>A random float in the range [<paramref name="min"/>, <paramref name="max"/>].</returns>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Thrown if <paramref name="min"/> is greater than <paramref name="max"/>.
+	/// </exception>
 	public float RangeFloat(float min, float max)
 	{
 		if (min > max)
@@ -153,8 +274,14 @@ public sealed class FastRandom
 	}
 
 	/// <summary>
-	/// Returns a random double in [min, max] inclusive
+	/// Returns a random double in the range [<paramref name="min"/>, <paramref name="max"/>] inclusive.
 	/// </summary>
+	/// <param name="min">The inclusive lower bound of the random number.</param>
+	/// <param name="max">The inclusive upper bound of the random number.</param>
+	/// <returns>A random double in the range [<paramref name="min"/>, <paramref name="max"/>].</returns>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Thrown if <paramref name="min"/> is greater than <paramref name="max"/>.
+	/// </exception>
 	public double RangeDouble(double min, double max)
 	{
 		if (min > max)
@@ -163,8 +290,14 @@ public sealed class FastRandom
 	}
 
 	/// <summary>
-	/// Returns a random long in [min, max] inclusive
+	/// Returns a random long in the range [<paramref name="min"/>, <paramref name="max"/>] inclusive.
 	/// </summary>
+	/// <param name="min">The inclusive lower bound of the random number.</param>
+	/// <param name="max">The inclusive upper bound of the random number.</param>
+	/// <returns>A random long in the range [<paramref name="min"/>, <paramref name="max"/>].</returns>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Thrown if <paramref name="min"/> is greater than <paramref name="max"/>.
+	/// </exception>
 	public long RangeLong(long min, long max)
 	{
 		if (min > max)
@@ -202,7 +335,7 @@ public sealed class FastRandom
 			r = NextUlong();
 		} while (r >= threshold);
 
-		return r % range + origin;
+		return (r % range) + origin;
 	}
 
 	private ulong NextUlong()

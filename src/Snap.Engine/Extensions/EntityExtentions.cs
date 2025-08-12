@@ -246,7 +246,6 @@ public static class EntityExtentions
 	/// </summary>
 	/// <typeparam name="T">The ancestor type to search for.</typeparam>
 	/// <param name="e">The entity to start from.</param>
-	/// <param name="result">The found ancestor if successful.</param>
 	/// <returns>True if an ancestor was found; otherwise, false.</returns>
 	public static bool HasAncestorOfType<T>(this Entity e) where T : Entity =>
         TryGetAncestorOfType<T>(e, out _);

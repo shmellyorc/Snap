@@ -127,9 +127,9 @@ public sealed class Listview : RenderTarget
 	{
 		get
 		{
-			if (index < 0 || index >= Children.Count)
-				throw new ArgumentOutOfRangeException(nameof(index));
-			return (ListviewItem)Children[index];
+			return index < 0 || index >= Children.Count
+				? throw new ArgumentOutOfRangeException(nameof(index))
+				: (ListviewItem)Children[index];
 		}
 	}
 
@@ -441,8 +441,10 @@ public sealed class Listview : RenderTarget
 		int length = Enum.GetValues<TEnum>().Length;
 
 		if (idx < 0 || idx >= length)
+		{
 			throw new InvalidOperationException(
 				$"SelectedIndex {idx} is outside the range of enum {typeof(TEnum).Name} (0-{length - 1}).");
+		}
 
 		// cast via object to satisfy the compiler
 		return (TEnum)(object)idx;

@@ -1,12 +1,21 @@
 namespace Snap.Engine.Graphics;
 
+/// <summary>
+/// Provides utilities for rendering debug shapes (lines, rectangles, circles) to the screen.
+/// </summary>
+/// <remarks>
+/// Debug rendering is controlled by <see cref="EngineSettings.DebugDraw"/>.
+/// </remarks>
 public sealed class DebugRenderer
 {
-	private SFPrimitiveType _primitive = SFPrimitiveType.Lines;
+	private readonly SFPrimitiveType _primitive = SFPrimitiveType.Lines;
 	private SFVertexBuffer _buffer;
 	private int _capcity, _vertexCount;
 	private SFVertex[] _vertexes;
 
+	/// <summary>
+	/// Gets the singleton instance of the <see cref="DebugRenderer"/>.
+	/// </summary>
 	public static DebugRenderer Instance { get; private set; }
 
 	internal DebugRenderer(int initialCapacity = 256)
@@ -19,6 +28,15 @@ public sealed class DebugRenderer
 		_vertexCount = 0;
 	}
 
+	/// <summary>
+	/// Draws a line between two points with the specified color.
+	/// </summary>
+	/// <param name="a">The start point of the line.</param>
+	/// <param name="b">The end point of the line.</param>
+	/// <param name="color">The color of the line.</param>
+	/// <remarks>
+	/// This method has no effect if <see cref="EngineSettings.DebugDraw"/> is <see langword="false"/>.
+	/// </remarks>
 	public void DrawLine(Vect2 a, Vect2 b, Color color)
 	{
 		if (!EngineSettings.Instance.DebugDraw)
@@ -30,6 +48,14 @@ public sealed class DebugRenderer
 		_vertexes[_vertexCount++] = new SFVertex(b, color, new(0, 0));
 	}
 
+	/// <summary>
+	/// Draws the outline of a rectangle with the specified color.
+	/// </summary>
+	/// <param name="rect">The rectangle to draw.</param>
+	/// <param name="color">The color of the rectangle outline.</param>
+	/// <remarks>
+	/// This method has no effect if <see cref="EngineSettings.DebugDraw"/> is <see langword="false"/>.
+	/// </remarks>
 	public void DrawRect(Rect2 rect, Color color)
 	{
 		if (!EngineSettings.Instance.DebugDraw)
@@ -46,6 +72,16 @@ public sealed class DebugRenderer
 		DrawLine(bottomLeft, topLeft, color);
 	}
 
+	/// <summary>
+	/// Draws the outline of a circle with the specified color and segment count.
+	/// </summary>
+	/// <param name="center">The center of the circle.</param>
+	/// <param name="radius">The radius of the circle.</param>
+	/// <param name="color">The color of the circle outline.</param>
+	/// <param name="segmentCount">The number of segments used to approximate the circle. Minimum is 3. Default is 16.</param>
+	/// <remarks>
+	/// This method has no effect if <see cref="EngineSettings.DebugDraw"/> is <see langword="false"/>.
+	/// </remarks>
 	public void DrawCircle(Vect2 center, float radius, Color color, int segmentCount = 16)
 	{
 		if (!EngineSettings.Instance.DebugDraw)

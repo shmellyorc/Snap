@@ -6,8 +6,10 @@ public sealed class EngineSettings
 	private const uint MinPages = 3;
 	private const uint MaxPages = 8;
 	private const int MinBatchIncrease = 32, MaxBatchIncrease = 1024;
-
-
+	private const uint MinimumDrawllCallCacheSize = 512;
+	private const uint MaxLogFileSizeBytes = 50;
+	private const uint BytesPerMB = 1_048_576;
+	private const uint MaxLogEntries = 99;
 
 	public static EngineSettings Instance { get; private set; }
 	public bool Initialized { get; private set; }
@@ -21,10 +23,12 @@ public sealed class EngineSettings
 	public EngineSettings WithBatchIncreasment(uint value)
 	{
 		if (value < MinBatchIncrease || value > MaxBatchIncrease)
-			throw new Exception();
+		{
+			throw new ArgumentOutOfRangeException(nameof(value),
+				$"Batch increasement must be between {MinBatchIncrease} and {MaxBatchIncrease}.");
+		}
 
 		BatchIncreasment = (int)value;
-
 		return this;
 	}
 
@@ -156,12 +160,10 @@ public sealed class EngineSettings
 	public int DrawCallCache { get; private set; }
 	public EngineSettings WithDrawCallCache(uint value)
 	{
-		const uint minimumDrawllCallCacheSize = 512;
-
-		if (value < minimumDrawllCallCacheSize)
+		if (value < MinimumDrawllCallCacheSize)
 		{
 			throw new ArgumentOutOfRangeException(nameof(value),
-				$"Draw call cache size must be at least {minimumDrawllCallCacheSize}.");
+				$"Draw call cache size must be at least {MinimumDrawllCallCacheSize}.");
 		}
 
 		DrawCallCache = (int)value;
@@ -341,9 +343,6 @@ public sealed class EngineSettings
 	public int LogFileSizeCap { get; private set; }
 	public EngineSettings WithLogFileCap(uint value)
 	{
-		const uint MaxLogFileSizeBytes = 50;
-		const uint BytesPerMB = 1_048_576;
-
 		if (value == 0 || value > MaxLogFileSizeBytes)
 		{
 			throw new ArgumentOutOfRangeException(nameof(value),
@@ -359,12 +358,10 @@ public sealed class EngineSettings
 	public int LogMaxRecentEntries { get; private set; }
 	public EngineSettings WithLogMaxRecentEntries(uint value)
 	{
-		const uint MaxEntries = 99;
-
-		if (value == 0 || value > MaxEntries)
+		if (value == 0 || value > MaxLogEntries)
 		{
 			throw new ArgumentOutOfRangeException(nameof(value),
-				$"Log max recent entries must be between 1 and {MaxEntries} inclusive.");
+				$"Log max recent entries must be between 1 and {MaxLogEntries} inclusive.");
 		}
 
 		LogMaxRecentEntries = (int)value;
@@ -396,12 +393,9 @@ public sealed class EngineSettings
 		}
 
 		// AppTitle
-		AppTitle = string.IsNullOrWhiteSpace(AppTitle)
-			? "Game" : AppTitle.Trim();
-		LogDirectory = string.IsNullOrWhiteSpace(LogDirectory)
-			? "Logs" : LogDirectory.Trim();
-		SaveDirectory = string.IsNullOrWhiteSpace(SaveDirectory)
-			? "Saves" : SaveDirectory.Trim();
+		AppTitle = string.IsNullOrWhiteSpace(AppTitle) ? "Game" : AppTitle.Trim();
+		LogDirectory = string.IsNullOrWhiteSpace(LogDirectory) ? "Logs" : LogDirectory.Trim();
+		SaveDirectory = string.IsNullOrWhiteSpace(SaveDirectory) ? "Saves" : SaveDirectory.Trim();
 
 		// Content root
 		if (string.IsNullOrWhiteSpace(AppContentRoot))

@@ -701,7 +701,6 @@ public sealed class AssetManager
 		return File.Exists(physical);
 	}
 
-
 	private static bool TryResolveLogicalPath(
 	string baseWithoutExt,
 	string[] exts,
@@ -732,7 +731,6 @@ public sealed class AssetManager
 		}
 		return false;
 	}
-
 
 	private static bool TryResolveAssetPath(string assetPathWithoutExtension, string[] extensions, out string resolvedPath, out bool isPhysicalPath)
 	{
@@ -784,8 +782,6 @@ public sealed class AssetManager
 		var osPath = logicalPath.Replace('/', Path.DirectorySeparatorChar);
 		return Path.Combine(baseDir, contentRoot, osPath);
 	}
-
-
 
 	private bool InternalRemove(uint hash, bool removeInDirectory)
 	{
